@@ -30,6 +30,7 @@ To refresh the data immediately: **Actions** tab → **Update data from Google S
 ## Working on the code
 
 - `CLAUDE.md` is the technical brief: business rules, page specification, brand tokens.
+- Preview the site locally: `python -m http.server 8000` in the repository folder, then open http://localhost:8000 (opening `index.html` directly does not work because the page loads JSON files).
 - Run the tests: `python -m unittest discover -s scripts/tests -v`
 - Build the data from a local CSV: `python scripts/build_data.py --input my_export.csv`
 
