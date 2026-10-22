@@ -1,4 +1,5 @@
-/* GNC brand tokens (Nutrition Cluster brand book 2020). See CLAUDE.md section 7. */
+/* Design tokens. Brand colours from the GNC brand book 2020 (CLAUDE.md section 7);
+   neutrals, sizes and radii from the Claude Design mockup in design/. */
 :root {
   /* Brand palette */
   --gnc-green: #9CCB38;         /* primary; "Completed, awaiting release" */
@@ -8,44 +9,64 @@
   --gnc-blue: #4EB3CF;          /* "Planned" */
   --gnc-sky: #51C3F9;
   --gnc-orange: #EE7B08;        /* "Ongoing" */
-  --gnc-grey: #808080;          /* empty or no data */
-  --gnc-slate: #455F51;         /* dark text accents */
+  --gnc-grey: #808080;
+  --gnc-slate: #455F51;
   --gnc-olive: #94A17F;
   --gnc-khaki: #89824E;
 
-  /* Status colours: every chart reads these, never the hex codes directly */
+  /* Status colours: every block reads these, never the hex codes directly */
   --status-planned: var(--gnc-blue);
   --status-ongoing: var(--gnc-orange);
   --status-completed: var(--gnc-green);
   --status-released: var(--gnc-green-dark);
-  --status-not-planned: var(--gnc-grey);
+  --status-not-planned: #A9AFA8;
 
-  /* Text and surfaces */
-  --text: #1F2A24;
-  --text-muted: #5B6660;        /* passes WCAG AA on white */
+  /* Freshness scale (map, "Data freshness" mode) */
+  --fresh-1: #4E8F2A;           /* < 1 year */
+  --fresh-2: #8DBE3F;           /* 1–2 years */
+  --fresh-3: #C9DF97;           /* 2–3 years */
+  --fresh-4: #C4C4C4;           /* > 3 years */
+  --fresh-never: #6E6E6E;       /* never (hatched) */
+
+  /* Text */
+  --text: #1F2421;
+  --text-strong: #1B1E1B;
+  --text-secondary: #3D433E;
+  --text-muted: #565C57;
+  --text-faint: #6B716C;        /* "Not reported" */
+  --text-brand: #4A4F4B;        /* product name in the header */
+
+  /* Surfaces and lines */
   --surface: #FFFFFF;
-  --surface-alt: #F5F7F3;
-  --border: #D9DED6;
-  --focus: #2F6FD6;
-  --link: #1F6F8B;              /* darker blue for AA contrast on white */
+  --surface-alt: #F5F7F2;
+  --surface-hover: #FAFBF8;
+  --map-water: #F4F8FA;
+  --border: #DDE1DA;
+  --border-input: #C9CEC5;
+  --border-row: #ECEFE9;
+  --border-badge: #A9AFA8;
+
+  /* Interaction */
+  --link: #3F6E0E;
+  --link-hover: #2C4F08;
+  --focus: #2A8BAA;
+  --pressed: #1F2421;           /* border of a selected KPI tile, active toggle */
 
   /* Type */
-  --font-title: Arial, Helvetica, sans-serif;            /* titles, KPI numbers */
+  --font-title: Arial, "Helvetica Neue", Helvetica, sans-serif;   /* titles, KPI numbers */
   --font-body: "Source Sans 3", "Source Sans Pro", Arial, sans-serif;
-  --fs-xs: 0.8125rem;
-  --fs-sm: 0.875rem;
-  --fs-md: 1rem;
-  --fs-lg: 1.25rem;
-  --fs-xl: 1.75rem;
 
-  /* Spacing, radius, layout */
-  --space-1: 4px;
-  --space-2: 8px;
-  --space-3: 12px;
-  --space-4: 16px;
-  --space-5: 24px;
-  --space-6: 32px;
-  --radius: 8px;
-  --page-max: 1280px;
-  --shadow: 0 1px 2px rgba(31, 42, 36, 0.08);
+  /* Layout */
+  --page-max: 1440px;
+  --page-pad: 40px;
+  --radius-card: 6px;
+  --radius-input: 4px;
+}
+
+@media (max-width: 899px) {
+  :root { --page-pad: 24px; }
+}
+
+@media (max-width: 639px) {
+  :root { --page-pad: 16px; }
 }

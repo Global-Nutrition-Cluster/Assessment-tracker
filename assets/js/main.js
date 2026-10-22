@@ -1,18 +1,20 @@
 // Entry point: loads the data, builds the filter bar and redraws every block when filters change.
-// Each block (KPIs, map, timeline, matrix, list) gets its own module in the next steps.
+// Map, timeline, matrix and list get their own modules in the next steps.
 
 import {
-  loadData, applyFilters, regionOptions, countryOptions, yearOptions,
+  loadData, applyFilters, yearOptions, regionOptions, countryOptions,
   TYPE_OPTIONS, STATUS_OPTIONS, FUNDING_OPTIONS,
 } from './data.js';
 import { readState, writeState } from './state.js';
 import { createFilterBar, escapeHtml } from './filters.js';
+import { createKpis } from './kpis.js';
 
 const app = {
   surveys: [],
   meta: {},
   state: readState(),
   updateFilters: null,
+  updateKpis: null,
 };
 
 async function start() {
@@ -26,7 +28,7 @@ async function start() {
   }
 
   app.updateFilters = createFilterBar(document.getElementById('filters'), {
-    years: yearOptions(app.surveys),
+    year: yearOptions(app.surveys),
     region: regionOptions(app.surveys),
     country: countryOptions(app.surveys),
     type: TYPE_OPTIONS,
@@ -34,7 +36,10 @@ async function start() {
     funding: FUNDING_OPTIONS,
   }, setState);
 
-  renderFooter();
+  app.updateKpis = createKpis(document.getElementById('kpis'),
+    (status) => setState({ ...app.state, status }));
+
+  renderDataDate();
   render();
 }
 
@@ -45,31 +50,27 @@ function setState(next) {
 }
 
 function render() {
-  const filtered = applyFilters(app.surveys, app.state);
-  app.updateFilters(app.state);
+  const { state, surveys } = app;
+  const filtered = applyFilters(surveys, state);
 
-  const n = filtered.length;
-  document.getElementById('result-line').innerHTML =
-    `<strong>${n}</strong> ${n === 1 ? 'assessment matches' : 'assessments match'} the current filters.`;
+  app.updateFilters(state);
+  app.updateKpis(applyFilters(surveys, state, ['status']), state.status);
 
-  // Temporary preview of the counts until the KPI tiles arrive (step 3)
-  const counts = Object.fromEntries(STATUS_OPTIONS.map((o) => [o.value, 0]));
-  filtered.forEach((s) => { if (s.display_status in counts) counts[s.display_status] += 1; });
-  document.querySelectorAll('[data-kpi]').forEach((tile) => {
-    tile.querySelector('.kpi-value').textContent = counts[tile.dataset.kpi];
-  });
+  // Temporary until the survey list arrives (step 4)
+  document.getElementById('list-count').textContent =
+    `${filtered.length} ${filtered.length === 1 ? 'survey matches' : 'surveys match'} the current filters`;
 }
 
-function renderFooter() {
+function renderDataDate() {
   const updated = app.meta.updated_at ? new Date(app.meta.updated_at) : null;
-  document.getElementById('data-updated').textContent = updated
-    ? `Data updated ${updated.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`
-    : 'Data update date unavailable';
+  document.getElementById('data-date').textContent = updated
+    ? updated.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'unknown';
 }
 
 function showError(error) {
   console.error(error);
-  document.getElementById('result-line').outerHTML = `
+  document.getElementById('kpis').outerHTML = `
     <div class="notice" role="alert">
       <strong>The data could not be loaded.</strong> Please try again later.
       <br><small>${escapeHtml(error.message)}</small>

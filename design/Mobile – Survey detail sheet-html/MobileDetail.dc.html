@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Survey detail (mobile) – GNC Nutrition Assessment Tracker</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&amp;display=swap">
+<style>
+body{margin:0}
+a{color:#3F6E0E}a:hover{color:#2C4F08}
+*{box-sizing:border-box}
+:focus-visible{outline:3px solid #2A8BAA;outline-offset:2px}
+.h{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#565C57}
+.nr{color:#6B716C;font-style:italic}
+dt{padding:10px 0;border-bottom:1px solid #ECEFE9;color:#565C57;font-size:14px}
+dd{margin:0;padding:10px 0;border-bottom:1px solid #ECEFE9}
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; font-family: 'Source Sans 3', 'Source Sans Pro', Arial, sans-serif; color: #1F2421; background: #FFFFFF">
+
+  <!-- page behind the sheet -->
+  <div aria-hidden="true" style="position: absolute; inset: 0">
+    <div style="border-bottom: 4px solid #9CCB38; padding: 10px 16px; height: 68px; display: flex; align-items: center">
+      <img src="./assets/4b537e9b3122234fb1fe6111cc37bd85.png" alt="" style="height: 36px; width: auto; display: block">
+    </div>
+    <div style="padding: 18px 16px; display: flex; flex-direction: column; gap: 10px">
+      <div class="h" style="font-size: 19px; font-weight: 700">Survey list</div>
+      <div style="height: 104px; border: 1px solid #DDE1DA; border-radius: 6px"></div>
+      <div style="height: 104px; border: 1px solid #DDE1DA; border-radius: 6px"></div>
+      <div style="height: 104px; border: 1px solid #DDE1DA; border-radius: 6px"></div>
+    </div>
+  </div>
+  <a href="Mobile.dc.html" aria-label="Close survey details" style="position: absolute; inset: 0; background: rgba(31,36,33,0.45)"></a>
+
+  <!-- bottom sheet -->
+  <section role="dialog" aria-modal="true" aria-label="Survey details" style="position: absolute; left: 0; right: 0; bottom: 0; height: 724px; background: #FFFFFF; border-radius: 12px 12px 0 0; display: flex; flex-direction: column; overflow: hidden">
+    <div style="display: flex; justify-content: center; padding: 8px 0 0"><span aria-hidden="true" style="width: 40px; height: 4px; border-radius: 2px; background: #C9CEC5"></span></div>
+    <div style="padding: 10px 16px 14px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 1px solid #DDE1DA">
+      <div style="display: flex; flex-direction: column; gap: 4px">
+        <span class="lbl">SMART survey</span>
+        <h2 class="h" style="margin: 0; font-size: 21px; font-weight: 700">ETH-2026-SMART-01</h2>
+        <span style="display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600">
+          <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#63A537"></circle><path d="M4.9 8.3l2.1 2.1 4.1-4.4" fill="none" stroke="#FFFFFF" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          Results released
+        </span>
+      </div>
+      <a href="Mobile.dc.html" aria-label="Close" style="width: 44px; height: 44px; border: 1px solid #C9CEC5; border-radius: 4px; display: flex; align-items: center; justify-content: center; flex: none">
+        <svg width="16" height="16" viewBox="0 0 16 16" stroke="#1F2421" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"></path></svg>
+      </a>
+    </div>
+    <div style="flex: 1; overflow-y: auto; padding: 4px 16px 16px">
+      <dl style="margin: 0; display: grid; grid-template-columns: 128px 1fr; font-size: 15px">
+        <dt>Country</dt><dd>Ethiopia (ETH)</dd>
+        <dt>Region</dt><dd>ESARO</dd>
+        <dt>Admin 1</dt><dd>Amhara</dd>
+        <dt>Assessment type</dt><dd>SMART</dd>
+        <dt>Start date (indicative)</dt><dd>26 Feb 2026</dd>
+        <dt>End date (indicative)</dt><dd><span class="nr">Not reported</span></dd>
+        <dt>Lead organization</dt><dd>GOAL / Amhara RENCU</dd>
+        <dt>Partners</dt><dd><span class="nr">Not reported</span></dd>
+        <dt>Validation</dt><dd>Results released</dd>
+        <dt>Funding</dt><dd><span style="font-size: 13px; font-weight: 600; color: #3D433E; border: 1px solid #A9AFA8; border-radius: 10px; padding: 1px 8px">Funded</span></dd>
+      </dl>
+      <div style="margin-top: 14px; padding: 12px 14px; border: 1px solid #E4B98A; border-radius: 4px; background: #FDF6EE; font-size: 14px; color: #5A3410; display: flex; gap: 8px">
+        <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" style="flex: none; margin-top: 2px"><path d="M8 1.5 15 14H1z" fill="#FFFFFF" stroke="#B85A00" stroke-width="1.6" stroke-linejoin="round"></path><path d="M8 6v3.6M8 11.6v.2" stroke="#B85A00" stroke-width="1.8" stroke-linecap="round"></path></svg>
+        <span>Missing information: end date. Country IMOs can update this record in the tracker.</span>
+      </div>
+    </div>
+    <div style="padding: 12px 16px 20px; border-top: 1px solid #DDE1DA">
+      <a href="https://aggregator.smartplusapp.org/survey/1228/metadata" style="display: flex; align-items: center; justify-content: center; gap: 8px; height: 48px; border-radius: 4px; background: #9CCB38; color: #1B1E1B; font-weight: 700; font-size: 16px; text-decoration: none">Open report
+        <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h4v4M13 3 7 9M11 9.5V13H3V5h3.5"></path></svg>
+      </a>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

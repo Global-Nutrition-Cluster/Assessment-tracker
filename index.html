@@ -3,8 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Nutrition Assessment Tracker | Global Nutrition Cluster</title>
-  <meta name="description" content="Planning of nutrition assessments (SMART, Rapid SMART, MICS, DHS, IPC AMN) by country: planned, ongoing and completed surveys.">
+  <title>Planning view – GNC Nutrition Assessment Tracker</title>
+  <meta name="description" content="Which nutrition assessments (SMART, Rapid SMART, MICS, DHS) are planned, ongoing or completed in each country, and where survey data is missing or out of date.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%277%27 fill=%27%239CCB38%27/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -14,83 +15,76 @@
 </head>
 <body>
   <header class="site-header">
-    <div class="container">
-      <a href="https://www.nutritioncluster.net" aria-label="Global Nutrition Cluster website">
-        <img src="assets/img/gnc-logo.png" alt="Global Nutrition Cluster" width="128" height="48">
-      </a>
-      <span class="header-divider" aria-hidden="true"></span>
-      <div>
-        <h1 class="site-title">Nutrition Assessment Tracker</h1>
-        <p class="site-subtitle">Planning of nutrition assessments</p>
+    <div class="wrap">
+      <div class="brand">
+        <a href="https://www.nutritioncluster.net" aria-label="Global Nutrition Cluster home">
+          <img src="assets/img/gnc-logo.png" alt="Global Nutrition Cluster" width="130" height="46">
+        </a>
+        <span class="brand-divider" aria-hidden="true"></span>
+        <span class="brand-name">Nutrition Assessment Tracker</span>
       </div>
+      <!-- Results, Methodology and Data & downloads tabs will be added when those pages exist -->
+      <nav class="site-nav" aria-label="Tracker sections">
+        <a href="./" aria-current="page">Planning view</a>
+      </nav>
     </div>
   </header>
 
-  <nav class="filter-bar" aria-label="Filters">
-    <div class="container" id="filters"></div>
-  </nav>
-
-  <main class="container">
-    <p class="result-line" id="result-line" aria-live="polite">Loading data…</p>
-
-    <div class="grid">
-      <!-- 1. KPI band (step 3) -->
-      <section class="kpi-band" aria-label="Assessments by stage">
-        <div class="card kpi" data-kpi="planned">
-          <div class="kpi-label"><span class="status-dot planned" aria-hidden="true"></span>Planned</div>
-          <div class="kpi-value">–</div>
-          <div class="kpi-sub">with funding gap: step 3</div>
-        </div>
-        <div class="card kpi" data-kpi="ongoing">
-          <div class="kpi-label"><span class="status-dot ongoing" aria-hidden="true"></span>Ongoing</div>
-          <div class="kpi-value">–</div>
-          <div class="kpi-sub">in data collection</div>
-        </div>
-        <div class="card kpi" data-kpi="completed">
-          <div class="kpi-label"><span class="status-dot completed" aria-hidden="true"></span>Completed</div>
-          <div class="kpi-value">–</div>
-          <div class="kpi-sub">awaiting release</div>
-        </div>
-        <div class="card kpi" data-kpi="released">
-          <div class="kpi-label"><span class="status-dot released" aria-hidden="true"></span>Results released</div>
-          <div class="kpi-value">–</div>
-          <div class="kpi-sub">last 12 months: step 3</div>
-        </div>
-      </section>
-
-      <!-- 2. Map and timeline -->
-      <div class="views">
-        <section class="card" id="map-card" aria-labelledby="map-title">
-          <h2 id="map-title">Map</h2>
-          <p class="card-question">Where are assessments planned, ongoing or completed?</p>
-          <div class="placeholder tall">Map with Status / Freshness toggle (step 5)</div>
-        </section>
-        <section class="card" id="timeline-card" aria-labelledby="timeline-title">
-          <h2 id="timeline-title">Timeline</h2>
-          <p class="card-question">When are assessments taking place?</p>
-          <div class="placeholder tall">Gantt chart by country (step 6)</div>
-        </section>
+  <section class="page-title">
+    <div class="wrap">
+      <div>
+        <h1>Planning view</h1>
+        <p>Which nutrition assessments are planned, ongoing or completed in each country, and where survey data is missing or out of date.</p>
       </div>
-
-      <!-- 3. Coverage matrix -->
-      <section class="card" id="matrix-card" aria-labelledby="matrix-title">
-        <h2 id="matrix-title">Coverage by assessment type</h2>
-        <p class="card-question">Which countries are missing recent data?</p>
-        <div class="placeholder">Countries × SMART, Rapid SMART, MICS, DHS (step 7)</div>
-      </section>
-
-      <!-- 4. Survey list -->
-      <section class="card" id="list-card" aria-labelledby="list-title">
-        <h2 id="list-title">Assessments</h2>
-        <div class="placeholder">Sortable list, CSV export and detail panel (step 4)</div>
-      </section>
+      <div class="data-asof">Data as of <strong id="data-date">…</strong><br>Source: country Nutrition Cluster submissions</div>
     </div>
+  </section>
+
+  <div class="filter-bar">
+    <form class="filter-form wrap" id="filters" aria-label="Filters"></form>
+  </div>
+
+  <main class="wrap">
+    <!-- KPI band -->
+    <section class="kpi-band" id="kpis" aria-label="Key figures"></section>
+
+    <!-- Map and timeline -->
+    <section class="views">
+      <div class="card" id="map-card">
+        <div class="card-head"><h2>Where assessments stand</h2></div>
+        <div class="placeholder tall">Map with Status / Data freshness toggle (step 5)</div>
+      </div>
+      <div class="card" id="timeline-card">
+        <div class="card-head"><h2>Timeline</h2></div>
+        <div class="placeholder tall">Gantt chart by country (step 6)</div>
+      </div>
+    </section>
+
+    <!-- Coverage matrix -->
+    <section class="card" id="matrix-card">
+      <div class="card-head">
+        <h2>Coverage by assessment type</h2>
+        <span class="card-note">Latest assessment per country and type · status and survey year · blank = no assessment on record</span>
+      </div>
+      <div class="placeholder">Countries × SMART, Rapid SMART, MICS, DHS (step 7)</div>
+    </section>
+
+    <!-- Survey list -->
+    <section class="card" id="list-card">
+      <div class="card-head">
+        <div>
+          <h2>Survey list</h2>
+          <div class="card-note" id="list-count"></div>
+        </div>
+      </div>
+      <div class="placeholder">Sortable list, CSV export and detail panel (step 4)</div>
+    </section>
   </main>
 
   <footer class="site-footer">
-    <div class="container">
-      <span><span id="data-updated">Loading…</span> · Source: GNC Nutrition Assessment Tracker</span>
-      <a href="https://www.nutritioncluster.net">nutritioncluster.net</a>
+    <div class="wrap">
+      <span>Global Nutrition Cluster · <a href="https://www.nutritioncluster.net">nutritioncluster.net</a></span>
+      <span>Assessment status is reported by country Nutrition Clusters. Start and end dates are indicative.</span>
     </div>
   </footer>
 </body>

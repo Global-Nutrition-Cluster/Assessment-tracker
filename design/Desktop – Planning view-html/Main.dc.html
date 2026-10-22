@@ -1,0 +1,670 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Planning view – GNC Nutrition Assessment Tracker</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&amp;display=swap">
+<style>
+body{margin:0;background:#FFFFFF}
+a{color:#3F6E0E}a:hover{color:#2C4F08}
+*{box-sizing:border-box}
+button,select,input{font-family:inherit}
+:focus-visible{outline:3px solid #2A8BAA;outline-offset:2px}
+.h{font-family:Arial,"Helvetica Neue",Helvetica,sans-serif}
+.lbl{font-size:12px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#565C57}
+.sel{height:40px;border:1px solid #C9CEC5;border-radius:4px;background:#FFFFFF;padding:0 32px 0 10px;font-size:15px;color:#1F2421;min-width:0}
+.card{border:1px solid #DDE1DA;border-radius:6px;background:#FFFFFF}
+.tbl{width:100%;border-collapse:collapse;font-size:14px}
+.tbl th{text-align:left;font-weight:600;color:#3D433E;background:#F5F7F2;border-bottom:1px solid #DDE1DA;padding:0;white-space:nowrap}
+.tbl th button{all:unset;cursor:pointer;display:flex;gap:6px;align-items:center;padding:10px 12px;min-height:24px}
+.tbl th span.st{display:block;padding:10px 12px}
+.tbl td{padding:9px 12px;border-bottom:1px solid #ECEFE9;vertical-align:top;color:#1F2421}
+.tbl tbody tr:hover td{background:#FAFBF8}
+.rowbtn{all:unset;cursor:pointer;color:#3F6E0E;font-weight:600;text-decoration:underline;text-underline-offset:2px}
+.mx td,.mx th{border-bottom:1px solid #ECEFE9;padding:6px 8px;font-size:14px}
+.mx th{font-weight:600;color:#3D433E;text-align:left;background:#F5F7F2}
+.cellbtn{all:unset;cursor:pointer;display:flex;align-items:center;gap:6px;height:30px;padding:0 10px;border-radius:3px;font-weight:600;color:#1B1E1B;font-size:14px}
+.ghost{all:unset;cursor:pointer}
+.mute{color:#565C57}
+.nr{color:#6B716C;font-style:italic}
+.fund{display:inline-block;font-size:12px;font-weight:600;color:#3D433E;border:1px solid #A9AFA8;border-radius:10px;padding:1px 8px;white-space:nowrap}
+</style>
+</helmet>
+<div style="font-family: 'Source Sans 3', 'Source Sans Pro', Arial, sans-serif; color: #1F2421; background: #FFFFFF; min-height: 100vh; position: relative">
+
+  <!-- Header -->
+  <header style="border-bottom: 4px solid #9CCB38">
+    <div style="max-width: 1440px; margin: 0 auto; padding: 14px 40px; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px">
+      <div style="display: flex; align-items: center; gap: 20px">
+        <a href="https://nutritioncluster.net" aria-label="Global Nutrition Cluster home" style="display: flex"><img src="./assets/4b537e9b3122234fb1fe6111cc37bd85.png" alt="Global Nutrition Cluster" style="height: 46px; width: auto; display: block"></a>
+        <div style="width: 1px; height: 36px; background: #DDE1DA"></div>
+        <div class="h" style="font-size: 18px; color: #4A4F4B">Nutrition Assessment Tracker</div>
+      </div>
+      <nav aria-label="Tracker sections" style="display: flex; flex-wrap: wrap; gap: 4px 24px; font-size: 16px">
+        <a href="#" aria-current="page" style="color: #1F2421; font-weight: 700; text-decoration: none; border-bottom: 3px solid #9CCB38; padding: 10px 0">Planning view</a>
+        <a href="#" style="color: #3D433E; text-decoration: none; padding: 10px 0">Results</a>
+        <a href="#" style="color: #3D433E; text-decoration: none; padding: 10px 0">Methodology</a>
+        <a href="#" style="color: #3D433E; text-decoration: none; padding: 10px 0">Data &amp; downloads</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Title -->
+  <section style="max-width: 1440px; margin: 0 auto; padding: 28px 40px 20px; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 32px">
+    <div style="max-width: 760px">
+      <h1 class="h" style="margin: 0 0 6px; font-size: 32px; font-weight: 400; color: #1F2421">Planning view</h1>
+      <p style="margin: 0; font-size: 17px; line-height: 1.45; color: #3D433E">Which nutrition assessments are planned, ongoing or completed in each country, and where survey data is missing or out of date.</p>
+    </div>
+    <div style="font-size: 14px; color: #565C57; text-align: right; line-height: 1.5">Data as of <strong style="color: #1F2421">22 Oct 2026</strong><br>Source: country Nutrition Cluster submissions</div>
+  </section>
+
+  <!-- Sticky filter bar -->
+  <div style="position: sticky; top: 0; z-index: 20; background: #FFFFFF; border-top: 1px solid #DDE1DA; border-bottom: 1px solid #DDE1DA">
+    <form aria-label="Filters" style="max-width: 1440px; margin: 0 auto; padding: 12px 40px; display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px">
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 160px">
+        <label class="lbl" for="f-period">Period</label>
+        <select id="f-period" class="sel"><option>May 2026 – Oct 2027</option><option>Last 12 months</option><option>Calendar year 2026</option></select>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 140px">
+        <label class="lbl" for="f-region">Region</label>
+        <select id="f-region" class="sel"><option>All regions</option><option>WCARO</option><option>ESARO</option><option>MENARO</option><option>LACRO</option><option>ROSA</option></select>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 160px">
+        <label class="lbl" for="f-country">Country</label>
+        <select id="f-country" class="sel"><option>All countries</option><option>Burkina Faso</option><option>Chad</option><option>Nigeria</option><option>South Sudan</option></select>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 180px">
+        <label class="lbl" for="f-type">Assessment type</label>
+        <select id="f-type" class="sel"><option>SMART + Rapid SMART</option><option>All types</option><option>MICS</option><option>DHS</option></select>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 170px">
+        <label class="lbl" for="f-status">Status</label>
+        <select id="f-status" class="sel" value="{{statusValue}}" onChange="{{onStatusSelect}}">
+          <option value="all">All statuses</option>
+          <option value="planned">Planned</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="completed">Completed</option>
+          <option value="released">Results released</option>
+        </select>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; flex: 1 1 170px">
+        <label class="lbl" for="f-funding">Funding</label>
+        <select id="f-funding" class="sel" value="{{fundingValue}}" onChange="{{onFundingSelect}}">
+          <option value="all">All</option>
+          <option value="Funded">Funded</option>
+          <option value="gap">Funding gap (partial + unfunded)</option>
+          <option value="Partially funded">Partially funded</option>
+          <option value="Unfunded">Unfunded</option>
+        </select>
+      </div>
+      <button type="button" onClick="{{reset}}" style="height: 40px; padding: 0 16px; border: 1px solid #C9CEC5; border-radius: 4px; background: #FFFFFF; color: #1F2421; font-size: 15px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M3 8a5 5 0 1 0 1.6-3.7"></path><path d="M3 2.5v2.8h2.8"></path></svg>
+        Reset
+      </button>
+    </form>
+  </div>
+
+  <main style="max-width: 1440px; margin: 0 auto; padding: 24px 40px 48px; display: flex; flex-direction: column; gap: 28px">
+
+    <!-- KPI band -->
+    <section aria-label="Key figures" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr)); gap: 16px">
+      <sc-for list="{{tiles}}" as="t" hint-placeholder-count="4">
+        <button type="button" onClick="{{t.onClick}}" aria-pressed="{{t.pressed}}" style="text-align: left; cursor: pointer; background: #FFFFFF; border: 1px solid {{t.border}}; box-shadow: inset 0 4px 0 {{t.bar}}; border-radius: 6px; padding: 18px 20px 16px; display: flex; flex-direction: column; gap: 6px; font-family: inherit; color: #1F2421">
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; color: #3D433E">
+            <svg width="18" height="18" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="{{t.ic.f}}"></circle><path d="{{t.ic.p}}" fill="{{t.ic.pf}}" stroke="{{t.ic.ps}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            {{t.label}}
+          </span>
+          <span class="h" style="font-size: 44px; line-height: 1; font-weight: 700; color: #1F2421">{{t.value}}</span>
+          <span style="font-size: 14px; color: #565C57; min-height: 20px">{{t.sub}}</span>
+        </button>
+      </sc-for>
+    </section>
+
+    <!-- Map + Timeline -->
+    <section style="display: grid; grid-template-columns: repeat(auto-fit, minmax(min(560px, 100%), 1fr)); gap: 24px; align-items: start">
+
+      <!-- Map -->
+      <div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 14px">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px">
+          <h2 class="h" style="margin: 0; font-size: 20px; font-weight: 700">Where assessments stand</h2>
+          <div role="group" aria-label="Map colouring" style="display: flex; border: 1px solid #C9CEC5; border-radius: 4px; overflow: hidden">
+            <button type="button" onClick="{{toStatus}}" aria-pressed="{{mapStatus}}" style="border: 0; padding: 0 14px; height: 36px; font-size: 14px; font-weight: 600; cursor: pointer; background: {{segA.bg}}; color: {{segA.fg}}">Status</button>
+            <button type="button" onClick="{{toFresh}}" aria-pressed="{{mapFresh}}" style="border: 0; border-left: 1px solid #C9CEC5; padding: 0 14px; height: 36px; font-size: 14px; font-weight: 600; cursor: pointer; background: {{segB.bg}}; color: {{segB.fg}}">Data freshness</button>
+          </div>
+        </div>
+        <p style="margin: 0; font-size: 14px; color: #565C57">{{mapCaption}}</p>
+        <div style="position: relative; border-radius: 4px; overflow: hidden; background: #F4F8FA">
+          <sc-if value="{{mapStatus}}" hint-placeholder-val="{{true}}">
+            <img src="./assets/0d0df6ef80e26a1d335bef4b66ab1274.svg" alt="Map of Africa and Yemen coloured by current SMART survey status per country" style="width: 100%; height: auto; display: block">
+          </sc-if>
+          <sc-if value="{{mapFresh}}" hint-placeholder-val="{{false}}">
+            <img src="./assets/daf5c86ac38e5bde8f166c9261b22bad.svg" alt="Map of Africa and Yemen coloured by age of the last assessment with released results" style="width: 100%; height: auto; display: block">
+          </sc-if>
+          <sc-for list="{{markers}}" as="m" hint-placeholder-count="13">
+            <button type="button" onClick="{{m.onClick}}" aria-label="{{m.aria}}" title="{{m.aria}}" style="position: absolute; left: {{m.x}}%; top: {{m.y}}%; transform: translate(calc(-50% + {{m.dx}}px), -50%); display: flex; align-items: center; justify-content: center; gap: 3px; height: 26px; min-width: 26px; padding: 0 7px 0 5px; border-radius: 13px; border: {{m.border}}; background: {{m.bg}}; font-size: 13px; font-weight: 700; color: #1B1E1B; cursor: pointer">
+              <sc-if value="{{m.glyph}}" hint-placeholder-val="{{true}}"><svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true"><path d="{{m.ic.p}}" fill="{{m.ic.pf2}}" stroke="{{m.ic.ps2}}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></sc-if>
+              {{m.label}}
+            </button>
+          </sc-for>
+        </div>
+        <!-- Legend -->
+        <sc-if value="{{mapStatus}}" hint-placeholder-val="{{true}}">
+          <div style="display: flex; flex-wrap: wrap; gap: 10px 32px; font-size: 14px">
+            <ul aria-label="Status legend" style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px">
+              <sc-for list="{{legend}}" as="l" hint-placeholder-count="4">
+                <li style="display: flex; align-items: center; gap: 6px">
+                  <span aria-hidden="true" style="width: 18px; height: 12px; border-radius: 2px; background: {{l.sw}}"></span>
+                  <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="{{l.ic.f}}"></circle><path d="{{l.ic.p}}" fill="{{l.ic.pf}}" stroke="{{l.ic.ps}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                  {{l.label}}
+                </li>
+              </sc-for>
+            </ul>
+            <ul aria-label="Funding legend" style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px">
+              <li style="display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 18px; height: 18px; border-radius: 9px; background: #5C625D; border: 1.5px solid #1F2421"></span>Funded</li>
+              <li style="display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 18px; height: 18px; border-radius: 9px; background: #FFFFFF; border: 3px solid #5C625D"></span>Funding gap</li>
+            </ul>
+          </div>
+        </sc-if>
+        <sc-if value="{{mapFresh}}" hint-placeholder-val="{{false}}">
+          <div style="display: flex; flex-direction: column; gap: 6px">
+            <div class="lbl">Age of last assessment with released results</div>
+            <ul aria-label="Freshness legend" style="list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0; font-size: 14px">
+              <li style="display: flex; flex-direction: column; gap: 4px; min-width: 88px"><span aria-hidden="true" style="height: 12px; background: #4E8F2A"></span>&lt; 1 year</li>
+              <li style="display: flex; flex-direction: column; gap: 4px; min-width: 88px"><span aria-hidden="true" style="height: 12px; background: #8DBE3F"></span>1–2 years</li>
+              <li style="display: flex; flex-direction: column; gap: 4px; min-width: 88px"><span aria-hidden="true" style="height: 12px; background: #C9DF97"></span>2–3 years</li>
+              <li style="display: flex; flex-direction: column; gap: 4px; min-width: 88px"><span aria-hidden="true" style="height: 12px; background: #C4C4C4"></span>&gt; 3 years</li>
+              <li style="display: flex; flex-direction: column; gap: 4px; min-width: 88px"><span aria-hidden="true" style="height: 12px; background: repeating-linear-gradient(45deg, #6E6E6E 0 2px, #B5B5B5 2px 5px)"></span>Never</li>
+            </ul>
+            <div style="font-size: 13px; color: #565C57">Age is counted from the results release date (Validation column); where no date is recorded, from the survey year in the Assessment ID. Marker = year of release. Light grey = no cluster record.</div>
+          </div>
+        </sc-if>
+      </div>
+
+      <!-- Timeline -->
+      <div class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 14px; min-width: 0">
+        <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+          <h2 class="h" style="margin: 0; font-size: 20px; font-weight: 700">Timeline</h2>
+          <span style="font-size: 14px; color: #565C57">May 2026 – Oct 2027 · {{tlCount}} surveys · dashed line = today</span>
+        </div>
+        <div style="overflow-x: auto">
+          <div style="min-width: 560px; position: relative">
+            <div style="display: grid; grid-template-columns: 168px 1fr; border-bottom: 1px solid #DDE1DA">
+              <div class="lbl" style="padding: 0 0 6px">Country / survey</div>
+              <div style="display: grid; grid-template-columns: repeat(18, minmax(0, 1fr))">
+                <sc-for list="{{months}}" as="mo" hint-placeholder-count="18">
+                  <div style="font-size: 12px; color: #565C57; text-align: center; padding-bottom: 6px; border-left: {{mo.bl}}; line-height: 1.25"><span style="display: block; font-weight: 700; color: #1F2421; min-height: 15px">{{mo.year}}</span>{{mo.m}}</div>
+                </sc-for>
+              </div>
+            </div>
+            <div style="position: relative">
+              <div aria-hidden="true" style="position: absolute; left: 168px; right: 0; top: 0; bottom: 0; background-image: linear-gradient(to right, #EEF0EC 1px, transparent 1px); background-size: calc(100% / 18) 100%"></div>
+              <div aria-hidden="true" style="position: absolute; left: 168px; right: 0; top: 0; bottom: 0; pointer-events: none; z-index: 3">
+                <div style="position: absolute; left: {{todayPct}}%; top: -4px; bottom: 0; border-left: 2px dashed #1F2421"></div>
+              </div>
+              <sc-for list="{{groups}}" as="g" hint-placeholder-count="8">
+                <div style="position: relative; border-bottom: 1px solid #ECEFE9">
+                  <div style="padding: 8px 0 2px; font-size: 14px; font-weight: 700; color: #1F2421">{{g.country}}</div>
+                  <sc-for list="{{g.rows}}" as="r" hint-placeholder-count="2">
+                    <div style="display: grid; grid-template-columns: 168px 1fr; align-items: center; min-height: 26px">
+                      <button type="button" class="ghost" onClick="{{r.open}}" style="display: flex; align-items: center; gap: 6px; font-size: 13px; color: #3D433E; padding-left: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">
+                        <svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" style="flex: none"><circle cx="8" cy="8" r="7" fill="{{r.ic.f}}"></circle><path d="{{r.ic.p}}" fill="{{r.ic.pf}}" stroke="{{r.ic.ps}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                        <span style="text-decoration: underline; text-decoration-color: #C9CEC5; text-underline-offset: 2px">{{r.short}}</span>
+                      </button>
+                      <div style="position: relative; height: 26px">
+                        <sc-if value="{{r.hasBar}}" hint-placeholder-val="{{true}}">
+                          <button type="button" onClick="{{r.open}}" aria-label="{{r.aria}}" title="{{r.aria}}" style="position: absolute; top: 6px; height: 14px; left: {{r.left}}%; width: {{r.width}}%; background: {{r.fill}}; border: 0; border-radius: {{r.radius}}; padding: 0; cursor: pointer; z-index: 2"></button>
+                        </sc-if>
+                        <sc-if value="{{r.diamond}}" hint-placeholder-val="{{false}}">
+                          <button type="button" onClick="{{r.open}}" aria-label="{{r.aria}}" title="{{r.aria}}" style="position: absolute; top: 6px; left: {{r.left}}%; width: 14px; height: 14px; margin-left: -7px; transform: rotate(45deg); background: {{r.fill}}; border: 0; padding: 0; cursor: pointer; z-index: 2"></button>
+                          <span style="position: absolute; top: 5px; left: {{r.left}}%; margin-left: 12px; font-size: 12px; color: #565C57; white-space: nowrap">no end date</span>
+                        </sc-if>
+                      </div>
+                    </div>
+                  </sc-for>
+                  <sc-if value="{{g.hasMore}}" hint-placeholder-val="{{false}}">
+                    <div style="padding: 0 0 8px 22px"><button type="button" class="ghost" onClick="{{g.toggle}}" style="font-size: 13px; font-weight: 600; color: #3F6E0E; text-decoration: underline; text-underline-offset: 2px; min-height: 24px">{{g.moreLabel}}</button></div>
+                  </sc-if>
+                  <sc-if value="{{g.noMore}}" hint-placeholder-val="{{true}}"><div style="height: 6px"></div></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 13px; color: #3D433E; align-items: center">
+          <span style="display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 20px; height: 10px; background: #4EB3CF; border-radius: 2px"></span>Planned</span>
+          <span style="display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 20px; height: 10px; background: #EE7B08; border-radius: 2px"></span>Ongoing</span>
+          <span style="display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 20px; height: 10px; background: #9CCB38; border-radius: 2px"></span>Completed (awaiting release)</span>
+          <span style="display: flex; align-items: center; gap: 6px"><span aria-hidden="true" style="width: 20px; height: 10px; background: #63A537; border-radius: 2px"></span>Results released</span>
+        </div>
+        <p style="margin: 0; font-size: 13px; color: #565C57">{{undatedNote}}</p>
+      </div>
+    </section>
+
+    <!-- Coverage matrix -->
+    <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 8px">
+        <h2 class="h" style="margin: 0; font-size: 20px; font-weight: 700">Coverage by assessment type</h2>
+        <span style="font-size: 14px; color: #565C57">Latest assessment per country and type · status and survey year · blank = no assessment on record</span>
+      </div>
+      <div style="overflow-x: auto">
+        <table class="mx" style="width: 100%; border-collapse: collapse; min-width: 680px">
+          <thead>
+            <tr>
+              <th scope="col" style="position: sticky; left: 0; z-index: 1; width: 260px">Country</th>
+              <th scope="col">SMART</th>
+              <th scope="col">Rapid SMART</th>
+              <th scope="col">MICS</th>
+              <th scope="col">DHS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{matrix}}" as="row" hint-placeholder-count="15">
+              <tr>
+                <th scope="row" style="position: sticky; left: 0; background: #FFFFFF; font-weight: 600; color: #1F2421">{{row.country}} <span style="font-weight: 400; color: #565C57; font-size: 13px">{{row.region}}</span></th>
+                <sc-for list="{{row.cells}}" as="c" hint-placeholder-count="4">
+                  <td style="opacity: {{c.op}}">
+                    <sc-if value="{{c.has}}" hint-placeholder-val="{{true}}">
+                      <button type="button" class="cellbtn" onClick="{{c.open}}" aria-label="{{c.aria}}" title="{{c.aria}}" style="background: {{c.bg}}">
+                        <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#FFFFFF" fill-opacity="0.9"></circle><path d="{{c.ic.p}}" fill="{{c.ic.pf2}}" stroke="{{c.ic.ps2}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                        {{c.year}}<span style="font-weight: 400; font-size: 12px">{{c.extra}}</span>
+                      </button>
+                    </sc-if>
+                  </td>
+                </sc-for>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+      <p style="margin: 0; font-size: 13px; color: #565C57">“× 16” = number of surveys of that type in the latest year.</p>
+    </section>
+
+    <!-- Survey list -->
+    <section class="card" style="padding: 20px; display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px">
+        <div>
+          <h2 class="h" style="margin: 0; font-size: 20px; font-weight: 700">Survey list</h2>
+          <div style="font-size: 14px; color: #565C57; margin-top: 2px">{{listCount}}</div>
+        </div>
+        <a href="#" style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 4px; background: #9CCB38; color: #1B1E1B; font-weight: 700; font-size: 15px; text-decoration: none">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 2v8M4.5 6.5 8 10l3.5-3.5M2.5 13.5h11"></path></svg>
+          Export CSV
+        </a>
+      </div>
+      <div style="overflow-x: auto">
+        <table class="tbl" style="min-width: 1080px">
+          <thead>
+            <tr>
+              <th scope="col" aria-sort="{{so.id}}"><button type="button" onClick="{{sortBy.id}}">Assessment ID <span aria-hidden="true" style="color: #565C57">{{sm.id}}</span></button></th>
+              <th scope="col" aria-sort="{{so.country}}"><button type="button" onClick="{{sortBy.country}}">Country · Admin 1 <span aria-hidden="true" style="color: #565C57">{{sm.country}}</span></button></th>
+              <th scope="col" aria-sort="{{so.type}}"><button type="button" onClick="{{sortBy.type}}">Type <span aria-hidden="true" style="color: #565C57">{{sm.type}}</span></button></th>
+              <th scope="col" aria-sort="{{so.status}}"><button type="button" onClick="{{sortBy.status}}">Status <span aria-hidden="true" style="color: #565C57">{{sm.status}}</span></button></th>
+              <th scope="col" aria-sort="{{so.start}}"><button type="button" onClick="{{sortBy.start}}">Start <span aria-hidden="true" style="color: #565C57">{{sm.start}}</span></button></th>
+              <th scope="col"><span class="st">End</span></th>
+              <th scope="col"><span class="st">Lead organization</span></th>
+              <th scope="col"><span class="st">Validation</span></th>
+              <th scope="col" aria-sort="{{so.budget}}"><button type="button" onClick="{{sortBy.budget}}">Funding <span aria-hidden="true" style="color: #565C57">{{sm.budget}}</span></button></th>
+              <th scope="col"><span class="st">Report</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <sc-for list="{{pageRows}}" as="r" hint-placeholder-count="12">
+              <tr>
+                <td><button type="button" class="rowbtn" onClick="{{r.open}}">{{r.id}}</button></td>
+                <td>{{r.country}}<sc-if value="{{r.admin1}}" hint-placeholder-val="{{true}}"><span class="mute"> · {{r.admin1}}</span></sc-if></td>
+                <td>{{r.type}}</td>
+                <td>
+                  <span style="display: flex; align-items: center; gap: 6px; white-space: nowrap">
+                    <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" style="flex: none"><circle cx="8" cy="8" r="7" fill="{{r.ic.f}}"></circle><path d="{{r.ic.p}}" fill="{{r.ic.pf}}" stroke="{{r.ic.ps}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                    {{r.statusLabel}}
+                  </span>
+                </td>
+                <td style="white-space: nowrap"><span class="{{r.startCls}}">{{r.startTxt}}</span></td>
+                <td style="white-space: nowrap"><span class="{{r.endCls}}">{{r.endTxt}}</span></td>
+                <td><span class="{{r.leadCls}}">{{r.leadTxt}}</span></td>
+                <td>{{r.validation}}</td>
+                <td><span class="fund">{{r.budget}}</span></td>
+                <td>
+                  <sc-if value="{{r.link}}" hint-placeholder-val="{{true}}"><a href="{{r.link}}" style="font-weight: 600">Open</a></sc-if>
+                  <sc-if value="{{r.noLink}}" hint-placeholder-val="{{false}}"><span class="nr">—</span></sc-if>
+                </td>
+              </tr>
+            </sc-for>
+          </tbody>
+        </table>
+      </div>
+      <nav aria-label="Pagination" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; color: #565C57">
+        <span>{{pageInfo}}</span>
+        <div style="display: flex; gap: 8px">
+          <button type="button" onClick="{{prevPage}}" style="height: 36px; padding: 0 14px; border: 1px solid #C9CEC5; border-radius: 4px; background: #FFFFFF; font-size: 14px; font-weight: 600; cursor: pointer; color: #1F2421">Previous</button>
+          <button type="button" onClick="{{nextPage}}" style="height: 36px; padding: 0 14px; border: 1px solid #C9CEC5; border-radius: 4px; background: #FFFFFF; font-size: 14px; font-weight: 600; cursor: pointer; color: #1F2421">Next</button>
+        </div>
+      </nav>
+    </section>
+  </main>
+
+  <footer style="border-top: 1px solid #DDE1DA; background: #F5F7F2">
+    <div style="max-width: 1440px; margin: 0 auto; padding: 20px 40px; display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px 24px; font-size: 14px; color: #565C57">
+      <span>Global Nutrition Cluster · <a href="https://nutritioncluster.net">nutritioncluster.net</a></span>
+      <span>Assessment status is reported by country Nutrition Clusters. Start and end dates are indicative. Indicator results are published on the Results page.</span>
+    </div>
+  </footer>
+
+  <!-- Detail side panel -->
+  <sc-if value="{{panelOpen}}" hint-placeholder-val="{{false}}">
+    <button type="button" aria-label="Close survey details" onClick="{{close}}" style="position: fixed; inset: 0; background: rgba(31,36,33,0.32); border: 0; padding: 0; cursor: default; z-index: 40"></button>
+    <aside role="dialog" aria-modal="true" aria-label="Survey details" style="position: fixed; top: 0; right: 0; bottom: 0; width: min(440px, 100%); background: #FFFFFF; border-left: 1px solid #DDE1DA; z-index: 41; overflow-y: auto; display: flex; flex-direction: column">
+      <div style="border-top: 4px solid #9CCB38; padding: 20px 24px 16px; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; border-bottom: 1px solid #DDE1DA">
+        <div style="display: flex; flex-direction: column; gap: 6px">
+          <span class="lbl">{{p.type}} survey</span>
+          <h2 class="h" style="margin: 0; font-size: 22px; font-weight: 700">{{p.id}}</h2>
+          <span style="display: flex; align-items: center; gap: 8px; font-size: 15px; font-weight: 600; flex-wrap: wrap">
+            <svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="{{p.ic.f}}"></circle><path d="{{p.ic.p}}" fill="{{p.ic.pf}}" stroke="{{p.ic.ps}}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            {{p.statusLabel}}
+            <span class="fund">{{p.budget}}</span>
+          </span>
+        </div>
+        <button type="button" onClick="{{close}}" aria-label="Close" style="width: 40px; height: 40px; border: 1px solid #C9CEC5; border-radius: 4px; background: #FFFFFF; cursor: pointer; display: flex; align-items: center; justify-content: center; flex: none">
+          <svg width="16" height="16" viewBox="0 0 16 16" stroke="#1F2421" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"></path></svg>
+        </button>
+      </div>
+      <dl style="margin: 0; padding: 8px 24px 16px; display: grid; grid-template-columns: 132px 1fr; gap: 0; font-size: 15px">
+        <sc-for list="{{p.fields}}" as="fd" hint-placeholder-count="10">
+          <dt style="padding: 10px 0; border-bottom: 1px solid #ECEFE9; color: #565C57; font-size: 14px">{{fd.k}}</dt>
+          <dd style="margin: 0; padding: 10px 0; border-bottom: 1px solid #ECEFE9"><span class="{{fd.cls}}">{{fd.v}}</span></dd>
+        </sc-for>
+      </dl>
+      <sc-if value="{{p.hasGaps}}" hint-placeholder-val="{{false}}">
+        <div style="margin: 0 24px 16px; padding: 12px 14px; border: 1px solid #DDE1DA; border-radius: 4px; background: #F5F7F2; font-size: 14px; color: #3D433E">Missing information: {{p.gaps}}. Country IMOs can update this record in the tracker.</div>
+      </sc-if>
+      <div style="padding: 0 24px 24px; display: flex; gap: 10px; flex-wrap: wrap">
+        <sc-if value="{{p.link}}" hint-placeholder-val="{{true}}">
+          <a href="{{p.link}}" style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 18px; border-radius: 4px; background: #9CCB38; color: #1B1E1B; font-weight: 700; text-decoration: none">Open report
+            <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h4v4M13 3 7 9M11 9.5V13H3V5h3.5"></path></svg>
+          </a>
+        </sc-if>
+        <sc-if value="{{p.noLink}}" hint-placeholder-val="{{false}}">
+          <span style="display: flex; align-items: center; height: 44px; padding: 0 16px; border-radius: 4px; border: 1px dashed #A9AFA8; color: #565C57; font-size: 14px">No report published yet</span>
+        </sc-if>
+      </div>
+    </aside>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"mapMode":{"editor":"enum","options":["status","freshness"],"default":"status"},"showPanel":{"editor":"boolean","default":false},"$preview":{"width":1440,"height":2860}}'>
+const TODAY = new Date('2026-10-22');
+const WS = new Date('2026-05-01'), WE = new Date('2027-11-01');
+const STATUS = {
+  ongoing: { label: 'Ongoing', color: '#EE7B08', rank: 0 },
+  planned: { label: 'Planned', color: '#4EB3CF', rank: 1 },
+  awaiting: { label: 'Completed (awaiting release)', color: '#9CCB38', rank: 2 },
+  released: { label: 'Results released', color: '#63A537', rank: 3 }
+};
+function icon(st) {
+  const base = { pf: 'none', ps: '#1B1E1B', pf2: 'none', ps2: '#1B1E1B' };
+  if (st === 'planned') return Object.assign(base, { f: '#4EB3CF', p: 'M8 4.6V8l2.3 1.5', ps: '#0E3D4C', ps2: '#0E3D4C' });
+  if (st === 'ongoing') return Object.assign(base, { f: '#EE7B08', p: 'M6.4 5v6L11 8z', pf: '#2B1500', ps: '#2B1500', pf2: '#2B1500', ps2: '#2B1500' });
+  if (st === 'awaiting') return Object.assign(base, { f: '#9CCB38', p: 'M5.5 4.5h5L5.5 11.5h5z', ps: '#22330A', ps2: '#22330A' });
+  return Object.assign(base, { f: '#63A537', p: 'M4.9 8.3l2.1 2.1 4.1-4.4', ps: '#FFFFFF', ps2: '#1E3A0C' });
+}
+// id, region, country, iso, admin1, type, status, start, end, lead, partners, link, validation, budget
+const R = [
+  ['ETH-2026-SMART-01','ESARO','Ethiopia','ETH','Amhara','SMART','released','2026-02-26','','GOAL / Amhara RENCU','','https://aggregator.smartplusapp.org/survey/1228/metadata','Results released','Funded'],
+  ['ETH-2026-SMART-02','ESARO','Ethiopia','ETH','Somali','SMART','awaiting','2026-01-26','','Somali RENCU','','','Awaiting government approval','Funded'],
+  ['MOZ-2026-SMART-01','ESARO','Mozambique','MOZ','','SMART','released','','','','','','Results released','Funded'],
+  ['SSD-2026-SMART-01','ESARO','South Sudan','SSD','Unity','SMART','released','2026-07-01','2026-09-30','CWW','','https://aggregator.smartplusapp.org/','Results released','Funded'],
+  ['SSD-2026-SMART-02','ESARO','South Sudan','SSD','Upper Nile','SMART','released','2026-07-01','2026-09-30','REACH','','https://aggregator.smartplusapp.org/','Results released','Funded'],
+  ['SSD-2026-SMART-03','ESARO','South Sudan','SSD','Northern Bahr el Ghazal','SMART','released','2026-07-01','2026-09-30','CWW','','https://aggregator.smartplusapp.org/','Results released','Funded'],
+  ['SSD-2026-SMART-04','ESARO','South Sudan','SSD','Upper Nile','SMART','released','2026-01-01','2026-03-31','REACH','','https://aggregator.smartplusapp.org/','Results released','Funded'],
+  ['SSD-2026-SMART-05','ESARO','South Sudan','SSD','Abyei Administrative Area','SMART','released','2026-04-01','2026-06-30','Save the Children','','https://aggregator.smartplusapp.org/','Results released','Funded'],
+  ['SSD-2026-SMART-06','ESARO','South Sudan','SSD','Jonglei','SMART','released','2026-07-01','2026-09-30','For Afrika','','https://aggregator.smartplusapp.org/','Results released','Funded'],
+  ['SSD-2026-SMART-07','ESARO','South Sudan','SSD','','SMART','planned','2026-07-01','2026-09-30','ACF','','','Not yet started','Funded'],
+  ['SSD-2026-SMART-08','ESARO','South Sudan','SSD','','SMART','planned','2026-07-01','2026-09-30','ACF','','','Not yet started','Funded'],
+  ['SSD-2026-SMART-09','ESARO','South Sudan','SSD','','SMART','ongoing','2026-07-01','2026-09-30','JDF','','','Data collection ongoing','Funded'],
+  ['SSD-2026-SMART-10','ESARO','South Sudan','SSD','','SMART','ongoing','2026-07-01','2026-09-30','CH','','','Data collection ongoing','Funded'],
+  ['SSD-2026-SMART-11','ESARO','South Sudan','SSD','','SMART','ongoing','2026-07-01','2026-09-30','WR','','','Data collection ongoing','Funded'],
+  ['SSD-2026-SMART-12','ESARO','South Sudan','SSD','','SMART','ongoing','2026-07-01','2026-09-30','HFO','','','Data collection ongoing','Funded'],
+  ['SSD-2026-SMART-13','ESARO','South Sudan','SSD','','SMART','ongoing','2026-07-01','2026-09-30','HFO','','','Data collection ongoing','Funded'],
+  ['SSD-2026-SMART-14','ESARO','South Sudan','SSD','','SMART','ongoing','2026-07-01','2026-09-30','GOAL','','','Data collection ongoing','Funded'],
+  ['SSD-2026-SMART-15','ESARO','South Sudan','SSD','','SMART','ongoing','2026-07-01','2026-09-30','WR','','','Data collection ongoing','Funded'],
+  ['SSD-2026-SMART-16','ESARO','South Sudan','SSD','','SMART','planned','2026-07-01','2026-09-30','','','','Not yet started','Unfunded'],
+  ['SDN-2026-SMART-01','MENARO','Sudan','SDN','','SMART','ongoing','2026-01-01','2026-12-31','UNICEF','WFP, FMOH','https://aggregator.smartplusapp.org/','Data collection ongoing','Partially funded'],
+  ['YEM-2026-SMART-01','MENARO','Yemen','YEM','Al Hodeidah; Taiz','SMART','released','2026-01-01','','IRC','','https://aggregator.smartplusapp.org/','Results released','Funded'],
+  ['YEM-2026-SMART-02','MENARO','Yemen','YEM','Abyan; Lahj','SMART','released','2025-11-01','','Care','','https://aggregator.smartplusapp.org/','Results released','Funded'],
+  ['YEM-2026-SMART-03','MENARO','Yemen','YEM','','SMART','planned','2026-07-01','','UNICEF / MoH','','','Not yet started','Funded'],
+  ['SYR-2026-SMART-01','MENARO','Syrian Arab Republic','SYR','','SMART','awaiting','2025-10-01','2025-12-31','MOH','','','Awaiting government approval','Funded'],
+  ['HTI-2026-SMART-01','LACRO','Haiti','HTI','','SMART','ongoing','','','UNICEF','','https://aggregator.smartplusapp.org/','Awaiting government approval','Funded'],
+  ['BFA-2026-SMART-01','WACRO','Burkina Faso','BFA','','SMART','planned','2026-09-01','2026-10-15','Government','','','Not yet started','Partially funded'],
+  ['CMR-2026-SMART-01','WACRO','Cameroon','CMR','','SMART','planned','2026-11-16','2026-12-18','','','','Not yet started','Funded'],
+  ['CAF-2026-SMART-01','WACRO','Central African Republic','CAF','','SMART','planned','2027-02-01','2027-03-15','','','','Not yet started','Unfunded'],
+  ['TCD-2026-SMART-01','WACRO','Chad','TCD','','SMART','planned','2026-11-02','2026-12-20','','','','Not yet started','Funded'],
+  ['TCD-2026-RSMART-01','WACRO','Chad','TCD','Ouaddaï','Rapid SMART','ongoing','2026-10-06','2026-11-06','ACF','UNICEF','','Data collection ongoing','Funded'],
+  ['COD-2026-SMART-01','WACRO','Democratic Republic of the Congo','COD','','SMART','ongoing','2026-09-14','','','','','Data collection ongoing','Funded'],
+  ['NGA-2026-SMART-01','WACRO','Nigeria','NGA','','SMART','ongoing','2026-08-24','2026-11-30','','','','Data collection ongoing','Funded']
+];
+// other assessment types (matrix + freshness)
+const X = [
+  ['BFA-2021-DHS-01','WACRO','Burkina Faso','BFA','','DHS','released','2021-07-01','2021-12-01','INSD','','https://dhsprogram.com/','Results released (2023-09-07)',''],
+  ['CMR-2014-MICS-01','WACRO','Cameroon','CMR','','MICS','released','2014-01-01','','INS','','https://mics.unicef.org/','Results released',''],
+  ['CMR-2018-DHS-01','WACRO','Cameroon','CMR','','DHS','released','2018-06-01','2018-12-01','National Institute of Statistics (NIS)','','https://dhsprogram.com/','Results released (2020-06-10)',''],
+  ['CAF-2019-MICS-01','WACRO','Central African Republic','CAF','','MICS','released','2018-12-01','','ICASEES','','https://mics.unicef.org/','Results released',''],
+  ['CAF-1994-DHS-01','WACRO','Central African Republic','CAF','','DHS','released','1994-09-01','1995-03-01','Direction des Statistiques Démographiques et Sociales','','https://dhsprogram.com/','Results released (1995-12-01)',''],
+  ['TCD-2019-MICS-01','WACRO','Chad','TCD','','MICS','released','2019-01-01','','INSEED','','https://mics.unicef.org/','Results released',''],
+  ['TCD-2014-DHS-01','WACRO','Chad','TCD','','DHS','released','2014-10-01','2015-04-01','INSEED','','https://dhsprogram.com/','Results released (2016-07-11)',''],
+  ['COD-2018-MICS-01','WACRO','Democratic Republic of the Congo','COD','','MICS','released','2017-09-01','','INS','','https://mics.unicef.org/','Results released',''],
+  ['COD-2023-DHS-01','WACRO','Democratic Republic of the Congo','COD','','DHS','released','2023-10-01','2024-01-01','INS, École de Santé Publique de Kinshasa','','https://dhsprogram.com/','Results released (2025-08-18)',''],
+  ['ETH-2024-DHS-01','ESARO','Ethiopia','ETH','','DHS','released','2024-08-01','2025-04-01','Ethiopian Statistical Services (ESS)','','https://dhsprogram.com/','Results released (2026-07-08)',''],
+  ['HTI-2016-DHS-01','LACRO','Haiti','HTI','','DHS','released','2016-11-01','2017-04-01','Institut Haïtien de l’Enfance (IHE)','','https://dhsprogram.com/','Results released (2018-08-21)',''],
+  ['MLI-2023-DHS-01','WACRO','Mali','MLI','','DHS','released','2023-12-01','2024-04-01','INSTAT','','https://dhsprogram.com/','Results released (2025-10-02)',''],
+  ['MOZ-2022-DHS-01','ESARO','Mozambique','MOZ','','DHS','released','2022-07-01','2023-03-01','Instituto Nacional de Estatística (INE)','','https://dhsprogram.com/','Results released (2024-05-07)',''],
+  ['NER-2027-DHS-01','WACRO','Niger','NER','','DHS','planned','2027-07-01','2027-10-01','','','https://dhsprogram.com/','Not yet released',''],
+  ['NGA-2021-MICS-01','WACRO','Nigeria','NGA','','MICS','released','2021-09-01','','National Bureau of Statistics','','https://mics.unicef.org/','Results released',''],
+  ['NGA-2025-DHS-01','WACRO','Nigeria','NGA','','DHS','ongoing','2025-12-01','2026-02-01','National Population Commission','','https://dhsprogram.com/','Not yet released',''],
+  ['SDN-1990-DHS-01','MENARO','Sudan','SDN','','DHS','released','1989-11-01','1990-05-01','Department of Statistics','','https://dhsprogram.com/','Results released (1991-05-01)',''],
+  ['SYR-2027-MICS-01','MENARO','Syrian Arab Republic','SYR','','MICS','planned','','','UNICEF','','','Not yet started',''],
+  ['YEM-2013-DHS-01','MENARO','Yemen','YEM','','DHS','released','2013-09-01','2013-11-01','MoPHP','','https://dhsprogram.com/','Results released (2015-07-13)','']
+];
+function toObj(a) {
+  const o = { id: a[0], region: a[1], country: a[2], iso: a[3], admin1: a[4], type: a[5], status: a[6], start: a[7], end: a[8], lead: a[9], partners: a[10], link: a[11], validation: a[12], budget: a[13] };
+  o.year = o.id.split('-')[1];
+  o.gap = o.budget === 'Partially funded' || o.budget === 'Unfunded';
+  // release date: Validation column, else survey year from the Assessment ID
+  const m = /\((\d{4}-\d{2}-\d{2})\)/.exec(o.validation || '');
+  o.relDate = o.status === 'released' ? (m ? m[1] : o.year + '-07-01') : '';
+  return o;
+}
+const SURVEYS = R.map(toObj), OTHERS = X.map(toObj), ALL = SURVEYS.concat(OTHERS);
+const BYID = {}; ALL.forEach((s) => { BYID[s.id] = s; });
+const MAP_POS = { BFA: [24.7, 32.4], CMR: [43.6, 41.6], CAF: [53.2, 39.1], TCD: [50.8, 28.8], COD: [57.2, 50.1], ETH: [77.7, 36.7], MLI: [22.3, 26.3], MOZ: [72.6, 67.2], NER: [38.9, 26.2], NGA: [36.6, 36.4], SSD: [65.7, 39.6], SDN: [65.3, 27.9], YEM: [87.9, 28] };
+const MAP_NAME = { BFA: 'Burkina Faso', CMR: 'Cameroon', CAF: 'Central African Republic', TCD: 'Chad', COD: 'DR Congo', ETH: 'Ethiopia', MLI: 'Mali', MOZ: 'Mozambique', NER: 'Niger', NGA: 'Nigeria', SSD: 'South Sudan', SDN: 'Sudan', YEM: 'Yemen' };
+const MATRIX_C = ['BFA','CMR','CAF','TCD','COD','ETH','HTI','MLI','MOZ','NER','NGA','SSD','SDN','SYR','YEM'];
+const TYPES = ['SMART','Rapid SMART','MICS','DHS'];
+const fmt = (d) => { if (!d) return ''; const t = new Date(d); return t.getUTCDate() + ' ' + ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][t.getUTCMonth()] + ' ' + t.getUTCFullYear(); };
+const pct = (d) => Math.max(0, Math.min(100, (new Date(d) - WS) / (WE - WS) * 100));
+function matchStatus(s, f) {
+  if (!f || f === 'all') return true;
+  if (f === 'completed') return s.status === 'awaiting' || s.status === 'released';
+  return s.status === f;
+}
+function matchFunding(s, f) {
+  if (!f || f === 'all') return true;
+  if (f === 'gap') return s.gap;
+  return s.budget === f;
+}
+function freshBucket(years) { return years < 1 ? '< 1 year' : years < 2 ? '1–2 years' : years < 3 ? '2–3 years' : '> 3 years'; }
+
+class Component extends DCLogic {
+  constructor(props) { super(props); this.state = { mode: null, filter: 'all', fund: 'all', sel: null, closed: false, sortKey: 'country', sortDir: 1, page: 0, ssdOpen: false }; }
+  open(id) { this.setState({ sel: id, closed: false }); }
+  renderVals() {
+    const st = this.state;
+    const mode = st.mode || this.props.mapMode || 'status';
+    const f = st.filter, fu = st.fund;
+    const mapStatus = mode === 'status';
+    const base = SURVEYS.filter((s) => matchFunding(s, fu));
+    const vis = base.filter((s) => matchStatus(s, f));
+
+    // KPIs (respond to the funding filter; the tiles themselves set the status filter)
+    const n = (fn) => base.filter(fn).length;
+    const planned = n((s) => s.status === 'planned'), plannedGap = n((s) => s.status === 'planned' && s.gap);
+    const ongoing = n((s) => s.status === 'ongoing');
+    const completed = n((s) => s.status === 'awaiting' || s.status === 'released'), awaiting = n((s) => s.status === 'awaiting');
+    const released = n((s) => s.status === 'released');
+    const tile = (key, label, value, sub, icSt) => {
+      const on = f === key;
+      return { label, value, sub, ic: icon(icSt), pressed: on ? 'true' : 'false', border: on ? '#1F2421' : '#DDE1DA', bar: STATUS[icSt].color, onClick: () => this.setState({ filter: on ? 'all' : key, page: 0 }) };
+    };
+    const tiles = [
+      tile('planned', 'Planned', planned, plannedGap + ' with funding gap', 'planned'),
+      tile('ongoing', 'Ongoing', ongoing, 'Data collection or analysis', 'ongoing'),
+      tile('completed', 'Completed', completed, awaiting + ' awaiting release', 'awaiting'),
+      tile('released', 'Results released', released, 'Last 12 months', 'released')
+    ];
+
+    // Map markers
+    const markers = [];
+    Object.keys(MAP_POS).forEach((iso) => {
+      const pos = MAP_POS[iso], name = MAP_NAME[iso];
+      if (mapStatus) {
+        const list = vis.filter((s) => s.iso === iso);
+        const parts = [list.filter((s) => !s.gap), list.filter((s) => s.gap)].filter((p) => p.length);
+        parts.forEach((p, i) => {
+          const gap = p[0].gap;
+          const top = p.slice().sort((a, b) => STATUS[a.status].rank - STATUS[b.status].rank)[0];
+          const c = STATUS[top.status].color;
+          markers.push({
+            x: pos[0], y: pos[1], dx: parts.length > 1 ? (i === 0 ? -17 : 17) : 0, glyph: true, ic: icon(top.status), label: String(p.length),
+            bg: gap ? '#FFFFFF' : c, border: gap ? '3px solid ' + c : '1.5px solid #1F2421',
+            aria: name + ': ' + p.length + ' survey' + (p.length === 1 ? '' : 's') + ', ' + (gap ? 'funding gap' : 'funded') + ', most active status ' + STATUS[top.status].label,
+            onClick: () => this.open(top.id)
+          });
+        });
+      } else {
+        const rel = ALL.filter((s) => s.iso === iso && s.relDate).sort((a, b) => b.relDate.localeCompare(a.relDate));
+        const last = rel[0];
+        const years = last ? (TODAY - new Date(last.relDate)) / (365.25 * 864e5) : null;
+        markers.push({
+          x: pos[0], y: pos[1], dx: 0, glyph: false, ic: icon('released'), label: last ? last.relDate.slice(0, 4) : 'Never',
+          bg: '#FFFFFF', border: '1.5px solid #5C625D',
+          aria: name + ': ' + (last ? 'last results released ' + fmt(last.relDate) + ' (' + last.type + ', ' + freshBucket(years) + ')' : 'no assessment with released results'),
+          onClick: () => { if (last) this.open(last.id); }
+        });
+      }
+    });
+    const legend = ['planned', 'ongoing', 'awaiting', 'released'].map((k) => ({ ic: icon(k), label: STATUS[k].label, sw: STATUS[k].color }));
+
+    // Timeline (start dates are indicative: used only to place bars)
+    const order = ['BFA','CMR','CAF','TCD','COD','NGA','ETH','SSD','SDN','YEM'];
+    const inWin = (s) => s.start && (new Date(s.start) < WE) && (s.end ? new Date(s.end) >= WS : new Date(s.start) >= WS || s.status === 'ongoing' || s.status === 'planned');
+    const groups = [];
+    let tlCount = 0;
+    order.forEach((iso) => {
+      const rows = vis.filter((s) => s.iso === iso && inWin(s)).sort((a, b) => STATUS[a.status].rank - STATUS[b.status].rank || a.id.localeCompare(b.id));
+      if (!rows.length) return;
+      tlCount += rows.length;
+      const isSSD = iso === 'SSD' && rows.length > 4;
+      const limit = isSSD && !st.ssdOpen ? 4 : rows.length;
+      const shown = rows.slice(0, limit).map((s) => {
+        const left = pct(s.start);
+        const hasEnd = !!s.end;
+        const width = hasEnd ? Math.max(pct(s.end) - left, 0.9) : 0;
+        return {
+          short: s.id.replace(/^[A-Z]{3}-2026-/, '').replace(/^[A-Z]{3}-/, '') + (s.admin1 ? ' · ' + s.admin1 : ''),
+          ic: icon(s.status), hasBar: hasEnd, diamond: !hasEnd, left: left.toFixed(2), width: width.toFixed(2),
+          fill: STATUS[s.status].color, radius: new Date(s.start) < WS ? '0 2px 2px 0' : '2px',
+          aria: s.id + ', ' + STATUS[s.status].label + ', indicative dates ' + fmt(s.start) + (hasEnd ? ' to ' + fmt(s.end) : ', no end date'),
+          open: () => this.open(s.id)
+        };
+      });
+      groups.push({ country: (rows[0].country === 'Democratic Republic of the Congo' ? 'DR Congo' : rows[0].country) + (rows.length > 1 ? ' (' + rows.length + ')' : ''), rows: shown, hasMore: isSSD, noMore: !isSSD, moreLabel: st.ssdOpen ? 'Show fewer' : 'Show ' + (rows.length - limit) + ' more surveys', toggle: () => this.setState({ ssdOpen: !st.ssdOpen }) });
+    });
+    const undated = vis.filter((s) => !s.start).length;
+    const months = [];
+    for (let i = 0; i < 18; i++) {
+      const d = new Date(Date.UTC(2026, 4 + i, 1));
+      months.push({ m: 'JFMAMJJASOND'[d.getUTCMonth()], year: (i === 0 || d.getUTCMonth() === 0) ? String(d.getUTCFullYear()) : '', bl: d.getUTCMonth() === 0 ? '1px solid #8F958F' : '0' });
+    }
+
+    // Matrix
+    const matrix = MATRIX_C.map((iso) => {
+      const rec = ALL.filter((s) => s.iso === iso);
+      const cells = TYPES.map((t) => {
+        const list = rec.filter((s) => s.type === t).sort((a, b) => b.year.localeCompare(a.year) || STATUS[a.status].rank - STATUS[b.status].rank);
+        if (!list.length) return { has: false, op: 1, aria: '' };
+        const top = list[0];
+        const sameYear = list.filter((s) => s.year === top.year).length;
+        const isSurvey = t === 'SMART' || t === 'Rapid SMART';
+        const match = matchStatus(top, f) && (!isSurvey || matchFunding(top, fu));
+        return {
+          has: true, year: top.year, extra: sameYear > 1 ? ' × ' + sameYear : '', bg: STATUS[top.status].color, ic: icon(top.status),
+          aria: rec[0].country + ', ' + t + ' ' + top.year + ': ' + STATUS[top.status].label,
+          op: match ? 1 : 0.28, open: () => this.open(top.id)
+        };
+      });
+      return { country: rec[0].country === 'Democratic Republic of the Congo' ? 'DR Congo' : rec[0].country, region: rec[0].region, cells };
+    });
+
+    // List
+    const key = st.sortKey, dir = st.sortDir;
+    const val = (s) => key === 'status' ? STATUS[s.status].rank : key === 'start' ? (s.start || '9999') : (s[key] || '');
+    const sorted = vis.slice().sort((a, b) => { const A = val(a), B = val(b); return (A < B ? -1 : A > B ? 1 : a.id.localeCompare(b.id)) * dir; });
+    const PER = 12, pages = Math.max(1, Math.ceil(sorted.length / PER)), page = Math.min(st.page, pages - 1);
+    const pageRows = sorted.slice(page * PER, page * PER + PER).map((s) => ({
+      id: s.id, country: s.country === 'Democratic Republic of the Congo' ? 'DR Congo' : s.country, admin1: s.admin1, type: s.type,
+      ic: icon(s.status), statusLabel: STATUS[s.status].label,
+      startTxt: s.start ? fmt(s.start) : 'Not reported', startCls: s.start ? '' : 'nr',
+      endTxt: s.end ? fmt(s.end) : 'Not reported', endCls: s.end ? '' : 'nr',
+      leadTxt: s.lead || 'Not reported', leadCls: s.lead ? '' : 'nr',
+      validation: s.validation || '—', budget: s.budget || 'Not reported', link: s.link, noLink: !s.link, open: () => this.open(s.id)
+    }));
+    const cols = ['id', 'country', 'type', 'status', 'start', 'budget'];
+    const sortBy = {}, sm = {}, so = {};
+    cols.forEach((c) => {
+      sortBy[c] = () => this.setState({ sortKey: c, sortDir: st.sortKey === c ? -st.sortDir : 1, page: 0 });
+      sm[c] = key === c ? (dir === 1 ? '↑' : '↓') : '↕';
+      so[c] = key === c ? (dir === 1 ? 'ascending' : 'descending') : 'none';
+    });
+
+    // Panel
+    const selId = st.sel || (this.props.showPanel && !st.closed ? 'ETH-2026-SMART-01' : null);
+    const s = selId ? BYID[selId] : null;
+    let p = { fields: [], ic: icon('planned') };
+    if (s) {
+      const F = (k, v) => ({ k, v: v || 'Not reported', cls: v ? '' : 'nr' });
+      const gaps = [];
+      if (!s.start) gaps.push('start date'); if (!s.end) gaps.push('end date'); if (!s.lead) gaps.push('lead organization');
+      p = {
+        id: s.id, type: s.type, ic: icon(s.status), statusLabel: STATUS[s.status].label, budget: s.budget || 'Funding not reported',
+        link: s.link, noLink: !s.link, hasGaps: gaps.length > 0, gaps: gaps.join(', '),
+        fields: [F('Country', s.country + ' (' + s.iso + ')'), F('Region', s.region), F('Admin 1', s.admin1), F('Assessment type', s.type), F('Start date (indicative)', fmt(s.start)), F('End date (indicative)', fmt(s.end)), F('Lead organization', s.lead), F('Partners', s.partners), F('Validation', s.validation), F('Funding', s.budget)]
+      };
+    }
+
+    const on = { bg: '#1F2421', fg: '#FFFFFF' }, off = { bg: '#FFFFFF', fg: '#1F2421' };
+    return {
+      tiles, markers, legend, groups, months, matrix, pageRows, sortBy, sm, so, p,
+      mapStatus, mapFresh: !mapStatus, segA: mapStatus ? on : off, segB: mapStatus ? off : on,
+      mapCaption: mapStatus ? 'Countries coloured by the status of their most active SMART survey. Markers count surveys in the current filter: filled = funded, hollow = funding gap.' : 'Countries coloured by how long ago results of any assessment type were last released.',
+      toStatus: () => this.setState({ mode: 'status' }), toFresh: () => this.setState({ mode: 'freshness' }),
+      todayPct: pct(TODAY).toFixed(2), tlCount,
+      undatedNote: undated ? undated + ' survey' + (undated === 1 ? ' has' : 's have') + ' no start date and appear' + (undated === 1 ? 's' : '') + ' only in the survey list. Dates are indicative.' : 'Dates are indicative.',
+      statusValue: f, onStatusSelect: (e) => this.setState({ filter: e.target.value, page: 0 }),
+      fundingValue: fu, onFundingSelect: (e) => this.setState({ fund: e.target.value, page: 0 }),
+      reset: () => this.setState({ filter: 'all', fund: 'all', mode: 'status', page: 0, sortKey: 'country', sortDir: 1 }),
+      listCount: sorted.length + ' of ' + SURVEYS.length + ' SMART and Rapid SMART surveys' + (f !== 'all' || fu !== 'all' ? ' · filtered' : ''),
+      pageInfo: 'Showing ' + (sorted.length ? page * PER + 1 : 0) + '–' + Math.min(sorted.length, page * PER + PER) + ' of ' + sorted.length,
+      prevPage: () => this.setState({ page: Math.max(0, page - 1) }), nextPage: () => this.setState({ page: Math.min(pages - 1, page + 1) }),
+      panelOpen: !!s, close: () => this.setState({ sel: null, closed: true })
+    };
+  }
+}
+</script>
+</body>
+</html>

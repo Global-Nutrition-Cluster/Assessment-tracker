@@ -115,24 +115,30 @@ Write each rule as a small, tested function.
 
 ## 5. Page specification: Planning view
 
-Top to bottom. Every block reads the same filtered dataset.
+Top to bottom. Every block reads the same filtered dataset. The mockup in `design/` gives the exact look (colours, sizes, spacing); the decisions below were taken when comparing it with this brief (Oct 2026).
 
-1. **Header:** GNC logo, title "Nutrition Assessment Tracker", subtitle "Planning of nutrition assessments".
-2. **Filter bar (sticky):** Period (year, default current year), Region, Country, Assessment type (default: SMART + Rapid SMART), Status, Funding. "Reset" link. Active selections appear as removable chips.
-3. **KPI band:** four tiles. Each shows a count plus one sub-line, and clicking a tile filters by that status.
+1. **Header:** GNC logo, divider, product name "Nutrition Assessment Tracker", and section tabs on the right. Only "Planning view" is shown until the Results, Methodology and Data & downloads pages exist (no dead links). Green 4 px bottom border.
+2. **Page title:** "Planning view" + one-sentence description on the left; "Data as of <date from meta.json>" and "Source: country Nutrition Cluster submissions" on the right.
+3. **Filter bar (sticky on desktop):** six single-choice dropdowns and a Reset button, no chips:
+   - Period: "Calendar year YYYY" for each survey year (default current year) + "All years". Filters on `survey_year`, never on start/end dates.
+   - Region, Country (the country list follows the region).
+   - Assessment type: "SMART + Rapid SMART" (default), "All types", then each type group.
+   - Status: All, Planned, Ongoing, Completed (= completed + released), Results released, Not planned.
+   - Funding: All, Funded, Funding gap (partial + unfunded), Partially funded, Unfunded.
+4. **KPI band:** four tiles with a status icon and a coloured top bar. Counts follow every filter except Status; clicking a tile sets the Status filter, clicking again clears it.
    - Planned: "X with funding gap"
-   - Ongoing: "in data collection"
-   - Completed: "awaiting release"
-   - Results released: "last 12 months"
-4. **Map** (hero block). Leaflet (or MapLibre) with `geo/countries.geojson` and **no paid tiles**: a plain background or a free, keyless basemap. Africa-centred by default. Toggle between two modes:
-   - **Status mode:** a country takes the colour of its most advanced display status within the filtered set (`released` > `completed` > `ongoing` > `planned`). Legend: Planned, Ongoing, Completed (awaiting release), Results released, nothing else. When admin-1 locations exist, survey points show funding: filled marker = Funded, hollow marker = Funding gap.
-   - **Freshness mode:** countries coloured by the freshness bucket (rule 4.3.10), on a green-to-grey sequential scale.
+   - Ongoing: "Data collection or analysis"
+   - Completed: all completed surveys (released or not), sub-line "X awaiting release"
+   - Results released: sub-line "In the selected period" (most SMART rows have no release date, so "last 12 months" cannot be computed reliably)
+5. **Map** "Where assessments stand" (hero block). Leaflet (or MapLibre) with `geo/countries.geojson` (Natural Earth, fixed ISO3 codes) and **no paid tiles**. Segmented toggle "Status" / "Data freshness", a one-line caption, and the UN boundaries disclaimer under the map.
+   - **Status mode:** a country takes the colour of its most advanced display status within the filtered set (`released` > `completed` > `ongoing` > `planned`). Legend: Planned, Ongoing, Completed (awaiting release), Results released, nothing else. Count markers per country: filled = funded, hollow = funding gap.
+   - **Freshness mode:** countries coloured by the freshness bucket (rule 4.3.10) with the mockup scale (`--fresh-*` tokens, "Never" hatched); markers show the release year.
    - Hover shows a tooltip. Clicking a country filters the page to that country.
-5. **Timeline (Gantt):** in plain SVG, no Gantt library. One row per survey, grouped by country. Months on the x-axis; default window = last 6 months + next 12. Bars run from start to end date, coloured by display status. A survey without an end date is drawn as a one-month block, with no special legend entry. A dashed vertical "Today" line. The legend shows status colours only.
-6. **Coverage matrix:** countries as rows, columns **SMART, Rapid SMART, MICS, DHS** (no IPC). A cell shows the status colour and year of the latest survey of that type; an empty cell means no survey on record. The country column stays frozen when scrolling horizontally.
-7. **Survey list:** sortable table with ID, Country, Admin 1, Type, Status (the four statuses only), Sub-stage, Start, End, Lead organization, Funding badge, Report link. "Export CSV" button (exports the filtered rows).
-8. **Detail panel:** clicking a map point, timeline bar, matrix cell or list row opens a side panel with all fields and the report link.
-9. **Footer:** "Data updated <date> · Source: GNC Nutrition Assessment Tracker", and a link to the GNC website.
+6. **Timeline (Gantt):** in plain SVG or HTML, no Gantt library. One row per survey, grouped by country, long groups collapsed with "Show N more surveys". 18 months on the x-axis (last 6 + next 12). Bars run from start to end date, coloured by display status, with the status icon in the row label. A survey without an end date is drawn as a one-month block; **no diamond and no "no end date" label** (the mockup shows one, the owner removed it). Dashed vertical "Today" line. Legend: status colours only. Note under the legend: number of surveys without a start date (listed only in the survey list) and "Dates are indicative."
+7. **Coverage matrix:** countries as rows (with region), columns **SMART, Rapid SMART, MICS, DHS** (no IPC). A cell shows the status colour, icon and year of the latest survey of that type, plus "× N" when several surveys share that year; an empty cell means no survey on record. Cells that do not match the Status/Funding filters are faded. The country column stays frozen when scrolling horizontally.
+8. **Survey list:** sortable table with Assessment ID, Country · Admin 1, Type, Status (icon + label), Start, End, Lead organization, Validation, Funding badge, Report link. Missing values read "Not reported" (grey italic). 12 rows per page with Previous/Next. "Export CSV" primary button (exports all filtered rows).
+9. **Detail panel:** side panel (440 px) on desktop, bottom sheet on mobile (`design/Mobile – Survey detail sheet-html`). All fields, "Not reported" for gaps, a "Missing information: …" notice, and an "Open report" button (or "No report published yet").
+10. **Footer:** "Global Nutrition Cluster · nutritioncluster.net" and "Assessment status is reported by country Nutrition Clusters. Start and end dates are indicative."
 
 **URL state:** all filters and the map mode live in the query string (for example `?country=MLI&type=SMART&year=2026&map=freshness`), so a view can be shared by link.
 
@@ -188,6 +194,7 @@ Load Source Sans 3 from Google Fonts. The freshness scale runs from `--gnc-green
 - [ ] The KPI counts match the filtered list.
 - [ ] The map toggles between Status and Freshness, and Freshness uses only release dates or survey years.
 - [ ] The coverage matrix has exactly four columns: SMART, Rapid SMART, MICS, DHS.
+- [ ] The page matches the mockup in `design/`, except where section 5 records a different decision.
 - [ ] Filters persist in the URL, and a copied link reopens the same view.
 - [ ] It works on mobile (375 px) without horizontal page scroll (except inside the matrix).
 - [ ] Lighthouse accessibility score ≥ 90.
