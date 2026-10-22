@@ -184,6 +184,64 @@ main.wrap { padding-top: 24px; padding-bottom: 48px; display: flex; flex-directi
 .legend-note { font-size: 13px; color: var(--text-muted); }
 .map-disclaimer { margin: 0; font-size: 12px; color: var(--text-muted); }
 
+/* ---------- Timeline ---------- */
+.tl-scroll { position: relative; overflow-x: auto; }
+.tl { --tl-label: 168px; min-width: 560px; position: relative; }
+.tl-head { display: grid; grid-template-columns: var(--tl-label) 1fr; border-bottom: 1px solid var(--border); }
+.tl-label-col { padding: 0 0 6px; align-self: end; }
+.tl-months { display: grid; grid-template-columns: repeat(18, minmax(0, 1fr)); }
+.tl-month { font-size: 12px; color: var(--text-muted); text-align: center; padding-bottom: 6px; line-height: 1.25; }
+.tl-jan { border-left: 1px solid #8F958F; }
+.tl-year { display: block; font-weight: 700; color: var(--text); min-height: 15px; }
+.tl-body { position: relative; }
+.tl-grid {
+  position: absolute; left: var(--tl-label); right: 0; top: 0; bottom: 0;
+  background-image: linear-gradient(to right, #EEF0EC 1px, transparent 1px);
+  background-size: calc(100% / 18) 100%;
+}
+.tl-today { position: absolute; top: -4px; bottom: 0; border-left: 2px dashed var(--text); z-index: 3; pointer-events: none; }
+.tl-group { position: relative; border-bottom: 1px solid var(--border-row); padding-bottom: 6px; }
+.tl-country { padding: 8px 0 2px; font-size: 14px; font-weight: 700; color: var(--text); }
+.tl-row { display: grid; grid-template-columns: var(--tl-label) 1fr; align-items: center; min-height: 26px; }
+.tl-name {
+  all: unset; cursor: pointer; display: flex; align-items: center; gap: 6px; min-width: 0;
+  padding-left: 4px; font-size: 13px; color: var(--text-secondary); white-space: nowrap;
+}
+.tl-name span { overflow: hidden; text-overflow: ellipsis; text-decoration: underline; text-decoration-color: var(--border-input); text-underline-offset: 2px; }
+.tl-name:focus-visible, .tl-more:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.tl-track { position: relative; height: 26px; }
+.tl-bar { position: absolute; top: 6px; height: 14px; border: 0; border-radius: 2px; padding: 0; cursor: pointer; z-index: 2; }
+.tl-bar.cut-left { border-radius: 0 2px 2px 0; }
+.tl-bar.cut-right { border-radius: 2px 0 0 2px; }
+.tl-bar.cut-left.cut-right { border-radius: 0; }
+.tl-bar:hover { filter: brightness(0.92); }
+.tl-planned, .swatch-planned { background: var(--status-planned); }
+.tl-ongoing, .swatch-ongoing { background: var(--status-ongoing); }
+.tl-completed, .swatch-completed { background: var(--status-completed); }
+.tl-released, .swatch-released { background: var(--status-released); }
+.tl-legend { font-size: 13px; color: var(--text-secondary); }
+.tl-legend .swatch { width: 20px; height: 10px; }
+.tl-more {
+  all: unset; cursor: pointer; display: inline-block; margin: 2px 0 2px 22px; min-height: 24px;
+  font-size: 13px; font-weight: 600; color: var(--link); text-decoration: underline; text-underline-offset: 2px;
+}
+.tl-footnote { margin: 0; font-size: 13px; }
+.tl-empty { margin: 0; padding: 24px 0; text-align: center; color: var(--text-muted); font-size: 14px; }
+
+/* Phone version of the timeline: list grouped by month */
+.tl-mobile { display: none; }
+.tl-m-month { margin: 12px 0 4px; font-family: var(--font-title); font-size: 15px; }
+.tl-m-month:first-child { margin-top: 0; }
+.tl-m-list { list-style: none; margin: 0; padding: 0; }
+.tl-m-item {
+  all: unset; cursor: pointer; box-sizing: border-box; width: 100%;
+  display: flex; gap: 8px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border-row);
+  font-size: 14px; line-height: 1.4;
+}
+.tl-m-item .st-icon { margin-top: 3px; }
+.tl-m-item .mute { display: block; font-size: 13px; }
+.tl-m-item:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
 /* ---------- Survey list ---------- */
 .table-scroll { position: relative; overflow-x: auto; max-width: 100%; }  /* relative: keeps hidden labels inside the scroll area */
 .tbl { width: 100%; min-width: 1080px; border-collapse: collapse; font-size: 14px; }
@@ -289,6 +347,8 @@ body.panel-open { overflow: hidden; }
   .kpi { padding: 14px 14px 12px; }
   .kpi-value { font-size: 34px; }
   .map { height: 380px; }
+  .tl-scroll { display: none; }
+  .tl-mobile { display: block; }
 
   /* Detail panel becomes a bottom sheet (design/Mobile – Survey detail sheet-html) */
   .panel-backdrop { background: rgba(31, 36, 33, 0.45); }

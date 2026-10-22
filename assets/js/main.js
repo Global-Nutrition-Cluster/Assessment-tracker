@@ -1,5 +1,5 @@
 // Entry point: loads the data, builds the filter bar and redraws every block when filters change.
-// Timeline and matrix get their own modules in the next steps.
+// The coverage matrix gets its own module in the next step.
 
 import {
   loadData, applyFilters, matchType, yearOptions, regionOptions, countryOptions,
@@ -11,6 +11,7 @@ import { createKpis } from './kpis.js';
 import { createList } from './list.js';
 import { createPanel } from './panel.js';
 import { createMap } from './map.js';
+import { createTimeline } from './timeline.js';
 
 const app = {
   surveys: [],
@@ -20,6 +21,7 @@ const app = {
   updateKpis: null,
   updateList: null,
   updateMap: null,
+  updateTimeline: null,
   panel: null,
 };
 
@@ -47,6 +49,8 @@ async function start() {
 
   app.panel = createPanel(document.getElementById('panel'),
     (survey) => { app.state = { ...app.state, survey: survey || '' }; writeState(app.state); });
+  app.updateTimeline = createTimeline(document.getElementById('timeline-card'),
+    (survey, opener) => app.panel.open(survey, opener));
   app.updateList = createList(document.getElementById('list-card'),
     (survey, opener) => app.panel.open(survey, opener));
 
@@ -83,6 +87,7 @@ function render() {
   app.updateFilters(state);
   app.updateKpis(applyFilters(surveys, state, ['status']), state.status);
   app.updateList(filtered);
+  app.updateTimeline(filtered);
   app.updateMap?.({
     mode: state.map,
     // The map ignores the Country filter so other countries stay clickable; the selected one is outlined
