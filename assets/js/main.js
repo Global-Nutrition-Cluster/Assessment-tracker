@@ -1,5 +1,5 @@
 // Entry point: loads the data, builds the filter bar and redraws every block when filters change.
-// The coverage matrix gets its own module in the next step.
+// Each block lives in its own module: kpis, map, timeline, matrix, list, panel.
 
 import {
   loadData, applyFilters, matchType, yearOptions, regionOptions, countryOptions,
@@ -12,6 +12,7 @@ import { createList } from './list.js';
 import { createPanel } from './panel.js';
 import { createMap } from './map.js';
 import { createTimeline } from './timeline.js';
+import { createMatrix } from './matrix.js';
 
 const app = {
   surveys: [],
@@ -22,6 +23,7 @@ const app = {
   updateList: null,
   updateMap: null,
   updateTimeline: null,
+  updateMatrix: null,
   panel: null,
 };
 
@@ -50,6 +52,8 @@ async function start() {
   app.panel = createPanel(document.getElementById('panel'),
     (survey) => { app.state = { ...app.state, survey: survey || '' }; writeState(app.state); });
   app.updateTimeline = createTimeline(document.getElementById('timeline-card'),
+    (survey, opener) => app.panel.open(survey, opener));
+  app.updateMatrix = createMatrix(document.getElementById('matrix-card'),
     (survey, opener) => app.panel.open(survey, opener));
   app.updateList = createList(document.getElementById('list-card'),
     (survey, opener) => app.panel.open(survey, opener));
@@ -88,6 +92,8 @@ function render() {
   app.updateKpis(applyFilters(surveys, state, ['status']), state.status);
   app.updateList(filtered);
   app.updateTimeline(filtered);
+  // The matrix shows the latest survey of each type, so only Region and Country restrict it
+  app.updateMatrix(applyFilters(surveys, state, ['year', 'type', 'status', 'funding']), state);
   app.updateMap?.({
     mode: state.map,
     // The map ignores the Country filter so other countries stay clickable; the selected one is outlined

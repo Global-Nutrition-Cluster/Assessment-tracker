@@ -242,6 +242,34 @@ main.wrap { padding-top: 24px; padding-bottom: 48px; display: flex; flex-directi
 .tl-m-item .mute { display: block; font-size: 13px; }
 .tl-m-item:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
+/* ---------- Coverage matrix ---------- */
+.mx-scroll { position: relative; overflow-x: auto; }
+.mx { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 14px; }
+.mx th, .mx td { border-bottom: 1px solid var(--border-row); padding: 6px 8px; text-align: left; }
+.mx thead th { font-weight: 600; color: var(--text-secondary); background: var(--surface-alt); }
+.mx .mx-country { position: sticky; left: 0; z-index: 1; width: 260px; background: var(--surface); font-weight: 600; color: var(--text); }
+.mx thead .mx-country { background: var(--surface-alt); }
+.mx-region { font-weight: 400; color: var(--text-muted); font-size: 13px; }
+.mx-cell {
+  all: unset; cursor: pointer; box-sizing: border-box;
+  display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 3px;
+  font-weight: 600; font-size: 14px; color: var(--text-strong);
+}
+.mx-cell:hover { filter: brightness(0.94); }
+.mx-cell:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.mx-planned { background: var(--status-planned); }
+.mx-ongoing { background: var(--status-ongoing); }
+.mx-completed { background: var(--status-completed); }
+.mx-released { background: var(--status-released); }
+.mx-not_planned { background: var(--status-not-planned); }
+.mx-icon { display: flex; }
+.mx-icon circle { fill: #FFFFFF; fill-opacity: 0.9; }      /* white disc on the coloured cell, as in the mockup */
+.mx-icon path { stroke: var(--text-strong); }
+.mx-extra { font-weight: 400; font-size: 12px; }
+.mx-faded { opacity: 0.28; }
+.mx td.empty { padding: 24px 8px; text-align: center; color: var(--text-muted); }
+.mx-note { margin: 0; font-size: 13px; }
+
 /* ---------- Survey list ---------- */
 .table-scroll { position: relative; overflow-x: auto; max-width: 100%; }  /* relative: keeps hidden labels inside the scroll area */
 .tbl { width: 100%; min-width: 1080px; border-collapse: collapse; font-size: 14px; }
@@ -347,6 +375,7 @@ body.panel-open { overflow: hidden; }
   .kpi { padding: 14px 14px 12px; }
   .kpi-value { font-size: 34px; }
   .map { height: 380px; }
+  .mx .mx-country { width: 150px; }
   .tl-scroll { display: none; }
   .tl-mobile { display: block; }
 
