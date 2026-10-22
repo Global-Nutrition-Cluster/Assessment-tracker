@@ -82,11 +82,12 @@ export function createMatrix(root, onOpen) {
     const isSurvey = type === 'SMART' || type === 'Rapid SMART';
     const match = matchStatus(top, state.status) && (!isSurvey || matchFunding(top, state.funding));
     const status = top.display_status || 'not_planned';
-    const label = `${shortCountry(top.country)}, ${type} ${top.survey_year || ''}: ${STATUS_LABELS[status]}${sameYear > 1 ? `, ${sameYear} surveys that year` : ''}`;
+    // The accessible name starts with the visible text ("2026 × 16"), then explains it
+    const label = `${top.survey_year || '—'}${sameYear > 1 ? ` × ${sameYear}` : ''}: ${shortCountry(top.country)}, ${type}, ${STATUS_LABELS[status]}${sameYear > 1 ? `, ${sameYear} surveys that year` : ''}`;
 
     return `<td class="${match ? '' : 'mx-faded'}">
       <button type="button" class="mx-cell mx-${status}" data-id="${escapeHtml(top.id)}" title="${escapeHtml(label)}" aria-label="${escapeHtml(label)}">
-        <span class="mx-icon">${statusIcon(status, 14)}</span>${top.survey_year || '—'}${sameYear > 1 ? `<span class="mx-extra"> × ${sameYear}</span>` : ''}
+        <span class="mx-icon">${statusIcon(status, 14)}</span>${top.survey_year || '—'}${sameYear > 1 ? `<span class="mx-extra">&nbsp;× ${sameYear}</span>` : ''}
       </button>
     </td>`;
   }

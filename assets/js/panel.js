@@ -19,7 +19,7 @@ export function createPanel(root, onChange) {
 
   root.innerHTML = `
     <div class="panel-backdrop" hidden></div>
-    <aside class="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden>
+    <div class="panel" role="dialog" aria-modal="true" aria-labelledby="panel-title" hidden>
       <span class="panel-handle" aria-hidden="true"></span>
       <div class="panel-head">
         <div class="panel-heading"></div>
@@ -27,7 +27,7 @@ export function createPanel(root, onChange) {
       </div>
       <div class="panel-body"></div>
       <div class="panel-foot"></div>
-    </aside>`;
+    </div>`;
 
   const backdrop = root.querySelector('.panel-backdrop');
   const panel = root.querySelector('.panel');

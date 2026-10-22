@@ -146,9 +146,10 @@ Top to bottom. Every block reads the same filtered dataset. The mockup in `desig
 
 - **Desktop ≥ 1200 px:** KPIs in one row, map and timeline side by side, matrix and list full width.
 - **Tablet:** map and timeline stacked.
-- **Mobile < 640 px:** KPI tiles in a 2 × 2 grid, map full width, timeline replaced by a list grouped by month, matrix scrolls horizontally with the country column frozen.
+- **Mobile < 640 px:** filters folded behind a sticky "Filters (n)" button, KPI tiles in a 2 × 2 grid, map full width, timeline replaced by a list grouped by month, matrix and survey list scroll horizontally (country column frozen in the matrix), detail panel as a bottom sheet.
 - Status is never conveyed by colour alone: always add a label or an icon.
-- WCAG AA contrast, keyboard navigation for filters, tiles, list and panel, and `aria` labels on the map and SVG charts.
+- WCAG AA contrast, keyboard navigation for filters, tiles, list and panel, and `aria` labels on the map and charts. A "Skip to the dashboard" link comes first. Accessible names start with the visible text (Lighthouse label-content-name-mismatch).
+- Check with axe-core (no violations) and Lighthouse (accessibility 100 at the end of step 8, Oct 2026) after any UI change.
 
 ## 7. Brand tokens (GNC brand book 2020)
 
@@ -189,15 +190,15 @@ Load Source Sans 3 from Google Fonts. The freshness scale runs from `--gnc-green
 
 ## 9. Acceptance checklist for V1
 
-- [ ] The nightly workflow refreshes `data/surveys.json` from the Google Sheet, and a broken sheet does not break the site.
-- [ ] No "overdue" or date-based flag appears anywhere.
-- [ ] The KPI counts match the filtered list.
-- [ ] The map toggles between Status and Freshness, and Freshness uses only release dates or survey years.
-- [ ] The coverage matrix has exactly four columns: SMART, Rapid SMART, MICS, DHS.
-- [ ] The page matches the mockup in `design/`, except where section 5 records a different decision.
-- [ ] Filters persist in the URL, and a copied link reopens the same view.
-- [ ] It works on mobile (375 px) without horizontal page scroll (except inside the matrix).
-- [ ] Lighthouse accessibility score ≥ 90.
+- [x] The nightly workflow refreshes `data/surveys.json` from the Google Sheet, and a broken sheet does not break the site.
+- [x] No "overdue" or date-based flag appears anywhere.
+- [x] The KPI counts match the filtered list.
+- [x] The map toggles between Status and Freshness, and Freshness uses only release dates or survey years.
+- [x] The coverage matrix has exactly four columns: SMART, Rapid SMART, MICS, DHS.
+- [x] The page matches the mockup in `design/`, except where section 5 records a different decision.
+- [x] Filters persist in the URL, and a copied link reopens the same view.
+- [x] It works on mobile (375 px) without horizontal page scroll (except inside the matrix).
+- [x] Lighthouse accessibility score ≥ 90.
 
 ## 10. Open questions (ask the owner before deciding)
 

@@ -16,6 +16,7 @@
   <script type="module" src="assets/js/main.js"></script>
 </head>
 <body>
+  <a class="skip-link" href="#content">Skip to the dashboard</a>
   <header class="site-header">
     <div class="wrap">
       <div class="brand">
@@ -32,6 +33,7 @@
     </div>
   </header>
 
+  <main id="main">
   <section class="page-title">
     <div class="wrap">
       <div>
@@ -46,7 +48,7 @@
     <form class="filter-form wrap" id="filters" aria-label="Filters"></form>
   </div>
 
-  <main class="wrap">
+  <div class="content wrap" id="content" tabindex="-1">
     <!-- KPI band -->
     <section class="kpi-band" id="kpis" aria-label="Key figures"></section>
 
@@ -61,6 +63,7 @@
 
     <!-- Survey list (filled by list.js) -->
     <section class="card" id="list-card" aria-label="Survey list"></section>
+  </div>
   </main>
 
   <footer class="site-footer">
