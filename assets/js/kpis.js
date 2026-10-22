@@ -1,14 +1,14 @@
-// KPI band: four tiles that count surveys by stage and act as a status filter.
+// KPI band: four tiles (status icon, no coloured top bar since Oct 2026) that count surveys by stage and act as a status filter.
 // The counts follow every filter except Status, so the four tiles stay comparable;
 // clicking a tile sets the Status filter, clicking it again clears it.
 
 import { statusIcon } from './icons.js';
 
 const TILES = [
-  { key: 'planned', label: 'Planned', icon: 'planned', bar: 'var(--status-planned)' },
-  { key: 'ongoing', label: 'Ongoing', icon: 'ongoing', bar: 'var(--status-ongoing)' },
-  { key: 'completed', label: 'Completed', icon: 'completed', bar: 'var(--status-completed)' },
-  { key: 'released', label: 'Results released', icon: 'released', bar: 'var(--status-released)' },
+  { key: 'planned', label: 'Planned', icon: 'planned' },
+  { key: 'ongoing', label: 'Ongoing', icon: 'ongoing' },
+  { key: 'completed', label: 'Completed', icon: 'completed' },
+  { key: 'released', label: 'Results released', icon: 'released' },
 ];
 
 /**
@@ -17,7 +17,7 @@ const TILES = [
  */
 export function createKpis(root, onSelect) {
   root.innerHTML = TILES.map((t) => `
-    <button type="button" class="kpi" data-key="${t.key}" aria-pressed="false" style="--bar: ${t.bar}">
+    <button type="button" class="kpi" data-key="${t.key}" aria-pressed="false">
       <span class="kpi-label">${statusIcon(t.icon, 18)}${t.label}</span>
       <span class="kpi-value">–</span>
       <span class="kpi-sub"></span>

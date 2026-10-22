@@ -69,16 +69,8 @@
       <div class="placeholder">Countries × SMART, Rapid SMART, MICS, DHS (step 7)</div>
     </section>
 
-    <!-- Survey list -->
-    <section class="card" id="list-card">
-      <div class="card-head">
-        <div>
-          <h2>Survey list</h2>
-          <div class="card-note" id="list-count"></div>
-        </div>
-      </div>
-      <div class="placeholder">Sortable list, CSV export and detail panel (step 4)</div>
-    </section>
+    <!-- Survey list (filled by list.js) -->
+    <section class="card" id="list-card" aria-label="Survey list"></section>
   </main>
 
   <footer class="site-footer">
@@ -87,5 +79,8 @@
       <span>Assessment status is reported by country Nutrition Clusters. Start and end dates are indicative.</span>
     </div>
   </footer>
+
+  <!-- Survey detail panel (filled by panel.js) -->
+  <div id="panel"></div>
 </body>
 </html>

@@ -1,5 +1,5 @@
 // Filter state <-> URL query string, so any view can be shared by link.
-// Example: ?year=2026&country=MLI&type=all&status=planned&map=freshness
+// Example: ?year=2026&country=MLI&type=all&status=planned&map=freshness&survey=MLI-2026-SMART-01
 // Values equal to the defaults are left out of the URL to keep links short.
 
 const CURRENT_YEAR = String(new Date().getFullYear());
@@ -12,6 +12,7 @@ export const DEFAULTS = Object.freeze({
   status: 'all',        // 'all' | 'planned' | 'ongoing' | 'completed' | 'released' | 'not_planned'
   funding: 'all',       // 'all' | 'funded' | 'gap' | 'partial' | 'unfunded'
   map: 'status',        // 'status' | 'freshness'
+  survey: '',           // Assessment ID shown in the detail panel, '' when closed
 });
 
 const KEYS = Object.keys(DEFAULTS);

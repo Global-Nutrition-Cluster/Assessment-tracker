@@ -1,5 +1,5 @@
 // Entry point: loads the data, builds the filter bar and redraws every block when filters change.
-// Map, timeline, matrix and list get their own modules in the next steps.
+// Map, timeline and matrix get their own modules in the next steps.
 
 import {
   loadData, applyFilters, yearOptions, regionOptions, countryOptions,
@@ -8,6 +8,8 @@ import {
 import { readState, writeState } from './state.js';
 import { createFilterBar, escapeHtml } from './filters.js';
 import { createKpis } from './kpis.js';
+import { createList } from './list.js';
+import { createPanel } from './panel.js';
 
 const app = {
   surveys: [],
@@ -15,6 +17,8 @@ const app = {
   state: readState(),
   updateFilters: null,
   updateKpis: null,
+  updateList: null,
+  panel: null,
 };
 
 async function start() {
@@ -39,8 +43,17 @@ async function start() {
   app.updateKpis = createKpis(document.getElementById('kpis'),
     (status) => setState({ ...app.state, status }));
 
+  app.panel = createPanel(document.getElementById('panel'),
+    (survey) => { app.state = { ...app.state, survey: survey || '' }; writeState(app.state); });
+  app.updateList = createList(document.getElementById('list-card'),
+    (survey, opener) => app.panel.open(survey, opener));
+
   renderDataDate();
   render();
+
+  // A shared link can point at one survey: open its panel
+  const linked = app.surveys.find((s) => s.id === app.state.survey);
+  if (linked) app.panel.open(linked);
 }
 
 function setState(next) {
@@ -55,10 +68,7 @@ function render() {
 
   app.updateFilters(state);
   app.updateKpis(applyFilters(surveys, state, ['status']), state.status);
-
-  // Temporary until the survey list arrives (step 4)
-  document.getElementById('list-count').textContent =
-    `${filtered.length} ${filtered.length === 1 ? 'survey matches' : 'surveys match'} the current filters`;
+  app.updateList(filtered);
 }
 
 function renderDataDate() {
