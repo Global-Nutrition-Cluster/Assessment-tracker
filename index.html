@@ -9,8 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/vendor/leaflet-1.9.4/leaflet.css">
   <link rel="stylesheet" href="assets/css/tokens.css">
   <link rel="stylesheet" href="assets/css/main.css">
+  <script src="assets/vendor/leaflet-1.9.4/leaflet.js"></script>
   <script type="module" src="assets/js/main.js"></script>
 </head>
 <body>
@@ -50,10 +52,7 @@
 
     <!-- Map and timeline -->
     <section class="views">
-      <div class="card" id="map-card">
-        <div class="card-head"><h2>Where assessments stand</h2></div>
-        <div class="placeholder tall">Map with Status / Data freshness toggle (step 5)</div>
-      </div>
+      <div class="card" id="map-card"></div>
       <div class="card" id="timeline-card">
         <div class="card-head"><h2>Timeline</h2></div>
         <div class="placeholder tall">Gantt chart by country (step 6)</div>
