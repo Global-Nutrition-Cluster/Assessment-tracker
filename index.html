@@ -44,25 +44,15 @@
     </div>
   </section>
 
-  <div class="filter-bar">
-    <form class="filter-form wrap" id="filters" aria-label="Filters"></form>
-  </div>
-
   <div class="content wrap" id="content" tabindex="-1">
     <!-- KPI band -->
     <section class="kpi-band" id="kpis" aria-label="Key figures"></section>
 
-    <!-- Map and timeline -->
+    <!-- Map and survey list side by side (compact-layout test branch: no filters, timeline or matrix) -->
     <section class="views">
       <div class="card" id="map-card"></div>
-      <div class="card" id="timeline-card"></div>
+      <section class="card" id="list-card" aria-label="Survey list"></section>
     </section>
-
-    <!-- Coverage matrix (filled by matrix.js) -->
-    <section class="card" id="matrix-card" aria-label="Coverage by assessment type"></section>
-
-    <!-- Survey list (filled by list.js) -->
-    <section class="card" id="list-card" aria-label="Survey list"></section>
   </div>
   </main>
 

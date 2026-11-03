@@ -424,3 +424,64 @@ body.panel-open { overflow: hidden; }
   .panel-foot { padding: 12px 16px 20px; border-top: 1px solid var(--border); }
   .panel-foot > * { flex: 1; justify-content: center; height: 48px; }
 }
+
+/* ======================================================================
+   Compact layout (test branch "compact-layout", Nov 2026)
+   Smaller type and tighter spacing everywhere; map and survey list side by side.
+   These rules come last so they override the sizes above; delete this block to go back.
+   ====================================================================== */
+body { font-size: 14px; }
+
+.site-header .wrap { padding-top: 10px; padding-bottom: 10px; }
+.brand img { height: 38px; }
+.brand-name { font-size: 16px; }
+.site-nav { font-size: 14px; }
+.site-nav a { padding: 6px 0; }
+
+.page-title .wrap { padding-top: 18px; padding-bottom: 4px; }
+.page-title h1 { font-size: 24px; margin-bottom: 4px; }
+.page-title p { font-size: 15px; }
+.data-asof { font-size: 13px; }
+
+.content { padding-top: 16px; padding-bottom: 32px; gap: 16px; }
+
+.kpi-band { gap: 12px; }
+.kpi { padding: 8px 12px; gap: 2px; }
+.kpi-label { font-size: 13px; }
+.kpi-value { font-size: 26px; }
+.kpi-sub { font-size: 12px; min-height: 16px; }
+
+/* Map and survey list side by side from 1100 px, stacked below */
+.views { grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: stretch; }
+@media (min-width: 1100px) {
+  .views { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+.card { padding: 14px; gap: 10px; }
+.card-head h2 { font-size: 17px; }
+.card-note { font-size: 13px; }
+
+.segmented button { height: 30px; padding: 0 10px; font-size: 13px; }
+.btn { height: 34px; padding: 0 12px; font-size: 14px; }
+.btn-small { height: 30px; padding: 0 10px; font-size: 13px; }
+
+.map { height: 460px; }
+.map-legend { font-size: 13px; gap: 8px 24px; }
+.legend { gap: 6px 14px; }
+.legend-note { font-size: 12px; }
+.map-disclaimer { font-size: 11px; }
+
+.tbl { min-width: 720px; font-size: 13px; }
+.tbl th button { padding: 7px 8px; }
+.tbl th .th { padding: 7px 8px; }
+.tbl td { padding: 6px 8px; }
+.fund { font-size: 11px; padding: 0 6px; }
+.pager { font-size: 13px; }
+
+.site-footer .wrap { padding-top: 14px; padding-bottom: 14px; font-size: 13px; }
+
+@media (max-width: 639px) {
+  .page-title h1 { font-size: 22px; }
+  .kpi-value { font-size: 24px; }
+  .map { height: 340px; }
+}
