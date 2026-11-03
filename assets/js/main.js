@@ -1,14 +1,13 @@
 // Entry point: loads the data and draws the blocks.
 // compact-layout branch: no filter bar, timeline or coverage matrix on the page (their modules stay in
 // assets/js/ so they can be put back). The page shows the default view: SMART surveys of the current year;
-// the KPI tiles still filter by status.
+// the KPI tiles still filter by status. No detail panel (removed by the owner, Nov 2026).
 
 import { loadData, applyFilters } from './data.js';
 import { readState, writeState } from './state.js';
 import { escapeHtml } from './filters.js';
 import { createKpis } from './kpis.js';
 import { createList } from './list.js';
-import { createPanel } from './panel.js';
 import { createMap } from './map.js';
 
 const app = {
@@ -18,7 +17,6 @@ const app = {
   updateKpis: null,
   updateList: null,
   updateMap: null,
-  panel: null,
 };
 
 async function start() {
@@ -35,16 +33,10 @@ async function start() {
   app.updateKpis = createKpis(document.getElementById('kpis'),
     (status) => setState({ ...app.state, status }));
 
-  app.panel = createPanel(document.getElementById('panel'),
-    (survey) => { app.state = { ...app.state, survey: survey || '' }; writeState(app.state); });
-  app.updateList = createList(document.getElementById('list-card'),
-    (survey, opener) => app.panel.open(survey, opener));
+  app.updateList = createList(document.getElementById('list-card'));
 
   try {
     app.updateMap = await createMap(document.getElementById('map-card'), {
-      // Clicking a country opens its SMART surveys in the detail panel (no filtering)
-      onCountry: (surveys) => app.panel.openCountry(surveys),
-      onOpen: (survey) => app.panel.open(survey),
       onMode: (map) => setState({ ...app.state, map }),
     });
   } catch (error) {
@@ -55,10 +47,6 @@ async function start() {
   renderDataDate();
   writeState(app.state); // drops parameters that no longer exist (e.g. country, type) from old shared links
   render();
-
-  // A shared link can point at one survey: open its panel
-  const linked = app.surveys.find((s) => s.id === app.state.survey);
-  if (linked) app.panel.open(linked);
 }
 
 function setState(next) {

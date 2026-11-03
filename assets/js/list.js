@@ -1,6 +1,6 @@
 // Survey list: sortable table, 12 rows per page, CSV export of every filtered row.
-// Clicking a country opens the detail panel. The Assessment ID is not shown in the table
-// (owner's decision, Oct 2026) but stays in the detail panel and the CSV export.
+// Rows are read-only (no detail panel since Nov 2026). The Assessment ID is not shown in the table
+// (owner's decision, Oct 2026) but stays in the CSV export.
 
 import { statusIcon, STATUS_LABELS } from './icons.js';
 import { formatDate, fundingLabel, validationLabel, shortCountry } from './format.js';
@@ -38,9 +38,8 @@ function sortValue(s, key) {
 
 /**
  * @param {HTMLElement} root
- * @param {(survey, opener) => void} onOpen  opens the detail panel
  */
-export function createList(root, onOpen) {
+export function createList(root) {
   const view = { rows: [], sortKey: 'country', sortDir: 1, page: 0 };
 
   root.innerHTML = `
@@ -81,12 +80,6 @@ export function createList(root, onOpen) {
     draw();
   });
 
-  body.addEventListener('click', (event) => {
-    const button = event.target.closest('button[data-id]');
-    if (!button) return;
-    const survey = view.rows.find((s) => s.id === button.dataset.id);
-    if (survey) onOpen(survey, button);
-  });
 
   root.querySelector('.pager').addEventListener('click', (event) => {
     const button = event.target.closest('button[data-page]');
@@ -143,7 +136,7 @@ export function createList(root, onOpen) {
   };
 }
 
-// Missing values stay empty in the table (owner's decision, Nov 2026); the detail panel still says "Not reported"
+// Missing values stay empty in the table (owner's decision, Nov 2026)
 function notReported(value) {
   return value ? escapeHtml(value) : '';
 }
@@ -152,7 +145,7 @@ function rowHtml(s) {
   const status = s.display_status || 'not_planned';
   const funding = fundingLabel(s);
   return `<tr>
-    <td><button type="button" class="rowbtn" data-id="${escapeHtml(s.id)}">${escapeHtml(shortCountry(s.country))}</button>${s.admin1 ? `<span class="mute"> · ${escapeHtml(s.admin1)}</span>` : ''}</td>
+    <td><strong>${escapeHtml(shortCountry(s.country))}</strong>${s.admin1 ? `<span class="mute"> · ${escapeHtml(s.admin1)}</span>` : ''}</td>
     <td>${escapeHtml(s.type_raw)}</td>
     <td><span class="status-cell">${statusIcon(status, 14)}${STATUS_LABELS[status]}</span></td>
     <td class="nowrap">${notReported(formatDate(s.start_date))}</td>

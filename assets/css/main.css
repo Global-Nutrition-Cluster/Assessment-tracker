@@ -168,7 +168,7 @@ button, select, input { font-family: inherit; }
 .map .leaflet-control-zoom a { color: var(--text); }
 .map-tip { font-family: var(--font-body); font-size: 13px; line-height: 1.4; color: var(--text); }
 .map-info {
-  position: absolute; bottom: 28px; left: 10px; z-index: 500; width: 260px; max-width: calc(100% - 20px);   /* over the Atlantic, away from the countries */
+  position: absolute; left: 0; top: 0; z-index: 500; width: 260px; max-width: calc(100% - 20px);   /* moved next to the cursor by map.js */
   padding: 10px 12px; background: #FFFFFF; border: 1px solid var(--border); border-radius: var(--radius-input);
   box-shadow: 0 2px 8px rgba(31, 36, 33, 0.18); pointer-events: none;
 }
@@ -485,3 +485,6 @@ body { font-size: 14px; }
   .kpi-value { font-size: 24px; }
   .map { height: 340px; }
 }
+
+/* Countries are not clickable any more: no hand cursor on the map */
+.map path.leaflet-interactive { cursor: default; }

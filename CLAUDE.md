@@ -115,6 +115,15 @@ Write each rule as a small, tested function.
 
 ## 5. Page specification: Planning view
 
+> **Branch `compact-layout` (test, Nov 2026).** On this branch the page differs from the specification below:
+> no filter bar (default view: SMART surveys of the current year; KPI tiles still filter by status);
+> no timeline and no coverage matrix on the page (`timeline.js`, `matrix.js`, `filters.js` kept but not loaded);
+> map and survey list side by side from 1100 px; smaller type and tighter spacing (compact block at the end of `main.css`);
+> **no detail panel at all** (`panel.js` removed): clicking a country on the map or a row in the list does nothing;
+> hovering a country shows its SMART surveys in an info box that follows the cursor and flips to stay inside the map
+> (on touch screens a tap shows it at the tapped point); missing values in the survey list are left empty (no "Not reported").
+> If the branch is merged into `main`, rewrite this section to match.
+
 Top to bottom. Every block reads the same filtered dataset. The mockup in `design/` gives the exact look (colours, sizes, spacing); the decisions below were taken when comparing it with this brief (Oct 2026).
 
 1. **Header:** GNC logo, divider, product name "Nutrition Assessment Tracker", and section tabs on the right. Only "Planning view" is shown until the Results, Methodology and Data & downloads pages exist (no dead links). Green 4 px bottom border.

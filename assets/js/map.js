@@ -4,7 +4,8 @@
 //     in the four status colours only. No numbers on the map.
 //   - Data freshness: each country coloured by the age of its last released results (rule 4.3.10).
 //     Never computed from start or end dates.
-// Hovering a country shows its SMART surveys; clicking it opens them in the detail panel.
+// Hovering a country shows its SMART surveys in an info box next to the cursor. Clicking does nothing
+// (owner's decision, Nov 2026); on touch screens a tap only shows the box at the tapped point.
 
 import { statusIcon, STATUS_LABELS } from './icons.js';
 import { shortCountry, formatDate } from './format.js';
@@ -24,7 +25,7 @@ export const FRESH_BUCKETS = [
 const AFRICA_VIEW = [[-35, -19], [38, 56]]; // Africa and Yemen, as in the mockup
 
 const CAPTIONS = {
-  status: 'Countries coloured by the status of their most active SMART survey in the current filters. Hover a country to see its surveys, click for details.',
+  status: 'Countries coloured by the status of their most active SMART survey in the current filters. Hover a country to see its surveys.',
   freshness: 'Countries coloured by how long ago results of an assessment (any type) were last released.',
 };
 
@@ -32,10 +33,10 @@ const UN_DISCLAIMER = 'The boundaries and names shown and the designations used 
 
 /**
  * @param {HTMLElement} root
- * @param {object} handlers  { onCountry(surveys), onOpen(survey), onMode(mode) }
+ * @param {object} handlers  { onMode(mode) }
  * @returns {Promise<(view) => void>}  update function, see `update` below
  */
-export async function createMap(root, { onCountry, onOpen, onMode }) {
+export async function createMap(root, { onMode }) {
   root.innerHTML = `
     <div class="card-head">
       <h2>SMART assessments</h2>
@@ -88,28 +89,50 @@ export async function createMap(root, { onCountry, onOpen, onMode }) {
     style: () => ({ weight: 0.8, color: COLORS.border, fillColor: COLORS.noRecord, fillOpacity: 1 }),
     onEachFeature: (feature, layer) => {
       const iso3 = feature.properties.iso3;
-      layer.on('click', () => {
-        const smart = view?.smart.get(iso3);
-        if (smart?.length) onCountry(smart);
-        else if (view?.mode === 'freshness') {
-          const last = lastReleased(view.fresh.get(iso3) || []);
-          if (last) onOpen(last.survey);
-        }
-      });
-      // Hover: outline the country and show its surveys in the info box (bottom left of the map, over the ocean,
-      // so a long list is never cut by the map edge). Screen readers get the same details from the list.
-      layer.on('mouseover', () => {
+      // Hover: outline the country and show its surveys in the info box, which follows the cursor.
+      // Screen readers get the same details from the survey list.
+      layer.on('mouseover', (event) => {
         if (hasDetails(iso3)) layer.setStyle({ weight: 2, color: COLORS.hover });
-        info.innerHTML = tooltipHtml(feature.properties);
-        info.hidden = false;
+        showInfo(feature.properties, event.containerPoint);
       });
+      layer.on('mousemove', (event) => placeInfo(event.containerPoint));
       layer.on('mouseout', () => {
         layer.setStyle({ weight: 0.8, color: COLORS.border });
         info.hidden = true;
       });
+      // Touch screens have no hover: a tap shows the box where the finger is (and does nothing else)
+      layer.on('click', (event) => {
+        L.DomEvent.stopPropagation(event);   // keep the map's own click (below) from hiding the box again
+        showInfo(feature.properties, event.containerPoint);
+      });
     },
   }).addTo(map);
   const geoName = new Map(geo.features.map((f) => [f.properties.iso3, f.properties.name]));
+
+  // A tap on the sea (or anywhere off a country) hides the box on touch screens
+  map.on('click', () => { info.hidden = true; });
+
+  const GAP = 12; // px between the cursor and the box
+
+  function showInfo(props, point) {
+    info.innerHTML = tooltipHtml(props);
+    info.hidden = false;
+    placeInfo(point);
+  }
+
+  /** Put the box at the bottom right of the cursor, flipping left / up when it would leave the map. */
+  function placeInfo(point) {
+    if (info.hidden) return;
+    const size = map.getSize();
+    const w = info.offsetWidth;
+    const h = info.offsetHeight;
+    let x = point.x + GAP;
+    let y = point.y + GAP;
+    if (x + w > size.x - 4) x = point.x - GAP - w;   // too close to the right edge: go left
+    if (y + h > size.y - 4) y = point.y - GAP - h;   // too close to the bottom: go up
+    info.style.left = `${Math.max(4, x)}px`;
+    info.style.top = `${Math.max(4, y)}px`;
+  }
 
   addHatchPattern(map);
 
@@ -185,7 +208,7 @@ export async function createMap(root, { onCountry, onOpen, onMode }) {
     }).join('');
     const more = smart.length > TOOLTIP_MAX ? `<span class="tip-more">+ ${smart.length - TOOLTIP_MAX} more</span>` : '';
     return `<strong>${name}</strong> <span class="mute">· ${smart.length} SMART survey${smart.length === 1 ? '' : 's'}</span>${freshLine}
-      <span class="tip-list">${rows}${more}</span><span class="tip-hint">Click for survey details</span>`;
+      <span class="tip-list">${rows}${more}</span>`;
   }
 
   function statusLegend() {
