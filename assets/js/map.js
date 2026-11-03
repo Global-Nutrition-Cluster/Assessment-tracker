@@ -1,9 +1,10 @@
-// Map "Where assessments stand": Leaflet (vendored, global `L`) + Natural Earth countries, no tile service.
+// Map "SMART assessments": Leaflet (vendored, global `L`) + Natural Earth countries, no tile service.
 // Two modes, switched by a segmented toggle:
-//   - Status: each country coloured by its most active survey (ongoing > planned > completed > released),
-//     with count markers: filled = funded (or funding not reported), hollow = funding gap.
-//   - Data freshness: each country coloured by the age of its last released results (rule 4.3.10),
-//     with a marker showing the release year. Never computed from start or end dates.
+//   - Status: each country coloured by its most active SMART survey (ongoing > planned > completed > released),
+//     in the four status colours only. No numbers on the map.
+//   - Data freshness: each country coloured by the age of its last released results (rule 4.3.10).
+//     Never computed from start or end dates.
+// Hovering a country shows its SMART surveys; clicking it opens them in the detail panel.
 
 import { statusIcon, STATUS_LABELS } from './icons.js';
 import { shortCountry, formatDate } from './format.js';
@@ -11,6 +12,7 @@ import { escapeHtml } from './filters.js';
 
 // "Most active" order, as in the mockup: what is happening now comes first
 const ACTIVITY_RANK = { ongoing: 0, planned: 1, completed: 2, released: 3 };
+const TOOLTIP_MAX = 5; // surveys listed in the hover tooltip before "+ N more"
 
 export const FRESH_BUCKETS = [
   { key: 'lt1', label: '< 1 year', max: 1, token: '--fresh-1' },
@@ -22,28 +24,31 @@ export const FRESH_BUCKETS = [
 const AFRICA_VIEW = [[-35, -19], [38, 56]]; // Africa and Yemen, as in the mockup
 
 const CAPTIONS = {
-  status: 'Countries coloured by the status of their most active survey in the current filters. Markers count surveys: filled = funded, hollow = funding gap.',
-  freshness: 'Countries coloured by how long ago results of an assessment were last released (all assessment types unless one type is selected).',
+  status: 'Countries coloured by the status of their most active SMART survey in the current filters. Hover a country to see its surveys, click for details.',
+  freshness: 'Countries coloured by how long ago results of an assessment (any type) were last released.',
 };
 
 const UN_DISCLAIMER = 'The boundaries and names shown and the designations used on this map do not imply official endorsement or acceptance by the United Nations.';
 
 /**
  * @param {HTMLElement} root
- * @param {object} handlers  { onCountry(iso3), onOpen(survey), onMode(mode) }
+ * @param {object} handlers  { onCountry(surveys), onOpen(survey), onMode(mode) }
  * @returns {Promise<(view) => void>}  update function, see `update` below
  */
 export async function createMap(root, { onCountry, onOpen, onMode }) {
   root.innerHTML = `
     <div class="card-head">
-      <h2>Where assessments stand</h2>
+      <h2>SMART assessments</h2>
       <div class="segmented" role="group" aria-label="Map colouring">
         <button type="button" data-mode="status" aria-pressed="true">Status</button>
         <button type="button" data-mode="freshness" aria-pressed="false">Data freshness</button>
       </div>
     </div>
     <p class="card-note map-caption"></p>
-    <div class="map-box"><div class="map" role="region" aria-label="Map of assessments by country"></div></div>
+    <div class="map-box">
+      <div class="map" role="region" aria-label="Map of SMART assessments by country"></div>
+      <div class="map-info map-tip" aria-hidden="true" hidden></div>
+    </div>
     <div class="map-legend"></div>
     <p class="map-disclaimer">${UN_DISCLAIMER}</p>`;
 
@@ -61,9 +66,10 @@ export async function createMap(root, { onCountry, onOpen, onMode }) {
     released: color('--status-released'),
     noRecord: '#E3E6E1',
     border: '#FFFFFF',
-    selected: color('--text'),
+    hover: color('--text'),
   };
 
+  const info = root.querySelector('.map-info');
   const geo = await fetch('geo/countries.geojson', { cache: 'force-cache' }).then((r) => r.json());
 
   const map = L.map(root.querySelector('.map'), {
@@ -81,14 +87,28 @@ export async function createMap(root, { onCountry, onOpen, onMode }) {
   const countries = L.geoJSON(geo, {
     style: () => ({ weight: 0.8, color: COLORS.border, fillColor: COLORS.noRecord, fillOpacity: 1 }),
     onEachFeature: (feature, layer) => {
+      const iso3 = feature.properties.iso3;
       layer.on('click', () => {
-        if (view?.byCountry.has(feature.properties.iso3)) onCountry(feature.properties.iso3);
+        const smart = view?.smart.get(iso3);
+        if (smart?.length) onCountry(smart);
+        else if (view?.mode === 'freshness') {
+          const last = lastReleased(view.fresh.get(iso3) || []);
+          if (last) onOpen(last.survey);
+        }
       });
-      layer.bindTooltip(() => tooltipHtml(feature.properties), { sticky: true, direction: 'top', className: 'map-tip' });
+      // Hover: outline the country and show its surveys in the info box (bottom left of the map, over the ocean,
+      // so a long list is never cut by the map edge). Screen readers get the same details from the list.
+      layer.on('mouseover', () => {
+        if (hasDetails(iso3)) layer.setStyle({ weight: 2, color: COLORS.hover });
+        info.innerHTML = tooltipHtml(feature.properties);
+        info.hidden = false;
+      });
+      layer.on('mouseout', () => {
+        layer.setStyle({ weight: 0.8, color: COLORS.border });
+        info.hidden = true;
+      });
     },
   }).addTo(map);
-  const markers = L.layerGroup().addTo(map);
-  const labelPoint = new Map(geo.features.map((f) => [f.properties.iso3, [f.properties.label_y, f.properties.label_x]]));
   const geoName = new Map(geo.features.map((f) => [f.properties.iso3, f.properties.name]));
 
   addHatchPattern(map);
@@ -98,13 +118,11 @@ export async function createMap(root, { onCountry, onOpen, onMode }) {
   /**
    * @param {object} v
    * @param {'status'|'freshness'} v.mode
-   * @param {object[]} v.surveys       surveys after every filter (status mode)
-   * @param {object[]} v.freshSurveys  surveys for the freshness mode (see main.js)
-   * @param {string}   v.country       selected ISO3 or 'all'
-   * @param {Set}      v.markerCountries  freshness mode: countries that get a year marker (the others are only coloured)
+   * @param {object[]} v.surveys       SMART surveys after every filter
+   * @param {object[]} v.freshSurveys  surveys of every type for the freshness mode (see main.js)
    */
   return function update(v) {
-    view = { ...v, byCountry: groupByCountry(v.mode === 'status' ? v.surveys : v.freshSurveys) };
+    view = { mode: v.mode, smart: groupByCountry(v.surveys), fresh: groupByCountry(v.freshSurveys) };
 
     root.querySelectorAll('.segmented button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.mode === v.mode)));
     root.querySelector('.map-caption').textContent = CAPTIONS[v.mode];
@@ -112,28 +130,21 @@ export async function createMap(root, { onCountry, onOpen, onMode }) {
 
     countries.setStyle((feature) => {
       const iso3 = feature.properties.iso3;
-      const list = view.byCountry.get(iso3);
-      const selected = v.country === iso3;
+      const list = (v.mode === 'status' ? view.smart : view.fresh).get(iso3);
       return {
-        weight: selected ? 2.5 : 0.8,
-        color: selected ? COLORS.selected : COLORS.border,
+        weight: 0.8,
+        color: COLORS.border,
         fillOpacity: 1,
         fillColor: list ? (v.mode === 'status' ? statusFill(list) : freshFill(list)) : COLORS.noRecord,
       };
     });
-    countries.eachLayer((layer) => {
-      if (v.country === layer.feature.properties.iso3) layer.bringToFront();
-    });
-
-    markers.clearLayers();
-    for (const [iso3, list] of view.byCountry) {
-      const point = labelPoint.get(iso3);
-      if (!point) continue;
-      if (v.mode === 'status') addStatusMarkers(iso3, list, point);
-      else if (v.markerCountries.has(iso3)) addFreshMarker(iso3, list, point);
-    }
   };
 
+  function hasDetails(iso3) {
+    return Boolean(view?.smart.get(iso3)?.length || (view?.mode === 'freshness' && view.fresh.get(iso3)));
+  }
+
+  // Only the four status colours; a country with "Not planned" surveys only stays grey
   function statusFill(list) {
     const top = mostActive(list);
     return top ? COLORS[top.display_status] : COLORS.noRecord;
@@ -145,79 +156,42 @@ export async function createMap(root, { onCountry, onOpen, onMode }) {
     return color(freshBucket(last.age).token);
   }
 
-  function addStatusMarkers(iso3, list, point) {
-    const active = list.filter((s) => s.display_status in ACTIVITY_RANK);
-    const parts = [active.filter((s) => s.funding_gap !== true), active.filter((s) => s.funding_gap === true)]
-      .filter((part) => part.length);
-    parts.forEach((part, i) => {
-      const gap = part[0].funding_gap === true;
-      const top = mostActive(part);
-      const c = COLORS[top.display_status];
-      const offset = parts.length > 1 ? (i === 0 ? -17 : 17) : 0;
-      const label = `${countryName(iso3)}: ${part.length} survey${part.length === 1 ? '' : 's'}, ${gap ? 'funding gap' : 'funded or funding not reported'}, most active status ${STATUS_LABELS[top.display_status]}`;
-      const style = `--dx:${offset}px;` + (gap ? `background:#FFFFFF;border:3px solid ${c}` : `background:${c};border:1.5px solid #1F2421`);
-      const icon = L.divIcon({
-        className: 'map-marker-wrap',
-        html: `<span class="map-marker" style="${style}">${statusIcon(top.display_status, 12)}${part.length}</span>`,
-        iconSize: null,           // the pill is centred on the point by CSS (.map-marker)
-        iconAnchor: [0, 0],
-      });
-      L.marker(point, { icon, title: label, alt: label, keyboard: true, riseOnHover: true })
-        .on('click', () => onOpen(top))
-        .addTo(markers);
-    });
-  }
-
-  function addFreshMarker(iso3, list, point) {
-    const last = lastReleased(list);
-    const text = last ? String(last.date).slice(0, 4) : 'Never';
-    const label = last
-      ? `${countryName(iso3)}: last results released ${formatDate(last.date)} (${last.survey.type_raw}, ${freshBucket(last.age).label})`
-      : `${countryName(iso3)}: no assessment with released results`;
-    const icon = L.divIcon({
-      className: 'map-marker-wrap',
-      html: `<span class="map-marker map-marker-fresh">${text}</span>`,
-      iconSize: null,
-      iconAnchor: [0, 0],
-    });
-    L.marker(point, { icon, title: label, alt: label, keyboard: true, riseOnHover: true })
-      .on('click', () => { if (last) onOpen(last.survey); })
-      .addTo(markers);
-  }
-
+  // Hover: the country's SMART surveys (status, place, dates), as a preview of the detail panel
   function tooltipHtml(props) {
     const iso3 = props.iso3;
-    const name = escapeHtml(countryName(iso3));
-    const list = view?.byCountry.get(iso3);
-    if (!list) return `<strong>${name}</strong><br><span class="mute">No assessment on record</span>`;
+    const smart = view?.smart.get(iso3) || [];
+    const name = escapeHtml(shortCountry(smart[0]?.country || view?.fresh.get(iso3)?.[0]?.country || geoName.get(iso3) || iso3));
 
-    if (view.mode === 'freshness') {
-      const last = lastReleased(list);
-      return last
-        ? `<strong>${name}</strong><br>Last results released ${formatDate(last.date)}<br><span class="mute">${escapeHtml(last.survey.type_raw)} · ${freshBucket(last.age).label}</span>`
-        : `<strong>${name}</strong><br>No assessment with released results`;
+    let freshLine = '';
+    if (view?.mode === 'freshness') {
+      const fresh = view.fresh.get(iso3);
+      const last = fresh && lastReleased(fresh);
+      freshLine = !fresh ? '<span class="mute">No assessment on record</span>'
+        : last ? `Last results released ${formatDate(last.date)} <span class="mute">(${escapeHtml(last.survey.type_raw)}, ${freshBucket(last.age).label})</span>`
+        : 'No assessment with released results';
+      freshLine = `<span class="tip-fresh">${freshLine}</span>`;
     }
-    const counts = Object.keys(ACTIVITY_RANK)
-      .map((key) => [key, list.filter((s) => s.display_status === key).length])
-      .filter(([, n]) => n > 0)
-      .map(([key, n]) => `<span class="tip-row">${statusIcon(key, 12)}${n} ${STATUS_LABELS[key].toLowerCase()}</span>`);
-    return `<strong>${name}</strong><br>${counts.join('') || '<span class="mute">Not planned</span>'}<span class="tip-hint">Click to filter the page</span>`;
-  }
 
-  function countryName(iso3) {
-    const fromData = view?.byCountry.get(iso3)?.[0]?.country;
-    return shortCountry(fromData || geoName.get(iso3) || iso3);
+    if (!smart.length) {
+      return `<strong>${name}</strong>${freshLine || '<br><span class="mute">No SMART survey in the current filters</span>'}`;
+    }
+
+    const sorted = [...smart].sort((a, b) => (ACTIVITY_RANK[a.display_status] ?? 9) - (ACTIVITY_RANK[b.display_status] ?? 9) || a.id.localeCompare(b.id));
+    const rows = sorted.slice(0, TOOLTIP_MAX).map((s) => {
+      const status = s.display_status || 'not_planned';
+      const place = s.admin1 ? ` · ${escapeHtml(s.admin1)}` : '';
+      // Short lines (ID, place, status); dates and funding are in the detail panel
+      return `<span class="tip-row">${statusIcon(status, 12)}<span><strong>${escapeHtml(s.id)}</strong>${place}<span class="mute"> · ${STATUS_LABELS[status]}</span></span></span>`;
+    }).join('');
+    const more = smart.length > TOOLTIP_MAX ? `<span class="tip-more">+ ${smart.length - TOOLTIP_MAX} more</span>` : '';
+    return `<strong>${name}</strong> <span class="mute">· ${smart.length} SMART survey${smart.length === 1 ? '' : 's'}</span>${freshLine}
+      <span class="tip-list">${rows}${more}</span><span class="tip-hint">Click for survey details</span>`;
   }
 
   function statusLegend() {
     const items = ['planned', 'ongoing', 'completed', 'released'].map((key) => `
       <li><span class="swatch" style="background:${COLORS[key]}"></span>${statusIcon(key, 14)}${STATUS_LABELS[key]}</li>`).join('');
-    return `
-      <ul class="legend" aria-label="Status legend">${items}</ul>
-      <ul class="legend" aria-label="Funding legend">
-        <li><span class="dot dot-filled"></span>Funded or not reported</li>
-        <li><span class="dot dot-hollow"></span>Funding gap</li>
-      </ul>`;
+    return `<ul class="legend" aria-label="Status legend">${items}</ul>`;
   }
 
   function freshnessLegend() {
@@ -226,7 +200,7 @@ export async function createMap(root, { onCountry, onOpen, onMode }) {
       <div class="legend-block">
         <div class="lbl">Age of last assessment with released results</div>
         <ul class="legend legend-scale" aria-label="Freshness legend">${items}<li><span class="bar bar-never"></span>Never</li></ul>
-        <div class="legend-note">Age is counted from the results release date (Validation column); where no date is recorded, from the survey year in the Assessment ID. Markers show the release year for countries with SMART surveys on record. Light grey = no assessment on record.</div>
+        <div class="legend-note">Age is counted from the results release date (Validation column); where no date is recorded, from the survey year in the Assessment ID. Light grey = no assessment on record.</div>
       </div>`;
   }
 }

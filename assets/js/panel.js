@@ -1,8 +1,9 @@
 // Survey detail panel: a side panel on desktop, a bottom sheet on phones (CSS decides).
-// Opened from the list today; the map, timeline and matrix will reuse it.
+// Two views: one survey (from the list, timeline, matrix) or one country's SMART surveys (from the map);
+// in the country view each survey opens its details, with a link back to the country.
 
 import { statusIcon, STATUS_LABELS } from './icons.js';
-import { formatDate, fundingLabel, validationLabel } from './format.js';
+import { formatDate, fundingLabel, validationLabel, shortCountry } from './format.js';
 import { escapeHtml } from './filters.js';
 
 const WARNING_ICON = '<svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true" class="notice-icon"><path d="M8 1.5 15 14H1z" fill="#FFFFFF" stroke="#B85A00" stroke-width="1.6" stroke-linejoin="round"></path><path d="M8 6v3.6M8 11.6v.2" stroke="#B85A00" stroke-width="1.8" stroke-linecap="round"></path></svg>';
@@ -12,10 +13,11 @@ const EXTERNAL_ICON = '<svg width="14" height="14" viewBox="0 0 16 16" fill="non
 /**
  * @param {HTMLElement} root   empty container at the end of <body>
  * @param {(id|null) => void} onChange  called with the open survey ID (or null) so it can go in the URL
- * @returns {{ open(survey, opener?), close() }}
+ * @returns {{ open(survey, opener?), openCountry(surveys, opener?), close() }}
  */
 export function createPanel(root, onChange) {
   let opener = null;
+  let countryList = null; // surveys of the country view, to come back to it
 
   root.innerHTML = `
     <div class="panel-backdrop" hidden></div>
@@ -39,14 +41,29 @@ export function createPanel(root, onChange) {
     if (event.key === 'Tab') trapFocus(event);
   });
 
-  function open(survey, from = null) {
-    opener = from;
+  function open(survey, from = null, keepCountry = false) {
+    if (!keepCountry) countryList = null;
+    if (from) opener = from;
     fill(survey);
+    show();
+    onChange(survey.id);
+  }
+
+  /** Country view: the SMART surveys of one country. A single survey opens directly. */
+  function openCountry(list, from = null) {
+    if (list.length === 1) { open(list[0], from); return; }
+    countryList = list;
+    if (from) opener = from;
+    fillCountry(list);
+    show();
+    onChange(null);
+  }
+
+  function show() {
     backdrop.hidden = false;
     panel.hidden = false;
     document.body.classList.add('panel-open');
     panel.querySelector('[data-close]').focus();
-    onChange(survey.id);
   }
 
   function close() {
@@ -56,7 +73,46 @@ export function createPanel(root, onChange) {
     document.body.classList.remove('panel-open');
     if (opener && document.contains(opener)) opener.focus();
     opener = null;
+    countryList = null;
     onChange(null);
+  }
+
+  // Clicks inside the country view: open one survey, or go back to the country
+  panel.querySelector('.panel-body').addEventListener('click', (event) => {
+    const item = event.target.closest('[data-survey]');
+    if (!item || !countryList) return;
+    const survey = countryList.find((s) => s.id === item.dataset.survey);
+    if (survey) open(survey, null, true);
+  });
+  panel.querySelector('.panel-head').addEventListener('click', (event) => {
+    if (event.target.closest('[data-back]') && countryList) {
+      fillCountry(countryList);
+      panel.querySelector('[data-close]').focus();
+      onChange(null);
+    }
+  });
+
+  function fillCountry(list) {
+    const ACTIVITY_RANK = { ongoing: 0, planned: 1, completed: 2, released: 3, not_planned: 4 };
+    const sorted = [...list].sort((a, b) => (ACTIVITY_RANK[a.display_status] ?? 9) - (ACTIVITY_RANK[b.display_status] ?? 9) || a.id.localeCompare(b.id));
+    panel.querySelector('.panel-heading').innerHTML = `
+      <span class="lbl">SMART surveys</span>
+      <h2 id="panel-title">${escapeHtml(shortCountry(list[0].country))}</h2>
+      <span class="panel-status">${list.length} surveys in the current filters</span>`;
+    panel.querySelector('.panel-body').innerHTML = `
+      <ul class="panel-list">
+        ${sorted.map((s) => {
+          const status = s.display_status || 'not_planned';
+          const dates = s.start_date ? (s.end_date ? `${formatDate(s.start_date)} – ${formatDate(s.end_date)}` : `from ${formatDate(s.start_date)}`) : 'Dates not reported';
+          return `<li><button type="button" class="panel-item" data-survey="${escapeHtml(s.id)}">
+            ${statusIcon(status, 16)}
+            <span><strong>${escapeHtml(s.id)}</strong>${s.admin1 ? ` · ${escapeHtml(s.admin1)}` : ''}
+              <span class="mute">${STATUS_LABELS[status]} · ${dates}${fundingLabel(s) ? ` · ${fundingLabel(s)}` : ''}</span></span>
+          </button></li>`;
+        }).join('')}
+      </ul>`;
+    panel.querySelector('.panel-foot').innerHTML = '';
+    panel.querySelector('.panel-body').scrollTop = 0;
   }
 
   function fill(s) {
@@ -64,6 +120,7 @@ export function createPanel(root, onChange) {
     const funding = fundingLabel(s);
 
     panel.querySelector('.panel-heading').innerHTML = `
+      ${countryList ? `<button type="button" class="panel-back" data-back>← All surveys in ${escapeHtml(shortCountry(s.country))}</button>` : ''}
       <span class="lbl">${escapeHtml(s.type_raw || 'Assessment')} survey</span>
       <h2 id="panel-title">${escapeHtml(s.id)}</h2>
       <span class="panel-status">${statusIcon(status, 16)}${STATUS_LABELS[status]}
@@ -110,5 +167,5 @@ export function createPanel(root, onChange) {
     else if (!event.shiftKey && document.activeElement === last) { first.focus(); event.preventDefault(); }
   }
 
-  return { open, close };
+  return { open, openCountry, close };
 }

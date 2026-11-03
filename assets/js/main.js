@@ -2,8 +2,8 @@
 // Each block lives in its own module: kpis, map, timeline, matrix, list, panel.
 
 import {
-  loadData, applyFilters, matchType, yearOptions, regionOptions, countryOptions,
-  TYPE_OPTIONS, STATUS_OPTIONS, FUNDING_OPTIONS,
+  loadData, applyFilters, yearOptions, regionOptions,
+  STATUS_OPTIONS, FUNDING_OPTIONS,
 } from './data.js';
 import { readState, writeState } from './state.js';
 import { createFilterBar, escapeHtml } from './filters.js';
@@ -40,8 +40,6 @@ async function start() {
   app.updateFilters = createFilterBar(document.getElementById('filters'), {
     year: yearOptions(app.surveys),
     region: regionOptions(app.surveys),
-    country: countryOptions(app.surveys),
-    type: TYPE_OPTIONS,
     status: STATUS_OPTIONS,
     funding: FUNDING_OPTIONS,
   }, setState);
@@ -60,8 +58,8 @@ async function start() {
 
   try {
     app.updateMap = await createMap(document.getElementById('map-card'), {
-      // Clicking a country filters the page to it; clicking it again clears the filter
-      onCountry: (iso3) => setState({ ...app.state, country: app.state.country === iso3 ? 'all' : iso3 }),
+      // Clicking a country opens its SMART surveys in the detail panel (no filtering)
+      onCountry: (surveys) => app.panel.openCountry(surveys),
       onOpen: (survey) => app.panel.open(survey),
       onMode: (map) => setState({ ...app.state, map }),
     });
@@ -71,6 +69,7 @@ async function start() {
   }
 
   renderDataDate();
+  writeState(app.state); // drops parameters that no longer exist (e.g. country, type) from old shared links
   render();
 
   // A shared link can point at one survey: open its panel
@@ -92,32 +91,21 @@ function render() {
   app.updateKpis(applyFilters(surveys, state, ['status']), state.status);
   app.updateList(filtered);
   app.updateTimeline(filtered);
-  // The matrix shows the latest survey of each type, so only Region and Country restrict it
+  // The matrix shows the latest survey of each type (SMART, Rapid SMART, MICS, DHS), so only Region restricts it
   app.updateMatrix(applyFilters(surveys, state, ['year', 'type', 'status', 'funding']), state);
   app.updateMap?.({
     mode: state.map,
-    // The map ignores the Country filter so other countries stay clickable; the selected one is outlined
-    surveys: applyFilters(surveys, state, ['country']),
+    surveys: filtered,
     freshSurveys: freshnessSurveys(surveys, state),
-    country: state.country,
-    markerCountries: smartCountries(surveys),
   });
 }
 
-/** Countries with at least one SMART or Rapid SMART survey on record (cluster countries). */
-function smartCountries(surveys) {
-  return new Set(surveys.filter((s) => matchType(s, 'smart')).map((s) => s.iso3));
-}
-
 /**
- * Surveys used by the "Data freshness" map (rule 4.3.10). Freshness looks at the latest release
- * ever, so Period, Status and Funding are ignored. Assessment type is applied only when one
- * type is chosen; with the default (SMART + Rapid SMART) or "All types", every type counts.
+ * Surveys used by the "Data freshness" map (rule 4.3.10): every assessment type, latest release ever,
+ * so only the Region filter applies (Period, Status and Funding are ignored).
  */
 function freshnessSurveys(surveys, state) {
-  const base = applyFilters(surveys, state, ['year', 'status', 'funding', 'type', 'country']);
-  if (state.type === 'smart' || state.type === 'all') return base;
-  return base.filter((s) => matchType(s, state.type));
+  return applyFilters(surveys, state, ['year', 'status', 'funding', 'type']);
 }
 
 function renderDataDate() {

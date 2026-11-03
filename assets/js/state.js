@@ -1,5 +1,6 @@
 // Filter state <-> URL query string, so any view can be shared by link.
-// Example: ?year=2026&country=MLI&type=all&status=planned&map=freshness&survey=MLI-2026-SMART-01
+// Example: ?year=2026&region=WACRO&status=planned&map=freshness&survey=MLI-2026-SMART-01
+// The page covers SMART and Rapid SMART surveys only (no Country or Assessment type filter since Oct 2026).
 // Values equal to the defaults are left out of the URL to keep links short.
 
 const CURRENT_YEAR = String(new Date().getFullYear());
@@ -7,8 +8,6 @@ const CURRENT_YEAR = String(new Date().getFullYear());
 export const DEFAULTS = Object.freeze({
   year: CURRENT_YEAR,   // a survey year, or 'all'
   region: 'all',        // a region code, or 'all'
-  country: 'all',       // an ISO3 code, or 'all'
-  type: 'smart',        // 'smart' = SMART + Rapid SMART, 'all', or one type group
   status: 'all',        // 'all' | 'planned' | 'ongoing' | 'completed' | 'released' | 'not_planned'
   funding: 'all',       // 'all' | 'funded' | 'gap' | 'partial' | 'unfunded'
   map: 'status',        // 'status' | 'freshness'

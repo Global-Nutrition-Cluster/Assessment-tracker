@@ -1,18 +1,6 @@
 // Loading the generated data files and filtering the surveys.
 // The business rules behind each field are in CLAUDE.md section 4.3.
 
-// Options of the filter bar (labels as in the mockup)
-export const TYPE_OPTIONS = [
-  { value: 'smart', label: 'SMART + Rapid SMART' },
-  { value: 'all', label: 'All types' },
-  { value: 'SMART', label: 'SMART' },
-  { value: 'Rapid SMART', label: 'Rapid SMART' },
-  { value: 'MICS', label: 'MICS' },
-  { value: 'DHS', label: 'DHS' },
-  { value: 'IPC AMN', label: 'IPC AMN' },
-  { value: 'Other', label: 'Other (MSNA, NVA…)' },
-];
-
 // "Completed" = every completed survey, released or not (as in the mockup);
 // "Results released" narrows it to those with released results.
 export const STATUS_OPTIONS = [
@@ -76,8 +64,8 @@ export function applyFilters(surveys, state, ignore = []) {
   return surveys.filter((s) =>
     (skip.has('year') || state.year === 'all' || String(s.survey_year) === state.year) &&
     (skip.has('region') || state.region === 'all' || s.region === state.region) &&
-    (skip.has('country') || state.country === 'all' || s.iso3 === state.country) &&
-    (skip.has('type') || matchType(s, state.type)) &&
+    // The page covers SMART and Rapid SMART only; blocks that show other types skip 'type'
+    (skip.has('type') || matchType(s, 'smart')) &&
     (skip.has('status') || matchStatus(s, state.status)) &&
     (skip.has('funding') || matchFunding(s, state.funding))
   );
@@ -98,14 +86,3 @@ export function regionOptions(surveys) {
   return [{ value: 'all', label: 'All regions' }, ...values.map((v) => ({ value: v, label: v }))];
 }
 
-export function countryOptions(surveys) {
-  const byIso = new Map();
-  for (const s of surveys) {
-    if (!s.iso3) continue;
-    const known = byIso.get(s.iso3);
-    byIso.set(s.iso3, { label: s.country || s.iso3, region: known?.region || s.region || '' });
-  }
-  const list = [...byIso].map(([value, o]) => ({ value, label: o.label, region: o.region }))
-    .sort((a, b) => a.label.localeCompare(b.label));
-  return [{ value: 'all', label: 'All countries' }, ...list];
-}

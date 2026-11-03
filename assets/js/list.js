@@ -1,5 +1,6 @@
 // Survey list: sortable table, 12 rows per page, CSV export of every filtered row.
-// Clicking an Assessment ID opens the detail panel.
+// Clicking a country opens the detail panel. The Assessment ID is not shown in the table
+// (owner's decision, Oct 2026) but stays in the detail panel and the CSV export.
 
 import { statusIcon, STATUS_LABELS } from './icons.js';
 import { formatDate, fundingLabel, validationLabel, shortCountry } from './format.js';
@@ -12,7 +13,6 @@ const STATUS_RANK = { ongoing: 0, planned: 1, completed: 2, released: 3, not_pla
 const FUNDING_RANK = { unfunded: 0, partial: 1, funded: 2 };
 
 const COLUMNS = [
-  { key: 'id', label: 'Assessment ID', sortable: true },
   { key: 'country', label: 'Country · Admin 1', sortable: true },
   { key: 'type', label: 'Type', sortable: true },
   { key: 'status', label: 'Status', sortable: true },
@@ -27,7 +27,6 @@ const COLUMNS = [
 // Value compared when sorting by a column. Missing values go last.
 function sortValue(s, key) {
   switch (key) {
-    case 'id': return s.id || '';
     case 'country': return `${s.country || ''}|${s.admin1 || ''}`;
     case 'type': return s.type_raw || '';
     case 'status': return STATUS_RANK[s.display_status] ?? 9;
@@ -152,8 +151,7 @@ function rowHtml(s) {
   const status = s.display_status || 'not_planned';
   const funding = fundingLabel(s);
   return `<tr>
-    <td><button type="button" class="rowbtn" data-id="${escapeHtml(s.id)}">${escapeHtml(s.id)}</button></td>
-    <td>${escapeHtml(shortCountry(s.country))}${s.admin1 ? `<span class="mute"> · ${escapeHtml(s.admin1)}</span>` : ''}</td>
+    <td><button type="button" class="rowbtn" data-id="${escapeHtml(s.id)}">${escapeHtml(shortCountry(s.country))}</button>${s.admin1 ? `<span class="mute"> · ${escapeHtml(s.admin1)}</span>` : ''}</td>
     <td>${escapeHtml(s.type_raw)}</td>
     <td><span class="status-cell">${statusIcon(status, 14)}${STATUS_LABELS[status]}</span></td>
     <td class="nowrap">${notReported(formatDate(s.start_date))}</td>
@@ -161,7 +159,7 @@ function rowHtml(s) {
     <td>${notReported(s.lead_org)}</td>
     <td>${escapeHtml(validationLabel(s)) || '<span class="nr">—</span>'}</td>
     <td>${funding ? `<span class="fund">${funding}</span>` : '<span class="nr">Not reported</span>'}</td>
-    <td>${s.report_url ? `<a href="${escapeHtml(s.report_url)}" target="_blank" rel="noopener" class="strong">Open<span class="visually-hidden"> report for ${escapeHtml(s.id)} (new tab)</span></a>` : '<span class="nr">—</span>'}</td>
+    <td>${s.report_url ? `<a href="${escapeHtml(s.report_url)}" target="_blank" rel="noopener" class="strong">Open<span class="visually-hidden"> report for ${escapeHtml(shortCountry(s.country))}${s.admin1 ? ` ${escapeHtml(s.admin1)}` : ''} (new tab)</span></a>` : '<span class="nr">—</span>'}</td>
   </tr>`;
 }
 
