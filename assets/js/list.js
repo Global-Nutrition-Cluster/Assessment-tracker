@@ -143,8 +143,9 @@ export function createList(root, onOpen) {
   };
 }
 
+// Missing values stay empty in the table (owner's decision, Nov 2026); the detail panel still says "Not reported"
 function notReported(value) {
-  return value ? escapeHtml(value) : '<span class="nr">Not reported</span>';
+  return value ? escapeHtml(value) : '';
 }
 
 function rowHtml(s) {
@@ -157,9 +158,9 @@ function rowHtml(s) {
     <td class="nowrap">${notReported(formatDate(s.start_date))}</td>
     <td class="nowrap">${notReported(formatDate(s.end_date))}</td>
     <td>${notReported(s.lead_org)}</td>
-    <td>${escapeHtml(validationLabel(s)) || '<span class="nr">—</span>'}</td>
-    <td>${funding ? `<span class="fund">${funding}</span>` : '<span class="nr">Not reported</span>'}</td>
-    <td>${s.report_url ? `<a href="${escapeHtml(s.report_url)}" target="_blank" rel="noopener" class="strong">Open<span class="visually-hidden"> report for ${escapeHtml(shortCountry(s.country))}${s.admin1 ? ` ${escapeHtml(s.admin1)}` : ''} (new tab)</span></a>` : '<span class="nr">—</span>'}</td>
+    <td>${escapeHtml(validationLabel(s))}</td>
+    <td>${funding ? `<span class="fund">${funding}</span>` : ''}</td>
+    <td>${s.report_url ? `<a href="${escapeHtml(s.report_url)}" target="_blank" rel="noopener" class="strong">Open<span class="visually-hidden"> report for ${escapeHtml(shortCountry(s.country))}${s.admin1 ? ` ${escapeHtml(s.admin1)}` : ''} (new tab)</span></a>` : ''}</td>
   </tr>`;
 }
 
