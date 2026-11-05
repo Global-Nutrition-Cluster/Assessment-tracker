@@ -213,7 +213,7 @@ export async function createMap(root, { onMode }) {
 
   function statusLegend() {
     const items = ['planned', 'ongoing', 'completed', 'released'].map((key) => `
-      <li><span class="swatch" style="background:${COLORS[key]}"></span>${statusIcon(key, 14)}${STATUS_LABELS[key]}</li>`).join('');
+      <li><span class="swatch" style="background:${COLORS[key]}"></span>${STATUS_LABELS[key]}</li>`).join('');
     return `<ul class="legend" aria-label="Status legend">${items}</ul>`;
   }
 
