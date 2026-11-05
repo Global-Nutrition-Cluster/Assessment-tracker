@@ -1,4 +1,5 @@
-// Survey list: sortable table, 12 rows per page, CSV export of every filtered row.
+// Survey list: sortable table that scrolls vertically inside its card (no pagination, no horizontal scroll),
+// CSV export of every filtered row.
 // Rows are read-only (no detail panel since Nov 2026). The Assessment ID is not shown in the table
 // (owner's decision, Oct 2026) but stays in the CSV export.
 
@@ -6,22 +7,22 @@ import { statusIcon, STATUS_LABELS } from './icons.js';
 import { formatDate, fundingLabel, validationLabel, shortCountry } from './format.js';
 import { escapeHtml } from './filters.js';
 
-const PER_PAGE = 12;
 
 // Order used when sorting by status: what needs attention first
 const STATUS_RANK = { ongoing: 0, planned: 1, completed: 2, released: 3, not_planned: 4 };
 const FUNDING_RANK = { unfunded: 0, partial: 1, funded: 2 };
 
 const COLUMNS = [
-  { key: 'country', label: 'Country · Admin 1', sortable: true },
+  // To fit the half-width card without horizontal scrolling, Admin 1 sits under the country
+  // and Validation under the status. Start and End come last (owner's request, Nov 2026).
+  { key: 'country', label: 'Country', sortable: true },
   { key: 'type', label: 'Type', sortable: true },
   { key: 'status', label: 'Status', sortable: true },
-  { key: 'start', label: 'Start', sortable: true },
-  { key: 'end', label: 'End' },
   { key: 'lead', label: 'Lead organization' },
-  { key: 'validation', label: 'Validation' },
   { key: 'funding', label: 'Funding', sortable: true },
   { key: 'report', label: 'Report' },
+  { key: 'start', label: 'Start', sortable: true },
+  { key: 'end', label: 'End' },
 ];
 
 // Value compared when sorting by a column. Missing values go last.
@@ -40,7 +41,7 @@ function sortValue(s, key) {
  * @param {HTMLElement} root
  */
 export function createList(root) {
-  const view = { rows: [], sortKey: 'country', sortDir: 1, page: 0 };
+  const view = { rows: [], sortKey: 'country', sortDir: 1 };
 
   root.innerHTML = `
     <div class="card-head">
@@ -53,19 +54,13 @@ export function createList(root) {
         Export CSV
       </button>
     </div>
-    <div class="table-scroll">
+    <div class="table-scroll" tabindex="0" aria-label="Survey list, scrollable">
       <table class="tbl">
         <thead><tr></tr></thead>
         <tbody></tbody>
       </table>
     </div>
-    <nav class="pager" aria-label="Pagination">
-      <span id="list-page-info" aria-live="polite"></span>
-      <div class="pager-buttons">
-        <button type="button" class="btn btn-small" data-page="-1">Previous</button>
-        <button type="button" class="btn btn-small" data-page="1">Next</button>
-      </div>
-    </nav>`;
+`;
 
   const head = root.querySelector('thead tr');
   const body = root.querySelector('tbody');
@@ -76,17 +71,9 @@ export function createList(root) {
     const key = button.dataset.sort;
     view.sortDir = view.sortKey === key ? -view.sortDir : 1;
     view.sortKey = key;
-    view.page = 0;
     draw();
   });
 
-
-  root.querySelector('.pager').addEventListener('click', (event) => {
-    const button = event.target.closest('button[data-page]');
-    if (!button || button.disabled) return;
-    view.page += Number(button.dataset.page);
-    draw();
-  });
 
   root.querySelector('#list-export').addEventListener('click', () => exportCsv(sorted()));
 
@@ -103,10 +90,6 @@ export function createList(root) {
 
   function draw() {
     const rows = sorted();
-    const pages = Math.max(1, Math.ceil(rows.length / PER_PAGE));
-    view.page = Math.min(Math.max(view.page, 0), pages - 1);
-    const first = view.page * PER_PAGE;
-    const pageRows = rows.slice(first, first + PER_PAGE);
 
     head.innerHTML = COLUMNS.map((c) => {
       if (!c.sortable) return `<th scope="col"><span class="th">${c.label}</span></th>`;
@@ -116,23 +99,19 @@ export function createList(root) {
       return `<th scope="col" aria-sort="${sort}"><button type="button" data-sort="${c.key}">${c.label} <span aria-hidden="true" class="mute">${mark}</span></button></th>`;
     }).join('');
 
-    body.innerHTML = pageRows.length ? pageRows.map(rowHtml).join('')
+    body.innerHTML = rows.length ? rows.map(rowHtml).join('')
       : `<tr><td colspan="${COLUMNS.length}" class="empty">No survey matches the current filters.</td></tr>`;
 
     root.querySelector('#list-count').textContent =
       `${rows.length} ${rows.length === 1 ? 'survey matches' : 'surveys match'} the current filters`;
-    root.querySelector('#list-page-info').textContent = rows.length
-      ? `Showing ${first + 1}–${first + pageRows.length} of ${rows.length}` : 'Showing 0 of 0';
-    root.querySelector('[data-page="-1"]').disabled = view.page === 0;
-    root.querySelector('[data-page="1"]').disabled = view.page >= pages - 1;
     root.querySelector('#list-export').disabled = rows.length === 0;
   }
 
-  /** Called on every filter change: back to page 1, keep the sort. */
+  /** Called on every filter change: keep the sort, back to the top of the list. */
   return function update(surveys) {
     view.rows = surveys;
-    view.page = 0;
     draw();
+    root.querySelector('.table-scroll').scrollTop = 0;
   };
 }
 
@@ -145,15 +124,14 @@ function rowHtml(s) {
   const status = s.display_status || 'not_planned';
   const funding = fundingLabel(s);
   return `<tr>
-    <td><strong>${escapeHtml(shortCountry(s.country))}</strong>${s.admin1 ? `<span class="mute"> · ${escapeHtml(s.admin1)}</span>` : ''}</td>
+    <td><strong>${escapeHtml(shortCountry(s.country))}</strong>${s.admin1 ? `<span class="sub">${escapeHtml(s.admin1)}</span>` : ''}</td>
     <td>${escapeHtml(s.type_raw)}</td>
-    <td><span class="status-cell">${statusIcon(status, 14)}${STATUS_LABELS[status]}</span></td>
-    <td class="nowrap">${notReported(formatDate(s.start_date))}</td>
-    <td class="nowrap">${notReported(formatDate(s.end_date))}</td>
+    <td><span class="status-cell">${statusIcon(status, 14)}${STATUS_LABELS[status]}</span>${validationLabel(s) && validationLabel(s) !== STATUS_LABELS[status] ? `<span class="sub">${escapeHtml(validationLabel(s))}</span>` : ''}</td>
     <td>${notReported(s.lead_org)}</td>
-    <td>${escapeHtml(validationLabel(s))}</td>
     <td>${funding ? `<span class="fund">${funding}</span>` : ''}</td>
     <td>${s.report_url ? `<a href="${escapeHtml(s.report_url)}" target="_blank" rel="noopener" class="strong">Open<span class="visually-hidden"> report for ${escapeHtml(shortCountry(s.country))}${s.admin1 ? ` ${escapeHtml(s.admin1)}` : ''} (new tab)</span></a>` : ''}</td>
+    <td>${notReported(formatDate(s.start_date))}</td>
+    <td>${notReported(formatDate(s.end_date))}</td>
   </tr>`;
 }
 

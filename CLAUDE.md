@@ -118,10 +118,13 @@ Write each rule as a small, tested function.
 > **Branch `compact-layout` (test, Nov 2026).** On this branch the page differs from the specification below:
 > no filter bar (default view: SMART surveys of the current year; KPI tiles still filter by status);
 > no timeline and no coverage matrix on the page (`timeline.js`, `matrix.js`, `filters.js` kept but not loaded);
-> map and survey list side by side from 1100 px; smaller type and tighter spacing (compact block at the end of `main.css`);
+> map and survey list side by side from 1300 px; smaller type and tighter spacing (compact block at the end of `main.css`);
 > **no detail panel at all** (`panel.js` removed): clicking a country on the map or a row in the list does nothing;
 > hovering a country shows its SMART surveys in an info box that follows the cursor and flips to stay inside the map
-> (on touch screens a tap shows it at the tapped point); missing values in the survey list are left empty (no "Not reported").
+> (on touch screens a tap shows it at the tapped point); survey list: missing values left empty (no "Not reported"),
+> no pagination (the list takes the map card's height and scrolls vertically, header row sticky), no horizontal scroll on
+> desktop (Admin 1 under the country, Validation under the status), columns Country, Type, Status, Lead organization,
+> Funding, Report, Start, End (dates last).
 > If the branch is merged into `main`, rewrite this section to match.
 
 Top to bottom. Every block reads the same filtered dataset. The mockup in `design/` gives the exact look (colours, sizes, spacing); the decisions below were taken when comparing it with this brief (Oct 2026).

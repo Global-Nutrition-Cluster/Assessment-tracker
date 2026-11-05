@@ -451,9 +451,9 @@ body { font-size: 14px; }
 .kpi-value { font-size: 26px; }
 .kpi-sub { font-size: 12px; min-height: 16px; }
 
-/* Map and survey list side by side from 1100 px, stacked below */
+/* Map and survey list side by side from 1300 px (the list needs ~640 px to fit without sideways scrolling), stacked below */
 .views { grid-template-columns: minmax(0, 1fr); gap: 16px; align-items: stretch; }
-@media (min-width: 1100px) {
+@media (min-width: 1300px) {
   .views { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
 
@@ -488,3 +488,30 @@ body { font-size: 14px; }
 
 /* Countries are not clickable any more: no hand cursor on the map */
 .map path.leaflet-interactive { cursor: default; }
+
+/* Survey list next to the map (compact-layout branch, Nov 2026):
+   the list card takes the map card's height and scrolls vertically; columns wrap instead of scrolling sideways. */
+.status-cell { white-space: normal; }
+.tbl td .sub { display: block; font-size: 12px; color: var(--text-muted); }
+.tbl { min-width: 0; table-layout: auto; }
+.tbl th { white-space: normal; position: sticky; top: 0; z-index: 1; }   /* header stays visible while scrolling */
+.tbl td { overflow-wrap: break-word; }   /* break only words longer than the column */
+#list-card .table-scroll { overflow-x: auto; overflow-y: auto; }   /* columns wrap to fit; sideways scrolling only as a last resort on narrow screens */
+#list-card .table-scroll:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+@media (min-width: 1300px) {
+  /* contain: size = the list's own length is ignored, so the row height comes from the map card */
+  #list-card { contain: size; }
+  #list-card .table-scroll { flex: 1 1 auto; min-height: 0; }
+}
+@media (max-width: 1299px) {
+  #list-card .table-scroll { max-height: 600px; }
+}
+@media (max-width: 639px) {
+  /* a phone is too narrow for eight columns: let the table scroll sideways there */
+  #list-card .table-scroll { overflow-x: auto; }
+  #list-card .tbl { min-width: 640px; }
+}
+#list-card .tbl th button, #list-card .tbl th .th { padding: 7px 6px; }
+#list-card .tbl td { padding: 6px; }
+#list-card .status-cell { align-items: flex-start; }
+#list-card .status-cell .st-icon { margin-top: 2px; }
