@@ -1,6 +1,7 @@
-// Filter state <-> URL query string, so any view can be shared by link.
-// Example: ?year=2026&region=WACRO&status=planned&map=freshness
-// The page covers SMART and Rapid SMART surveys only (no Country or Assessment type filter since Oct 2026).
+// Page state <-> URL query string, so a view can be shared by link.
+// Example: ?status=planned&map=freshness
+// Since Nov 2026 there is no filter bar: year, region and funding stay at their defaults (SMART surveys of the
+// current year) and only the KPI status selection and the map mode come from the URL. Old parameters are ignored.
 // Values equal to the defaults are left out of the URL to keep links short.
 
 const CURRENT_YEAR = String(new Date().getFullYear());
@@ -13,7 +14,7 @@ export const DEFAULTS = Object.freeze({
   map: 'status',        // 'status' | 'freshness'
 });
 
-const KEYS = Object.keys(DEFAULTS);
+const KEYS = ['status', 'map']; // the only parts of the state that can change on the page
 
 export function readState(search = window.location.search) {
   const params = new URLSearchParams(search);
