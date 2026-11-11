@@ -30,14 +30,31 @@ jobs:
           SHEET_CSV_URL: ${{ vars.SHEET_CSV_URL }}
         run: python scripts/build_data.py
 
+      # Results page (CLAUDE.md 11.1). If the SMART results sheets cannot be read, the planning
+      # data above is still committed, the old results files are kept, and the run is marked failed.
+      - name: Build results (SMART sheets + data/dhs)
+        id: results
+        continue-on-error: true
+        env:
+          SMART_RESULTS_CSV_URL: ${{ vars.SMART_RESULTS_CSV_URL }}
+          SMART_SURVEYS_CSV_URL: ${{ vars.SMART_SURVEYS_CSV_URL }}
+        run: python scripts/build_results.py
+
       - name: Commit if the data changed
         run: |
-          git add data/surveys.json data/meta.json
+          git add data/*.json
           if git diff --cached --quiet; then
             echo "No change in the data."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git commit -m "data: refresh from Google Sheet"
+            git pull --rebase
             git push
           fi
+
+      - name: Fail the run if the results could not be built
+        if: steps.results.outcome == 'failure'
+        run: |
+          echo "::error::build_results.py failed: see the 'Build results' step above. The old results files were kept."
+          exit 1

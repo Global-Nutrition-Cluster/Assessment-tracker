@@ -1,0 +1,30 @@
+{
+ "updated_at": "2026-11-11T11:29:44+00:00",
+ "counts": {
+  "smart_surveys": 7,
+  "smart_values": 1148,
+  "dhs_surveys": 25,
+  "dhs_values": 1258,
+  "countries": 30
+ },
+ "warnings": [
+  "AFG-2022-SMART-01-R051: no value; row left out.",
+  "AFG-2022-SMART-01-R052: no value; row left out.",
+  "AFG-2022-SMART-01-R087: automatic check 'Value outside its CI' (value kept).",
+  "AFG-2022-SMART-01-R121: no value; row left out.",
+  "AFG-2022-SMART-01-R122: no value; row left out.",
+  "AFG-2022-SMART-01-R203: automatic check 'Value outside its CI' (value kept).",
+  "AFG-2022-SMART-01-R361: automatic check 'Value outside its CI' (value kept).",
+  "AFG-2022-SMART-01-R362: automatic check 'Value outside its CI' (value kept).",
+  "AFG-2022-SMART-01-R363: no value; row left out.",
+  "AFG-2022-SMART-01-R364: no value; row left out.",
+  "NER-2021-SMART-01-R249: no value; row left out.",
+  "NER-2021-SMART-01-R357: no value; row left out.",
+  "AFG-2022-SMART-01: Assessment ID not found in the planning tracker.",
+  "MLI-2022-SMART-01: Assessment ID not found in the planning tracker.",
+  "NER-2021-SMART-01: Assessment ID not found in the planning tracker.",
+  "NGA-2024-SMART-01: Assessment ID not found in the planning tracker.",
+  "SDN-2022-SMART-01: Assessment ID not found in the planning tracker.",
+  "SOM-2025-SMART-01: Assessment ID not found in the planning tracker."
+ ]
+}
