@@ -78,4 +78,11 @@
   --who-medium: #E07AAE;
   --who-high: #A3286D;
   --who-very-high: #6B0F4A;
+  /* Indicators without WHO classes (mortality, morbidity, MUAC…): five equal steps, a different hue
+     so they are never read as WHO classes */
+  --cont-1: #E3EEF1;
+  --cont-2: #B3D3DC;
+  --cont-3: #79AFBF;
+  --cont-4: #3E8196;
+  --cont-5: #1D5466;
 }

@@ -40,3 +40,44 @@
 .res-howto-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 12px 24px; }
 .res-howto h3 { margin: 0 0 4px; font-size: 13px; font-weight: 700; }
 .res-howto p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--text-secondary); }
+
+/* ---------- WHO 2018 class pills (map legend, hover box, ranked list) ---------- */
+.sev {
+  display: inline-flex; align-items: center; padding: 0 7px; border-radius: 10px;
+  font-size: 12px; font-weight: 600; line-height: 18px; white-space: nowrap; color: var(--text);
+}
+.sev-0 { background: var(--who-very-low); box-shadow: inset 0 0 0 1px #E9C3D6; }
+.sev-1 { background: var(--who-low); }
+.sev-2 { background: var(--who-medium); }
+.sev-3 { background: var(--who-high); color: #FFFFFF; }
+.sev-4 { background: var(--who-very-high); color: #FFFFFF; }
+/* continuous scale (no WHO classes) */
+.cont-0 { background: var(--cont-1); box-shadow: inset 0 0 0 1px #C5DBE1; }
+.cont-1 { background: var(--cont-2); }
+.cont-2 { background: var(--cont-3); }
+.cont-3 { background: var(--cont-4); color: #FFFFFF; }
+.cont-4 { background: var(--cont-5); color: #FFFFFF; }
+
+/* ---------- Map ---------- */
+#map-card .card-head { align-items: baseline; }
+.map-scope { font-size: 12px; }
+.res-legend { flex-direction: column; gap: 8px; }
+.legend-scale-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+.legend-scale-row .lbl { margin-right: 4px; text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--text); font-weight: 700; }
+.res-legend .legend { font-size: 13px; }
+.swatch.sw-hatch { background: repeating-linear-gradient(45deg, #D46A9F 0 2px, #FFFFFF 2px 5px); box-shadow: inset 0 0 0 1px #E9C3D6; }
+.swatch.sw-dots { background: radial-gradient(circle, #FFFFFF 1px, transparent 1.3px) 0 0 / 5px 5px, var(--who-medium); }
+.swatch.sw-hatch-cont { background: repeating-linear-gradient(45deg, #3E8196 0 2px, #FFFFFF 2px 5px); box-shadow: inset 0 0 0 1px #C5DBE1; }
+.swatch.sw-dots-cont { background: radial-gradient(circle, #FFFFFF 1px, transparent 1.3px) 0 0 / 5px 5px, var(--cont-3); }
+
+/* Hover box */
+.res-tip { width: 290px; display: flex; flex-direction: column; gap: 3px; }
+.res-tip[hidden] { display: none; }
+.res-tip .tip-value { font-family: var(--font-title); font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.res-tip .tip-value .mute { font-family: var(--font-body); font-size: 12px; font-weight: 400; }
+.res-tip .tip-line { display: block; font-size: 12px; }
+.res-tip .tip-old { color: var(--text-secondary); font-style: italic; }
+.res-tip .tip-also { display: block; margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--border-row); font-size: 12px; color: var(--text-secondary); }
+.res-tip .tip-action { display: block; margin-top: 2px; font-size: 12px; font-weight: 700; color: var(--link); }
+.res-tip .src { vertical-align: 1px; }
+#map-card .map path.leaflet-interactive { cursor: pointer; }
