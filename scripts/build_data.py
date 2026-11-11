@@ -117,6 +117,12 @@ TYPE_GROUPS = {
 }
 
 
+# The planning view tracks SMART surveys only (owner's decision, Nov 2026). Rows of other types
+# (DHS, MICS, IPC, MSNA…) are left out of data/surveys.json, with one summary warning.
+# DHS and MICS results come from their own sources (data/dhs/, Results page).
+TRACKED_TYPES = {"SMART", "Rapid SMART"}
+
+
 def type_group(type_raw):
     """Map the free-text type to one of the main groups, otherwise 'Other'."""
     key = re.sub(r"\s+", " ", (type_raw or "").strip().lower())
@@ -276,6 +282,20 @@ def normalise(record, warnings):
     }
 
 
+def keep_tracked_types(surveys, warnings):
+    """Rule 1: keep SMART and Rapid SMART rows; count the others in one warning."""
+    left_out = {}
+    for survey in surveys:
+        if survey["type_group"] not in TRACKED_TYPES:
+            name = survey["type_raw"] or "(no type)"
+            left_out[name] = left_out.get(name, 0) + 1
+    if left_out:
+        detail = ", ".join(f"{name}: {count}" for name, count in sorted(left_out.items(), key=lambda x: -x[1]))
+        warnings.append(f"{sum(left_out.values())} rows of other assessment types left out ({detail}). "
+                        "The planning view tracks SMART and Rapid SMART only: these rows can be removed from the sheet.")
+    return [s for s in surveys if s["type_group"] in TRACKED_TYPES]
+
+
 def build(csv_text):
     """Return (surveys, warnings). Raises SourceError if the sheet is unusable."""
     records = read_rows(csv_text)
@@ -284,6 +304,9 @@ def build(csv_text):
 
     warnings = []
     surveys = [normalise(record, warnings) for record in records]
+    surveys = keep_tracked_types(surveys, warnings)
+    if not surveys:
+        raise SourceError("No SMART or Rapid SMART row in the sheet; the sheet looks broken.")
 
     seen = set()
     for survey in surveys:

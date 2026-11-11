@@ -26,7 +26,7 @@ const AFRICA_VIEW = [[-35, -19], [38, 56]]; // Africa and Yemen, as in the mocku
 
 const CAPTIONS = {
   status: 'Countries coloured by the status of their most active SMART survey in the current filters. Hover a country to see its surveys.',
-  freshness: 'Countries coloured by how long ago results of an assessment (any type) were last released.',
+  freshness: 'Countries coloured by how long ago results of a SMART survey were last released.',
 };
 
 const UN_DISCLAIMER = 'The boundaries and names shown and the designations used on this map do not imply official endorsement or acceptance by the United Nations.';
@@ -189,9 +189,9 @@ export async function createMap(root, { onMode }) {
     if (view?.mode === 'freshness') {
       const fresh = view.fresh.get(iso3);
       const last = fresh && lastReleased(fresh);
-      freshLine = !fresh ? '<span class="mute">No assessment on record</span>'
+      freshLine = !fresh ? '<span class="mute">No SMART survey on record</span>'
         : last ? `Last results released ${formatDate(last.date)} <span class="mute">(${escapeHtml(last.survey.type_raw)}, ${freshBucket(last.age).label})</span>`
-        : 'No assessment with released results';
+        : 'No SMART survey with released results';
       freshLine = `<span class="tip-fresh">${freshLine}</span>`;
     }
 
@@ -221,9 +221,9 @@ export async function createMap(root, { onMode }) {
     const items = FRESH_BUCKETS.map((b) => `<li><span class="bar" style="background:var(${b.token})"></span>${b.label}</li>`).join('');
     return `
       <div class="legend-block">
-        <div class="lbl">Age of last assessment with released results</div>
+        <div class="lbl">Age of last SMART survey with released results</div>
         <ul class="legend legend-scale" aria-label="Freshness legend">${items}<li><span class="bar bar-never"></span>Never</li></ul>
-        <div class="legend-note">Age is counted from the results release date (Validation column); where no date is recorded, from the survey year in the Assessment ID. Light grey = no assessment on record.</div>
+        <div class="legend-note">Age is counted from the results release date (Validation column); where no date is recorded, from the survey year in the Assessment ID. Light grey = no SMART survey on record.</div>
       </div>`;
   }
 }

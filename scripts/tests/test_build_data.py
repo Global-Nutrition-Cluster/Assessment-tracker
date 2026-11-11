@@ -176,5 +176,28 @@ class WriteTests(unittest.TestCase):
             self.assertEqual((out / "surveys.json").read_text(), "[]\n")
 
 
+class TrackedTypes(unittest.TestCase):
+    """Rule 1: the planning view tracks SMART and Rapid SMART only (Nov 2026)."""
+
+    def test_other_types_are_left_out_with_one_warning(self):
+        rows = filler_rows(12) + [
+            "MLI-2023-DHS-01,WACRO,Mali,MLI,,,DHS,Completed,,,,,,Results released (2025-10-02),",
+            "MLI-2026-RSMART-01,WACRO,Mali,MLI,,,Rapid SMART,Planned,,,,,,Not yet started,Funded",
+            "AFG-2026-MSNA-01,ROSA,Afghanistan,AFG,,,MSNA,Ongoing,,,,,,,",
+        ]
+        surveys, warnings = bd.build(sample_csv(rows))
+        self.assertEqual({s["type_group"] for s in surveys}, {"SMART", "Rapid SMART"})
+        self.assertEqual(len(surveys), 13)
+        summary = [w for w in warnings if "left out" in w]
+        self.assertEqual(len(summary), 1)
+        self.assertIn("DHS: 1", summary[0])
+        self.assertIn("MSNA: 1", summary[0])
+
+    def test_sheet_without_smart_rows_fails(self):
+        rows = [f"MLI-20{i:02d}-DHS-01,WACRO,Mali,MLI,,,DHS,Completed,,,,,,," for i in range(12)]
+        with self.assertRaises(bd.SourceError):
+            bd.build(sample_csv(rows))
+
+
 if __name__ == "__main__":
     unittest.main()

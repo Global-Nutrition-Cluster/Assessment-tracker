@@ -8,7 +8,7 @@ A public, static web dashboard for the Global Nutrition Cluster (GNC). It shows 
 
 - **Owner:** Amadou Ndong, Information Management Officer, GNC
 - **Audiences:** public and partners, country cluster coordinators and IMOs, GNC global team
-- **V1 scope:** the **Planning view** (sections 4–6), starting with SMART and Rapid SMART surveys. The code must also handle MICS, DHS and IPC AMN rows without redesign.
+- **V1 scope:** the **Planning view** (sections 4–6): SMART and Rapid SMART surveys only (other types are left out since Nov 2026).
 - **V2 (Nov 2026):** the **Results view** (section 11): latest SMART and DHS indicator results by country, with automatic DHS imports.
 - **Later:** MICS results, and extraction of results from SMART report PDFs.
 - **Visual reference:** the validated mockup from Claude Design, stored in `design/`. Match its layout, spacing and components. Where this brief and the mockup disagree, this brief wins.
@@ -95,7 +95,7 @@ A public, static web dashboard for the Global Nutrition Cluster (GNC). It shows 
 
 Write each rule as a small, tested function.
 
-1. **Assessment type:** trim and keep the raw value. Map it to a `type_group`: `SMART`, `Rapid SMART`, `MICS`, `DHS`, `IPC AMN`, otherwise `Other` (MSNA, NVA, mass MUAC screening, IPC AFI…). `Other` rows are kept in the JSON but hidden by default in the UI.
+1. **Assessment type:** trim and keep the raw value. Map it to a `type_group`: `SMART`, `Rapid SMART`, `MICS`, `DHS`, `IPC AMN`, otherwise `Other` (MSNA, NVA, mass MUAC screening, IPC AFI…). **The planning tracker covers SMART and Rapid SMART only** (owner's decision, Nov 2026): rows of any other type are left out of `surveys.json`, with one summary warning in `meta.json` (DHS and MICS results come from their own sources, section 11).
 2. **Status:** one of `Planned`, `Ongoing`, `Completed`, `Not planned`. An unknown value produces a warning in `meta.json` and the row is kept with `status = null`.
 3. **Display status** (drives all colours):
    - `Planned` → `planned`
@@ -109,7 +109,7 @@ Write each rule as a small, tested function.
 7. **Funding:** `funded`, `partial`, `unfunded` or `null`. `funding_gap = true` when `partial` or `unfunded`.
 8. **Dates:** output ISO `YYYY-MM-DD` or `null`. Never invent an end date.
 9. **No date-based flags. Ever.** Start and end dates are indicative and change often. Do not compute or display "overdue", "late", "delayed", "start date passed" or any similar flag, in the data or in the UI.
-10. **Freshness** (per country, computed in the browser so it follows filters): age in years of the most recent **released** result, using `release_date`, else `survey_year`. Buckets: `< 1 year`, `1–2`, `2–3`, `> 3 years`, `never`. Never use start or end dates.
+10. **Freshness** (per country, computed in the browser so it follows filters): age in years of the most recent **released** SMART result, using `release_date`, else `survey_year`. Buckets: `< 1 year`, `1–2`, `2–3`, `> 3 years`, `never`. Never use start or end dates.
 
 ### 4.4 Output
 
@@ -139,7 +139,7 @@ One page, top to bottom. It covers **SMART and Rapid SMART surveys of the curren
 5. **Map** "SMART assessments", left half of the main row. Leaflet 1.9.4 (vendored in `assets/vendor/`) with `geo/countries.geojson` and **no tile service**. The boundaries come from Natural Earth 1:50m, with ISO3 codes fixed and Somaliland / Northern Cyprus merged into Somalia / Cyprus (`scripts/prepare_geo.py`, run by hand). Segmented toggle "Status" / "Data freshness", a one-line caption, a legend of colour squares and labels (no icons), and the UN boundaries disclaimer under the map. **No numbers or markers on the map, and clicking does nothing.**
    - **Hover:** the country is outlined and an info box next to the cursor lists its SMART surveys (ID, Admin 1, status icon and label; up to 5 + "N more"). The box follows the cursor and flips left / up to stay inside the map. On touch screens a tap shows it at the tapped point; a tap on the sea hides it.
    - **Status mode:** a country takes the colour of its **most active** SMART survey (`ongoing` > `planned` > `completed` > `released`): only blue, orange and the two greens; countries with no survey, or only "Not planned" ones, stay light grey.
-   - **Freshness mode:** countries coloured by the age of their last released results, any assessment type (rule 4.3.10), with the `--fresh-*` scale and "Never" hatched. It ignores the year and the KPI status selection.
+   - **Freshness mode:** countries coloured by the age of their last released SMART results (rule 4.3.10), with the `--fresh-*` scale and "Never" hatched. It ignores the year and the KPI status selection.
 6. **Survey list**, right half of the main row (`assets/js/list.js`). Same height as the map card (`contain: size` on the card); the table scrolls vertically, with a sticky header row; **no pagination** and no horizontal scroll on desktop. Columns: Country (Admin 1 underneath), Type, Status (icon + label, Validation underneath), Lead organization, Funding badge, Report link, Start, End. Missing values are left **empty**. Sortable by Country, Type, Status, Funding and Start. No Assessment ID column (it stays in the CSV export). Rows are read-only. "Export CSV" button (all listed rows).
 7. **No timeline, no coverage matrix and no detail panel** (removed by the owner). `timeline.js` and `matrix.js` stay in the repo, unused; `panel.js` was deleted.
 8. **Footer:** "Global Nutrition Cluster · nutritioncluster.net" and "Assessment status is reported by country Nutrition Clusters. Start and end dates are indicative."
@@ -231,6 +231,7 @@ Second page of the tracker: the latest nutrition survey results by country. Visu
 
 - The **planning tracker** (main Google Sheet) is the only place where an Assessment ID is created. An ID is never reused for another survey, even after a survey is cancelled.
 - In the SMART results workbook, the "Assessment ID" column of the Surveys sheet is a **drop-down list fed from the tracker** (IMPORTRANGE of the tracker's ID column + data validation "reject input"). The Consolidation sheet takes the ID from the Surveys sheet, never typed by hand.
+- Past SMART surveys used on the Results page are listed in the tracker too (Status Completed, Validation "Results released"), so every result ID exists there; they also feed the Freshness map.
 - `build_results.py` checks every SMART result ID against `data/surveys.json` (it cannot see two different surveys sharing one ID in the same country, such as SSD-2026-SMART-01 Pibor vs Guit County: that is what the drop-down prevents): unknown ID, or same ID with a different country ISO3 → warning in `results_meta.json` (the results are still shown). The warnings are listed in the workflow log.
 
 ### 11.3 Normalisation rules (`build_results.py`, each a small tested function)
