@@ -1,18 +1,19 @@
 // Results page entry point: loads data/results.json and draws the blocks (CLAUDE.md section 11).
 // Blocks: indicator selector + Source toggle, KPI tiles, map and ranked list (same figures, figures.js).
-// The full country profile is added in the next step of the results-view branch.
+// The country profile opens under them (profile.js).
 
 import { loadResults, selectorIndicators, indexSurveys } from './data.js';
 import { countryFigures } from './figures.js';
 import { createResultsMap } from './map.js';
 import { createRankedList } from './ranked.js';
+import { createProfile } from './profile.js';
 import { readState, writeState } from './state.js';
 import { createControls } from './controls.js';
 import { createResultsKpis } from './kpis.js';
 import { escapeHtml } from '../filters.js';
 
 const app = { data: null, state: null, surveysById: null, indicators: null,
-  updateControls: null, updateKpis: null, updateMap: null, updateRanked: null };
+  updateControls: null, updateKpis: null, updateMap: null, updateRanked: null, updateProfile: null };
 
 async function start() {
   try {
@@ -46,6 +47,10 @@ async function start() {
     onCountry: (country) => openCountry(country),
   });
 
+  app.updateProfile = createProfile(document.getElementById('profile'), {
+    onClose: () => setState({ ...app.state, country: null }),
+  });
+
   // Back / forward or an edited link (#country=XXX) opens or closes the profile
   window.addEventListener('hashchange', () => {
     app.state = readState(new Set(indicators.map((i) => i.key)));
@@ -77,23 +82,7 @@ function render() {
   app.updateKpis(data, state);
   app.updateMap?.({ figures, indicator, source: state.source, countryNames: data.countries });
   app.updateRanked({ figures, indicator, countryNames: data.countries });
-  renderProfile();
-}
-
-/** Placeholder until the country profile step: name, Copy link and Close. */
-function renderProfile() {
-  const root = document.getElementById('profile');
-  const iso3 = app.state.country;
-  if (!iso3) { root.hidden = true; return; }
-  const name = app.data.countries[iso3] || iso3;
-  root.hidden = false;
-  root.innerHTML = `
-    <div class="card-head">
-      <div><span class="lbl">Country profile</span><h2>${escapeHtml(name)}</h2></div>
-      <button type="button" class="btn" id="profile-close">Close</button>
-    </div>
-    <p class="card-note">The full profile (surveys, every area and indicator, confidence intervals) comes in a later step.</p>`;
-  root.querySelector('#profile-close').addEventListener('click', () => setState({ ...app.state, country: null }));
+  app.updateProfile(state.country, data, app.indicators);
 }
 
 function renderDataDate() {

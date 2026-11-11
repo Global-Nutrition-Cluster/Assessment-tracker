@@ -91,6 +91,7 @@ COUNTRY_NAMES = {
     "Kyrgyz Republic": "Kyrgyzstan",
     "Vietnam": "Viet Nam",
     "Turkey": "Turkiye",
+    "Cote d'Ivoire": "Côte d'Ivoire",
 }
 
 
