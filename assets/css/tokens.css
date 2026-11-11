@@ -70,3 +70,12 @@
 @media (max-width: 639px) {
   :root { --page-pad: 16px; }
 }
+
+/* Results page (CLAUDE.md 11.3.7): WHO 2018 prevalence classes, from the Results mockup */
+:root {
+  --who-very-low: #FBE6F0;
+  --who-low: #F4B6D2;
+  --who-medium: #E07AAE;
+  --who-high: #A3286D;
+  --who-very-high: #6B0F4A;
+}

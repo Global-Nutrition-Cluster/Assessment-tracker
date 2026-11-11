@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Results – GNC Nutrition Assessment Tracker</title>
+  <meta name="description" content="Latest nutrition survey results by country (SMART and DHS): acute malnutrition, mortality, morbidity, stunting and more, with sources and confidence intervals.">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%277%27 fill=%27%239CCB38%27/%3E%3C/svg%3E">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/vendor/leaflet-1.9.4/leaflet.css">
+  <link rel="stylesheet" href="assets/css/tokens.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/results.css">
+  <script src="assets/vendor/leaflet-1.9.4/leaflet.js"></script>
+  <script type="module" src="assets/js/results/main.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#content">Skip to the dashboard</a>
+  <header class="site-header">
+    <div class="wrap">
+      <div class="brand">
+        <a href="https://www.nutritioncluster.net" aria-label="Global Nutrition Cluster home">
+          <img src="assets/img/gnc-logo.png" alt="Global Nutrition Cluster" width="130" height="46">
+        </a>
+        <span class="brand-divider" aria-hidden="true"></span>
+        <span class="brand-name">Nutrition Assessment Tracker</span>
+      </div>
+      <nav class="site-nav" aria-label="Tracker sections">
+        <a href="./">Planning view</a>
+        <a href="results.html" aria-current="page">Results</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+  <section class="page-title">
+    <div class="wrap">
+      <div>
+        <h1>Results</h1>
+        <p>Latest nutrition survey results by country: acute malnutrition, mortality, morbidity and more.</p>
+      </div>
+      <div class="data-asof">Data as of <strong id="data-date">…</strong></div>
+    </div>
+  </section>
+
+  <div class="content wrap" id="content" tabindex="-1">
+    <!-- Indicator selector + Source toggle (CLAUDE.md 11.4.3) -->
+    <section class="res-controls" id="controls" aria-label="Indicator and source"></section>
+
+    <!-- KPI tiles (11.4.4) -->
+    <section class="kpi-band res-kpis" id="kpis" aria-label="Key figures"></section>
+
+    <!-- Map and ranked list side by side (11.4.5 and 11.4.6) -->
+    <section class="views">
+      <section class="card" id="map-card" aria-labelledby="map-title">
+        <div class="card-head"><h2 id="map-title">Map</h2></div>
+        <p class="card-note">The map comes in the next step.</p>
+      </section>
+      <section class="card" id="rank-card" aria-labelledby="rank-title">
+        <div class="card-head"><h2 id="rank-title">Ranked list</h2></div>
+        <p class="card-note">The ranked list comes in a later step.</p>
+      </section>
+    </section>
+
+    <!-- Country profile (11.4.8), shown when a country is chosen -->
+    <section class="card res-profile" id="profile" hidden aria-label="Country profile"></section>
+
+    <!-- How to read these figures (11.4.7) -->
+    <section class="res-howto" aria-labelledby="howto-title">
+      <h2 id="howto-title">How to read these figures</h2>
+      <div class="res-howto-cols">
+        <div>
+          <h3>Definitions</h3>
+          <p>SMART GAM by WHZ includes oedema and covers 6–59 months. DHS wasting is weight-for-height only (no oedema, no MUAC), 0–59 months. MUAC and combined GAM are separate indicators. DHS values are shown exactly as published; DHS does not publish MAM.</p>
+        </div>
+        <div>
+          <h3>Comparability</h3>
+          <p>Every value shows its source, survey year, area level and age group. SMART mortality (deaths/10,000/day, recall of a few months) and DHS mortality (per 1,000 live births, 5 years) are separate indicators and never share a scale. "Among children reported ill" shares are not prevalences.</p>
+        </div>
+        <div>
+          <h3>Thresholds and age of data</h3>
+          <p>Classes follow WHO 2018 prevalence thresholds for wasting, stunting and overweight. Other indicators use a continuous scale without classes. Surveys older than 3 years are marked on the map and in the lists.</p>
+        </div>
+      </div>
+    </section>
+  </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="wrap">
+      <span>Results come from published survey reports (SMART) and the DHS Program API. Values are shown as published.</span>
+      <span>Global Nutrition Cluster · <a href="https://www.nutritioncluster.net">nutritioncluster.net</a></span>
+    </div>
+  </footer>
+</body>
+</html>

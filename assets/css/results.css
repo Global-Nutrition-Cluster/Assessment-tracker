@@ -1,0 +1,42 @@
+/* Results page (results.html, CLAUDE.md section 11).
+   Loaded after main.css: it reuses the header, cards, KPI tiles and compact sizes of the Planning view,
+   and only adds what is new. Values follow the Results mockup in design/results/. */
+
+/* ---------- Indicator selector + Source toggle ---------- */
+.res-controls {
+  display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 12px 16px;
+}
+.res-indicator { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 8px 16px; flex: 1 1 520px; min-width: 0; }
+.res-indicator .field { flex: 0 1 360px; }
+.res-controls label,
+.res-controls .field-label { font-size: 12px; font-weight: 700; color: var(--text); }
+.res-controls > .field { flex: 0 0 auto; }   /* the Source toggle keeps its full width */
+.res-controls .sel { height: 36px; font-size: 14px; }
+.res-definition { margin: 0 0 8px; flex: 1 1 300px; max-width: 520px; font-size: 13px; line-height: 18px; color: var(--text-muted); }
+.res-controls .segmented button:disabled { color: var(--text-faint); background: var(--surface-alt); cursor: not-allowed; }
+
+/* ---------- Source badge (SMART / DHS / MICS) ---------- */
+.src {
+  display: inline-block; padding: 0 5px; border: 1px solid var(--gnc-slate); border-radius: 3px;
+  font-family: var(--font-title); font-size: 10px; font-weight: 700; letter-spacing: 0.04em; line-height: 15px;
+  color: var(--gnc-slate);
+}
+
+/* ---------- KPI tiles (read-only here) ---------- */
+.res-kpi { cursor: default; }
+.res-kpi:hover { background: var(--surface); }
+.res-kpi .kpi-label { gap: 6px; color: var(--text); }
+.res-kpi.is-off, .res-kpi.is-off:hover { background: var(--surface-alt); border-style: dashed; }   /* other source selected (no opacity: text keeps its contrast) */
+.res-kpi.is-soon .kpi-value { color: var(--text-faint); }
+
+/* ---------- Country profile (filled in step 5) ---------- */
+.res-profile[hidden] { display: none; }
+
+/* ---------- How to read these figures ---------- */
+.res-howto {
+  padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface-alt);
+}
+.res-howto h2 { margin: 0 0 10px; font-family: var(--font-title); font-size: 17px; }
+.res-howto-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 12px 24px; }
+.res-howto h3 { margin: 0 0 4px; font-size: 13px; font-weight: 700; }
+.res-howto p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--text-secondary); }
