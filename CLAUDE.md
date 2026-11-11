@@ -8,8 +8,9 @@ A public, static web dashboard for the Global Nutrition Cluster (GNC). It shows 
 
 - **Owner:** Amadou Ndong, Information Management Officer, GNC
 - **Audiences:** public and partners, country cluster coordinators and IMOs, GNC global team
-- **V1 scope:** the **Planning view** only, starting with SMART and Rapid SMART surveys. The code must also handle MICS, DHS and IPC AMN rows without redesign.
-- **Later (not in V1):** indicator results (GAM, SAM, MAM, mortality, morbidity), automatic DHS/MICS imports, and extraction of results from SMART report PDFs.
+- **V1 scope:** the **Planning view** (sections 4–6), starting with SMART and Rapid SMART surveys. The code must also handle MICS, DHS and IPC AMN rows without redesign.
+- **V2 (Nov 2026):** the **Results view** (section 11): latest SMART and DHS indicator results by country, with automatic DHS imports.
+- **Later:** MICS results, and extraction of results from SMART report PDFs.
 - **Visual reference:** the validated mockup from Claude Design, stored in `design/`. Match its layout, spacing and components. Where this brief and the mockup disagree, this brief wins.
 
 ## 2. Hard constraints
@@ -263,6 +264,15 @@ Second page of the tracker: the latest nutrition survey results by country. Visu
 
 **URL state**: `?indicator=GAM_WHZ&source=all` and `#country=MLI`.
 
-### 11.5 Open questions (Results)
+### 11.5 Acceptance checklist (Results)
+
+- [x] `build_results.py` builds `data/results.json` from the two SMART sheets and `data/dhs/`, with tests; a broken sheet keeps the old file.
+- [x] The DHS refresh runs only on GitHub Actions (weekly + manual), never on a personal computer.
+- [x] The map, the ranked list and the KPI tiles follow the indicator selector and the Source toggle; the map and the list show the same national figures.
+- [x] "To review" never appears; every value is "As published". No planning-date flag; "Older than 3 years" uses the survey year only.
+- [x] The country profile opens from the map and the list, and from a shared link (`#country=XXX`).
+- [x] No horizontal page scroll at 375 px; axe-core: no violations (overview and profiles); Lighthouse accessibility 100.
+
+### 11.6 Open questions (Results)
 
 - None for now (Report link column, "As published" badge and map source answered on 11 Nov 2026).
