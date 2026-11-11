@@ -62,10 +62,9 @@ FORCE = False           # --force : regenere les fichiers meme s'ils existent
 U5MR_ID = "CM_ECMR_C_U5M"   # Under-five mortality rate (deces pour 1 000 naissances vivantes)
 
 # Liste des indicateurs GNC
-# 1) Google Sheet : Fichier > Partager > Publier sur le web > la feuille > CSV,
-#    puis coller le lien ci-dessous (ou le mettre dans la variable
-#    d'environnement DHS_INDICATORS_CSV_URL, pratique pour GitHub Actions).
-INDICATORS_CSV_URL = os.environ.get("DHS_INDICATORS_CSV_URL", "https://docs.google.com/spreadsheets/d/e/2PACX-1vS10LS1r4TSp0qk6VQu0ug_Cus9t_k_rflP9dPbaJPjbWYp0YRInMIrZ0jwOVkR2HHCWk6zHQKPCNUJ/pub?gid=679508233&single=true&output=csv")
+# 1) Google Sheet publie en CSV : le lien est dans la variable du depot GitHub
+#    DHS_INDICATORS_CSV_URL (jamais en dur ici), transmise par update-dhs.yml.
+INDICATORS_CSV_URL = os.environ.get("DHS_INDICATORS_CSV_URL", "")
 # 2) Copie locale utilisee si le lien est vide ou injoignable
 INDICATORS_LOCAL = os.path.join("config", "dhs_indicators_selected.csv")
 # Dossier des fichiers produits. Dans le depot Assessment-tracker : data/dhs/
