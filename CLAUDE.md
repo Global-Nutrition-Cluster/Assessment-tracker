@@ -200,3 +200,52 @@ Load Source Sans 3 from Google Fonts. The freshness scale runs from `--gnc-green
 - Should MSNA, NVA and mass MUAC screening be visible by default or hidden under "Other"?
 - Pilot countries for V1: list to be confirmed.
 - Map granularity: country only, or admin-1 points once Pcodes are filled?
+
+## 11. Results view (`results.html`) — DRAFT, to be validated by the owner
+
+Second page of the tracker: the latest nutrition survey results by country. Visual reference: `design/results/` (overview, Mali profile, Niger profile). Where this section and the mockup disagree, this section wins. Built on the branch `results-view`.
+
+### 11.1 Sources
+
+| Source | Where | How it is refreshed |
+| --- | --- | --- |
+| SMART results (long format, sheet "Consolidation") | Google Sheet published as CSV, repository variable `SMART_RESULTS_CSV_URL` | nightly, `update-data.yml` |
+| SMART surveys (one row per survey, sheet "Surveys", with a **Report link** column = URL of the report, filled by the owner; empty → no link) | Google Sheet published as CSV, repository variable `SMART_SURVEYS_CSV_URL` | nightly, `update-data.yml` |
+| DHS indicators and surveys | `data/dhs/*.csv`, written by `scripts/dhs/dhs_extract.py` (DHS Program API, no key) | weekly, `update-dhs.yml` (Monday 03:00 UTC); optional variable `DHS_INDICATORS_CSV_URL` for the indicator list |
+| MICS | not yet ("Soon" in the UI) | — |
+
+`scripts/build_results.py` (standard library only) reads the three sources and writes `data/results.json` and `data/results_meta.json` (`updated_at`, row counts per source, warnings). Same safety rule as 4.5: if a CSV cannot be fetched or fails validation, the step fails and the existing JSON is kept. `dhs_extract.py` writes to a temporary folder first; `data/dhs/` is only replaced when the new files look complete.
+
+### 11.2 Assessment IDs: one owner, checked every night
+
+- The **planning tracker** (main Google Sheet) is the only place where an Assessment ID is created. An ID is never reused for another survey, even after a survey is cancelled.
+- In the SMART results workbook, the "Assessment ID" column of the Surveys sheet is a **drop-down list fed from the tracker** (IMPORTRANGE of the tracker's ID column + data validation "reject input"). The Consolidation sheet takes the ID from the Surveys sheet, never typed by hand.
+- `build_results.py` checks every SMART result ID against `data/surveys.json`: unknown ID, or same ID with a different country ISO3 → warning in `results_meta.json` (the results are still shown). The warnings are listed in the workflow log.
+
+### 11.3 Normalisation rules (`build_results.py`, each a small tested function)
+
+1. **One row per value**: source, survey (ID, type, year, lead, report link), country ISO3, area (name, level National / Admin 1 / Admin 2 / Stratum / IDP sites, parent), population group, age group, indicator code, value, CI lower/upper, unit, n, N, review status, automatic check. Values are kept **as published**: no recalculation, no rounding beyond the source.
+2. **Indicator names**: one indicator list for the selector. A name is shared by SMART and DHS only when the definition is the same (stunting, severe stunting, underweight, severe underweight, overweight). Wasting (GAM/SAM by WHZ) is shown side by side but each value carries its own definition line (SMART: WHZ < −2 and/or oedema, 6–59 months; DHS: WHZ < −2, no oedema, 0–59 months). Mortality, morbidity, MUAC, combined GAM and "among children reported ill" stay per source and never share a scale.
+3. **DHS confidence intervals**: the separate CI rows of the DHS file are attached to their indicator as `ci_lower` / `ci_upper`; when DHS publishes none, the UI says "No CI published".
+4. **Age group**: when a SMART survey gives the same indicator for 6–59 and 0–59 months, the national figure uses **6–59 months**; the other stays in the country profile.
+5. **Survey year** = year of the end of data collection (SMART) or `survey_year` (DHS). **Older than 3 years** = current year − survey year > 3. This is the age of the data (as Freshness, 4.3.10), never a planning-date flag (4.3.9 still applies).
+6. **Review status**: every value is shown with the badge **"As published"** (SMART and DHS). "To review" is never shown on the site (owner's decision, Nov 2026); the sheet's Review status is kept in the JSON for later use only. Rows with an **Automatic check** message are kept and listed in the warnings.
+7. **WHO 2018 classes** (wasting, stunting, overweight only): Very low / Low / Medium / High / Very high with the WHO thresholds. Other indicators have no classes.
+
+### 11.4 Page
+
+1. **Header**: same as the Planning view, with the tabs "Planning view" and "Results" on both pages.
+2. **Page title** "Results" + one sentence; "Data as of <date>" on the right.
+3. **Indicator selector** (default: Wasting — GAM by WHZ) with its definition line, and the **Source toggle** All · SMART · DHS · MICS (soon, disabled). The toggle applies to the map, the KPI tiles and the ranked list.
+4. **KPI tiles** (4): Countries with results (with "X with both SMART and DHS"), SMART surveys, DHS surveys, MICS "Soon".
+5. **Map** — follows the Source toggle (owner's decision, Nov 2026): "SMART" → SMART values only; "DHS" → DHS values only (MICS later); **"All" → SMART and DHS**: each country shows its **most recent national value**, any source (same survey year → SMART first), with a source badge; the hover box adds the other source on an "Also:" line (as in the mockup). The caption names the source shown. Countries coloured by the WHO class of that value; "Subnational data only" hatched; no data and no survey in light grey; survey older than 3 years dotted. Hover box like the Planning view (value, class, CI, level, survey year, definition). **Click opens the country profile** (unlike the Planning map). UN disclaimer under the map.
+6. **Ranked list** next to the map, same height, vertical scroll: rank, country, source badge, year, level, value with WHO class, 95% CI, "As published" badge, "Older than 3 years". Subnational-only and no-data countries come last. "Export CSV".
+7. **"How to read these figures"** card: Definitions, Comparability, Thresholds and age of data.
+8. **Country profile** (under the overview, opened by a map click or a list row; URL `results.html#country=MLI`; Copy link, Close): survey cards per source (SMART, Rapid SMART, DHS, MICS soon) with lead, data collection dates, coverage, report link and "As published" badge; then one block per source with indicator group tabs (Acute malnutrition, Mortality, Morbidity, Stunting, Underweight): national value + areas grouped Admin 1 › Admin 2, with CI dots, n/N, and the national line; Rapid SMART IDP sites in their own block; DHS "More indicators" grouped by topic; "Notes from the data" from the Notes column.
+9. **Footer**: "Results come from published survey reports (SMART) and the DHS Program API. Values are shown as published."
+
+**URL state**: `?indicator=GAM_WHZ&source=all` and `#country=MLI`.
+
+### 11.5 Open questions (Results)
+
+- None for now (Report link column, "As published" badge and map source answered on 11 Nov 2026).
