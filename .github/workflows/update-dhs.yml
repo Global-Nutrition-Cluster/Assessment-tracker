@@ -1,0 +1,70 @@
+# Refresh DHS planning and indicators from the DHS Program API (scripts/dhs/dhs_extract.py).
+# Runs only here, on GitHub: every Monday at 03:00 UTC, and on demand
+# (Actions > Update DHS data > Run workflow).
+# Output: data/dhs/*.csv, read by the Results page build.
+# Repository variable (optional): DHS_INDICATORS_CSV_URL = published CSV link of the Google Sheet
+# indicator list. If it is empty or unreachable, scripts/dhs/config/dhs_indicators_selected.csv is used.
+name: Update DHS data
+
+on:
+  schedule:
+    - cron: "0 3 * * 1"
+  workflow_dispatch:
+    inputs:
+      min_year:
+        description: "Oldest DHS survey year accepted for the indicators"
+        required: false
+        default: "2020"
+
+permissions:
+  contents: write
+
+# Same group as update-data.yml: the two refreshes never push at the same time
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install packages
+        run: pip install -r scripts/dhs/requirements.txt
+
+      # Writes to a temporary folder first: if the API fails, data/dhs/ is not touched
+      - name: Extract DHS data
+        env:
+          DHS_INDICATORS_CSV_URL: ${{ vars.DHS_INDICATORS_CSV_URL }}
+          DHS_OUTPUT_DIR: ${{ runner.temp }}/dhs
+        run: python scripts/dhs/dhs_extract.py --min-year "${{ inputs.min_year || '2020' }}"
+
+      - name: Check the new files, then copy them to data/dhs
+        run: |
+          for f in dhs_surveys.csv dhs_latest_indicators_national.csv dhs_latest_indicators_wide.csv; do
+            lines=$(wc -l < "$RUNNER_TEMP/dhs/$f" || echo 0)
+            if [ "$lines" -lt 10 ]; then
+              echo "::error::$f is missing or almost empty ($lines lines): data/dhs/ is kept as it is."
+              exit 1
+            fi
+          done
+          mkdir -p data/dhs
+          cp "$RUNNER_TEMP"/dhs/dhs_surveys.csv "$RUNNER_TEMP"/dhs/dhs_latest_indicators_*.csv data/dhs/
+
+      - name: Commit if the data changed
+        run: |
+          git add data/dhs/*.csv
+          if git diff --cached --quiet; then
+            echo "No change in the DHS data."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -m "data: refresh DHS outputs"
+            git pull --rebase
+            git push
+          fi
