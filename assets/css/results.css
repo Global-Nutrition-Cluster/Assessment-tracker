@@ -81,3 +81,43 @@
 .res-tip .tip-action { display: block; margin-top: 2px; font-size: 12px; font-weight: 700; color: var(--link); }
 .res-tip .src { vertical-align: 1px; }
 #map-card .map path.leaflet-interactive { cursor: pointer; }
+
+/* ---------- Ranked list (same height as the map card from 1300 px, as the Planning survey list) ---------- */
+#rank-card .table-scroll { overflow: auto; }
+#rank-card .table-scroll:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+@media (min-width: 1300px) {
+  #rank-card { contain: size; }   /* the list's own length is ignored: the row height comes from the map card */
+  #rank-card .table-scroll { flex: 1 1 auto; min-height: 0; }
+}
+@media (max-width: 1299px) {
+  #rank-card .table-scroll { max-height: 600px; }
+}
+.rank-tbl { min-width: 0; width: 100%; }
+.rank-tbl th { position: sticky; top: 0; z-index: 1; white-space: nowrap; }
+.rank-tbl td { vertical-align: top; padding: 8px 6px; }
+.rank-tbl th .th, .rank-tbl th button { padding: 7px 6px; }
+.rank-tbl .c-rank { width: 28px; color: var(--text-muted); }
+.rank-tbl .c-ci { white-space: nowrap; }
+.rank-tbl .c-review { width: 1%; white-space: nowrap; }
+.rank-tbl .sub { display: block; font-size: 12px; color: var(--text-muted); }
+.rank-country {
+  display: block; padding: 0; border: 0; background: none; cursor: pointer; text-align: left;
+  font: inherit; font-weight: 700; color: var(--text);
+}
+.rank-country:hover { color: var(--link); text-decoration: underline; }
+.rank-meta { display: block; margin-top: 2px; font-size: 12px; color: var(--text-secondary); }
+.rank-old { display: flex; align-items: center; gap: 4px; margin-top: 2px; font-size: 12px; color: var(--text-muted); }
+.rank-value { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-family: var(--font-title); font-size: 15px; font-weight: 700; }
+.rank-value .rank-unit { font-family: var(--font-body); font-size: 11px; font-weight: 400; }
+tr.is-old .rank-value { color: var(--text-secondary); }
+.rank-group th {
+  position: static; padding: 7px 6px; text-align: left; font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+  text-transform: uppercase; color: var(--gnc-slate); background: var(--surface-hover);
+}
+.rev {
+  display: inline-block; padding: 0 6px; border: 1px dashed #8A938D; border-radius: 3px;
+  font-size: 11px; line-height: 17px; color: #4A544E; white-space: nowrap;
+}
+@media (max-width: 639px) {
+  .rank-tbl { min-width: 520px; }
+}

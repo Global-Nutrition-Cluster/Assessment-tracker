@@ -1,17 +1,18 @@
 // Results page entry point: loads data/results.json and draws the blocks (CLAUDE.md section 11).
-// Blocks: indicator selector + Source toggle, KPI tiles, map. The ranked list and the full
-// country profile are added in the next steps of the results-view branch.
+// Blocks: indicator selector + Source toggle, KPI tiles, map and ranked list (same figures, figures.js).
+// The full country profile is added in the next step of the results-view branch.
 
 import { loadResults, selectorIndicators, indexSurveys } from './data.js';
 import { countryFigures } from './figures.js';
 import { createResultsMap } from './map.js';
+import { createRankedList } from './ranked.js';
 import { readState, writeState } from './state.js';
 import { createControls } from './controls.js';
 import { createResultsKpis } from './kpis.js';
 import { escapeHtml } from '../filters.js';
 
 const app = { data: null, state: null, surveysById: null, indicators: null,
-  updateControls: null, updateKpis: null, updateMap: null };
+  updateControls: null, updateKpis: null, updateMap: null, updateRanked: null };
 
 async function start() {
   try {
@@ -40,6 +41,10 @@ async function start() {
     console.error(error);
     document.getElementById('map-card').innerHTML = '<div class="notice" role="alert">The map could not be loaded.</div>';
   }
+
+  app.updateRanked = createRankedList(document.getElementById('rank-card'), {
+    onCountry: (country) => openCountry(country),
+  });
 
   // Back / forward or an edited link (#country=XXX) opens or closes the profile
   window.addEventListener('hashchange', () => {
@@ -71,6 +76,7 @@ function render() {
   app.updateControls(state);
   app.updateKpis(data, state);
   app.updateMap?.({ figures, indicator, source: state.source, countryNames: data.countries });
+  app.updateRanked({ figures, indicator, countryNames: data.countries });
   renderProfile();
 }
 
