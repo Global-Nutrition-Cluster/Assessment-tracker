@@ -27,9 +27,10 @@ export function definitionText(indicator, source) {
   const parts = Object.entries(indicator.definition || {})
     .filter(([src]) => source === 'all' || src === source.toUpperCase())
     .map(([src, text]) => `${src}: ${text}.`);
-  parts.push(indicator.classes
-    ? 'Colours use WHO 2018 prevalence classes.'
-    : 'No WHO classes for this indicator: colours follow a continuous scale.');
+  // Phases and their source come from the Dashboard indicators sheet (rule 11.3.7)
+  parts.push(indicator.phases
+    ? `Colours use ${indicator.phases.source} phases.`
+    : 'No phases for this indicator: colours follow a continuous scale.');
   return parts.join(' ');
 }
 

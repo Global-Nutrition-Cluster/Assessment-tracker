@@ -7,31 +7,52 @@
 //   - a country with only subnational values for the indicator is "subnational only".
 
 import { matchSource } from './data.js';
+import { escapeHtml } from '../filters.js';
 
 export const CURRENT_YEAR = new Date().getFullYear();
-
-export const WHO_CLASSES = ['Very low', 'Low', 'Medium', 'High', 'Very high'];
 
 /** Rule 11.3.5: the age of the data, from the survey year only (never a planning date). */
 export function isOlderThan3Years(surveyYear, currentYear = CURRENT_YEAR) {
   return Boolean(surveyYear) && currentYear - surveyYear > 3;
 }
 
-/** Rule 11.3.7: index 0–4 of the WHO 2018 class, or null when the indicator has no classes. */
-export function whoClass(indicator, value) {
-  if (!indicator?.classes || value == null) return null;
-  const index = indicator.classes.findIndex((threshold) => value < threshold);
-  return index === -1 ? indicator.classes.length : index;
+// --- Phases (rule 11.3.7) --------------------------------------------------------------
+// Each indicator's phases come from the "Dashboard indicators" Google Sheet:
+// indicator.phases = { source: 'WHO 2018', thresholds: [2.5, 5, 10, 15], labels: ['Very low', …] },
+// or null when the sheet says "none". 2 to 5 phases; a value equal to a threshold goes to the next phase.
+// phases.colours = the colour step of each phase (see build_results.py, phase_colours).
+
+/** Colour step (0–4, lightest to darkest) of phase i, set by build_results.py (phase_colours):
+ *  the same phase number has the same colour on every indicator; reversed when a higher value is better. */
+function phaseColour(phases, i) {
+  return phases.colours?.at(i) ?? i;
 }
 
-/** Thresholds as legend labels: "< 2.5%", "2.5–<5", … "≥ 15". */
-export function classLabels(indicator) {
-  const t = indicator.classes;
-  return WHO_CLASSES.map((name, i) => {
-    if (i === 0) return `${name} < ${t[0]}%`;
-    if (i === t.length) return `${name} ≥ ${t[i - 1]}`;
-    return `${name} ${t[i - 1]}–<${t[i]}`;
+/** { index, label, colour } of a value, or null when the indicator has no phases. */
+export function phaseOf(indicator, value) {
+  const phases = indicator?.phases;
+  if (!phases || value == null) return null;
+  const found = phases.thresholds.findIndex((threshold) => value < threshold);
+  const index = found === -1 ? phases.thresholds.length : found;
+  return { index, label: phases.labels.at(index), colour: phaseColour(phases, index) };
+}
+
+/** Legend items: "Very low < 2.5", "Low 2.5–<5", … "Very high ≥ 15", with their colour step. */
+export function phaseLegend(indicator) {
+  const { thresholds: t, labels } = indicator.phases;
+  return labels.map((name, i) => {
+    let range;
+    if (i === 0) range = `< ${t[0]}`;
+    else if (i === t.length) range = `≥ ${t[i - 1]}`;
+    else range = `${t[i - 1]}–<${t[i]}`;
+    return { text: `${name} ${range}`, colour: phaseColour(indicator.phases, i) };
   });
+}
+
+/** Pill with the phase name, coloured like the map ('' when the indicator has no phases). */
+export function phasePill(indicator, value) {
+  const phase = phaseOf(indicator, value);
+  return phase ? `<span class="sev sev-${phase.colour}">${escapeHtml(phase.label)}</span>` : '';
 }
 
 /** Value as published, with its unit. Percentages get one decimal (10 -> 10.0%), nothing is rounded away. */
@@ -116,7 +137,7 @@ export function countryFigures(data, indicatorKey, source, surveysById) {
   return figures;
 }
 
-/** Five equal steps between the smallest and largest national value, for indicators without WHO classes. */
+/** Five equal steps between the smallest and largest national value, for indicators without phases. */
 export function continuousSteps(figures) {
   const values = [...figures.values()].filter((f) => f.main).map((f) => f.main.value.value);
   if (!values.length) return null;

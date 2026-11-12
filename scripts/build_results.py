@@ -4,12 +4,14 @@
 Sources (CLAUDE.md section 11.1):
   - SMART results, sheet "Consolidation"  -> $SMART_RESULTS_CSV_URL (Google Sheet published as CSV)
   - SMART surveys, sheet "Surveys"        -> $SMART_SURVEYS_CSV_URL
+  - Indicators of the selector, sheet "Dashboard indicators" (labels, definitions, phases)
+                                          -> $RESULTS_INDICATORS_CSV_URL
   - DHS indicators and surveys            -> data/dhs/*.csv (written by the "Update DHS data" workflow)
   - Planning tracker, for the ID check    -> data/surveys.json (written by build_data.py)
 
 Usage:
     python scripts/build_results.py
-    python scripts/build_results.py --smart-results file.csv --smart-surveys file.csv   # local test files
+    python scripts/build_results.py --smart-results file.csv --smart-surveys file.csv --indicators file.csv
 
 The business rules are numbered as in CLAUDE.md, section 11.3. Values are kept as published:
 nothing is recalculated. Only the Python standard library is used.
@@ -55,114 +57,137 @@ SMART_SURVEY_COLUMNS = [
 SMART_REPORT_LINK_COLUMN = "Report link"
 
 # ---------------------------------------------------------------------------
-# Indicator list (rule 11.3.2)
-# One entry per indicator of the selector. A key is shared by SMART and DHS only when the
-# definition is the same (stunting, underweight) or, for wasting, when both are shown side by
-# side with their own definition line. Everything else stays per source.
-# "classes" = WHO 2018 prevalence thresholds (rule 11.3.7): Very low < t1 <= Low < t2 ...
+# Indicator list (rule 11.3.0): the "Dashboard indicators" Google Sheet, $RESULTS_INDICATORS_CSV_URL.
+# One row per indicator of the selector, in the order of the sheet. It holds the labels, the
+# definitions and the phases (thresholds + names + who set them). Nothing about indicators is
+# hard-coded here any more (owner's decision, Nov 2026).
 # ---------------------------------------------------------------------------
 
-WASTING_CLASSES = [2.5, 5, 10, 15]
-STUNTING_CLASSES = [2.5, 10, 20, 30]
-OVERWEIGHT_CLASSES = [2.5, 5, 10, 15]
+INDICATOR_COLUMNS = [
+    "Indicator key", "Group", "Label", "Unit", "SMART code", "DHS ID",
+    "SMART definition", "DHS definition", "Phase thresholds", "Phase labels", "Phase source",
+]
+NO_PHASES = "none"          # keyword in "Phase thresholds" for an indicator without phases
+DIRECTION_COLUMN = "Higher value is"   # optional column: worse (default) or better (e.g. dietary diversity)
+COLOURS_COLUMN = "Phase colours"       # optional column: colour step 1-5 of each phase, e.g. 1;3;4;5
+MAX_PHASES = 5              # the map has five colours
+MIN_INDICATORS = 1
 
 PCT = "%"
-DEATHS_DAY = "deaths/10,000/day"
 PER_1000 = "per 1,000 live births"
 
 
-def ind(key, group, label, unit, smart=None, dhs=None, classes=None, smart_def=None, dhs_def=None):
-    return {
-        "key": key, "group": group, "label": label, "unit": unit,
-        "smart_code": smart, "dhs_id": dhs, "classes": classes,
-        "definition": {k: v for k, v in (("SMART", smart_def), ("DHS", dhs_def)) if v},
-        "selector": True,
-    }
+def split_list(text):
+    """'2.5; 5;10 ' -> ['2.5', '5', '10']."""
+    return [part.strip() for part in (text or "").split(";") if part.strip()]
 
 
-INDICATORS = [
-    ind("GAM_WHZ", "Acute malnutrition", "Wasting — GAM by weight-for-height (WHZ)", PCT,
-        smart="GAM_WHZ", dhs="CN_NUTS_C_WH2", classes=WASTING_CLASSES,
-        smart_def="WHZ < −2 and/or oedema, 6–59 months", dhs_def="WHZ < −2, no oedema, 0–59 months"),
-    ind("SAM_WHZ", "Acute malnutrition", "SAM by weight-for-height (WHZ)", PCT,
-        smart="SAM_WHZ", dhs="CN_NUTS_C_WH3",
-        smart_def="WHZ < −3 and/or oedema, 6–59 months", dhs_def="WHZ < −3, no oedema, 0–59 months"),
-    ind("MAM_WHZ", "Acute malnutrition", "MAM by weight-for-height (WHZ)", PCT, smart="MAM_WHZ",
-        smart_def="WHZ ≥ −3 and < −2, no oedema, 6–59 months"),
-    ind("GAM_MUAC", "Acute malnutrition", "GAM by MUAC", PCT, smart="GAM_MUAC",
-        smart_def="MUAC < 125 mm and/or oedema, 6–59 months"),
-    ind("SAM_MUAC", "Acute malnutrition", "SAM by MUAC", PCT, smart="SAM_MUAC",
-        smart_def="MUAC < 115 mm and/or oedema, 6–59 months"),
-    ind("MAM_MUAC", "Acute malnutrition", "MAM by MUAC", PCT, smart="MAM_MUAC",
-        smart_def="MUAC 115–124 mm, no oedema, 6–59 months"),
-    ind("GAM_COMB", "Acute malnutrition", "GAM combined (WHZ or MUAC)", PCT, smart="GAM_COMB",
-        smart_def="WHZ < −2 and/or MUAC < 125 mm and/or oedema"),
-    ind("SAM_COMB", "Acute malnutrition", "SAM combined (WHZ or MUAC)", PCT, smart="SAM_COMB",
-        smart_def="WHZ < −3 and/or MUAC < 115 mm and/or oedema"),
-    ind("MAM_COMB", "Acute malnutrition", "MAM combined (WHZ or MUAC)", PCT, smart="MAM_COMB"),
+def parse_phases(row, warnings):
+    """Rule 11.3.7: phases of one indicator, or None.
 
-    ind("CDR", "Mortality", "Crude death rate (CDR)", DEATHS_DAY, smart="CDR",
-        smart_def="Deaths per 10,000 people per day, recall period of a few months"),
-    ind("U5DR", "Mortality", "Under-five death rate (U5DR)", DEATHS_DAY, smart="U5DR",
-        smart_def="Deaths of children under 5 per 10,000 per day, recall period of a few months"),
-    ind("U5MR", "Mortality", "Under-five mortality rate", PER_1000, dhs="CM_ECMR_C_U5M",
-        dhs_def="Deaths before age 5 per 1,000 live births, 5 years before the survey"),
-    ind("IMR", "Mortality", "Infant mortality rate", PER_1000, dhs="CM_ECMT_C_IMR",
-        dhs_def="Deaths before age 1 per 1,000 live births, 5 years before the survey"),
-    ind("CMR", "Mortality", "Child mortality rate (1–4 years)", PER_1000, dhs="CM_ECMT_C_CMR",
-        dhs_def="Deaths between age 1 and 5 per 1,000 children reaching age 1, 5 years before the survey"),
+    "Phase thresholds" = the upper limits between phases, ascending, separated by ';' (e.g. 2.5;5;10;15),
+    or the keyword none. "Phase labels" = one name per phase, from the lowest value to the highest,
+    so one more than the thresholds. "Higher value is" (optional) = worse (default) or better.
+    "Phase colours" (optional) = the colour step 1-5 of each phase (see phase_colours).
+    "Phase source" = who set the phases (WHO 2018, GNC, IPC...). Values below the first threshold
+    are in the first phase; a value equal to a threshold goes to the next phase (WHO: 10 is High).
+    """
+    key = row["Indicator key"]
+    raw = row["Phase thresholds"].strip()
+    if raw.lower() == NO_PHASES:
+        return None
+    if not raw:
+        warnings.append(f"Indicator {key}: 'Phase thresholds' is empty; write {NO_PHASES} when there are no phases. "
+                        "Shown without phases.")
+        return None
+    try:
+        thresholds = [parse_number(t) for t in split_list(raw)]
+    except ValueError:
+        warnings.append(f"Indicator {key}: phase thresholds '{raw}' are not numbers separated by ';'. Shown without phases.")
+        return None
+    labels = split_list(row["Phase labels"])
+    source = row["Phase source"].strip()
+    problem = None
+    if any(b <= a for a, b in zip(thresholds, thresholds[1:])):
+        problem = "thresholds are not in ascending order"
+    elif len(labels) != len(thresholds) + 1:
+        problem = f"{len(thresholds)} thresholds need {len(thresholds) + 1} phase labels, found {len(labels)}"
+    elif len(labels) > MAX_PHASES:
+        problem = f"at most {MAX_PHASES} phases"
+    elif not source:
+        problem = "'Phase source' is empty (e.g. WHO 2018, GNC)"
+    direction = (row.get(DIRECTION_COLUMN) or "worse").strip().lower()
+    if not problem and direction not in ("worse", "better"):
+        problem = f"'{DIRECTION_COLUMN}' must be worse or better, not '{direction}'"
+    colours = phase_colours(row.get(COLOURS_COLUMN, ""), len(labels), direction == "better")
+    if not problem and colours is None:
+        problem = f"'{COLOURS_COLUMN}' must give one number from 1 to 5 per phase"
+    if problem:
+        warnings.append(f"Indicator {key}: {problem}. Shown without phases.")
+        return None
+    return {"source": source, "thresholds": thresholds, "labels": labels,
+            "higher_is_better": direction == "better", "colours": colours}
 
-    ind("ILLNESS", "Morbidity", "Any illness (SMART)", PCT, smart="ILLNESS",
-        smart_def="Children under 5, 2 weeks before the survey"),
-    ind("DIAR", "Morbidity", "Diarrhoea (SMART)", PCT, smart="DIAR",
-        smart_def="Children under 5, 2 weeks before the survey"),
-    ind("FEVER", "Morbidity", "Fever (SMART)", PCT, smart="FEVER",
-        smart_def="Children under 5, 2 weeks before the survey"),
-    ind("ARI", "Morbidity", "Acute respiratory infection, ARI (SMART)", PCT, smart="ARI",
-        smart_def="Children under 5, 2 weeks before the survey"),
-    ind("COUGH", "Morbidity", "Cough (SMART)", PCT, smart="COUGH",
-        smart_def="Children under 5, 2 weeks before the survey"),
-    ind("DIAR_ILL", "Morbidity", "Diarrhoea among children reported ill (SMART)", PCT, smart="DIAR_ILL",
-        smart_def="Share of the children reported ill, not a prevalence"),
-    ind("FEVER_ILL", "Morbidity", "Fever among children reported ill (SMART)", PCT, smart="FEVER_ILL",
-        smart_def="Share of the children reported ill, not a prevalence"),
-    ind("ARI_ILL", "Morbidity", "ARI / cough among children reported ill (SMART)", PCT, smart="ARI_ILL",
-        smart_def="Share of the children reported ill, not a prevalence"),
-    ind("COUGH_ILL", "Morbidity", "Cough among children reported ill (SMART)", PCT, smart="COUGH_ILL",
-        smart_def="Share of the children reported ill, not a prevalence"),
-    ind("DHS_DIAR", "Morbidity", "Diarrhoea (DHS)", PCT, dhs="CH_DIAR_C_DIA",
-        dhs_def="Children under 5, 2 weeks before the survey"),
-    ind("DHS_FEVER", "Morbidity", "Fever (DHS)", PCT, dhs="CH_FEVR_C_FEV",
-        dhs_def="Children under 5, 2 weeks before the survey"),
-    ind("DHS_ARI", "Morbidity", "Acute respiratory infection, ARI (DHS)", PCT, dhs="CH_ARIS_C_ARI",
-        dhs_def="Children under 5 with ARI symptoms, 2 weeks before the survey"),
 
-    ind("STUNT", "Stunting", "Stunting (HAZ < −2)", PCT, smart="STUNT", dhs="CN_NUTS_C_HA2",
-        classes=STUNTING_CLASSES, smart_def="6–59 months", dhs_def="0–59 months"),
-    ind("STUNT_SEV", "Stunting", "Severe stunting (HAZ < −3)", PCT, smart="STUNT_SEV", dhs="CN_NUTS_C_HA3",
-        smart_def="6–59 months", dhs_def="0–59 months"),
-    ind("STUNT_MOD", "Stunting", "Moderate stunting (HAZ ≥ −3 and < −2)", PCT, smart="STUNT_MOD",
-        smart_def="6–59 months"),
+def phase_colours(text, count, higher_is_better):
+    """Colour step (0-4, lightest to darkest) of each phase, listed from the lowest value up.
 
-    ind("UW", "Underweight", "Underweight (WAZ < −2)", PCT, smart="UW", dhs="CN_NUTS_C_WA2",
-        smart_def="6–59 months", dhs_def="0–59 months"),
-    ind("UW_SEV", "Underweight", "Severe underweight (WAZ < −3)", PCT, smart="UW_SEV", dhs="CN_NUTS_C_WA3",
-        smart_def="6–59 months", dhs_def="0–59 months"),
-    ind("UW_MOD", "Underweight", "Moderate underweight (WAZ ≥ −3 and < −2)", PCT, smart="UW_MOD",
-        smart_def="6–59 months"),
+    Default: phase 1 = step 1, phase 2 = step 2... so the same phase number has the same colour on every
+    indicator (Critical is always the 4th colour). "Higher value is better" (e.g. dietary diversity):
+    the lowest values are the most severe, so the default runs the other way. "Phase colours" overrides
+    it when a phase covers two severity levels, e.g. 1;3;4;5 for CDR (Acceptable/Alert, Serious...).
+    Returns None when the column is filled but unusable.
+    """
+    if not (text or "").strip():
+        steps = list(range(count))
+        return steps[::-1] if higher_is_better else steps
+    try:
+        steps = [int(parse_number(t)) - 1 for t in split_list(text)]
+    except (ValueError, TypeError):
+        return None
+    if len(steps) != count or any(s < 0 or s > 4 for s in steps):
+        return None
+    return steps
 
-    ind("OVERWEIGHT", "Overweight", "Overweight (WHZ > +2)", PCT, dhs="CN_NUTS_C_WHP",
-        classes=OVERWEIGHT_CLASSES, dhs_def="0–59 months"),
-    ind("WHZ_MEAN", "Overweight", "Mean weight-for-height z-score", "", dhs="CN_NUTS_C_WHM",
-        dhs_def="0–59 months"),
-    ind("MMF", "Infant and young child feeding", "Minimum meal frequency, 6–23 months", PCT,
-        dhs="CN_IYCF_C_MNA", dhs_def="Children 6–23 months fed the minimum number of times"),
-    ind("WOMEN_THIN", "Adult nutrition", "Women thin, BMI < 18.5", PCT, dhs="AN_NUTS_W_THN",
-        dhs_def="Women 15–49 years"),
-]
 
-SMART_CODE_TO_KEY = {i["smart_code"]: i["key"] for i in INDICATORS if i["smart_code"]}
-DHS_ID_TO_KEY = {i["dhs_id"]: i["key"] for i in INDICATORS if i["dhs_id"]}
+def load_indicators(csv_text, warnings):
+    """Rows of the "Dashboard indicators" sheet -> indicator list. Raises SourceError if unusable."""
+    rows = read_table(csv_text, "Indicator key", INDICATOR_COLUMNS, "Dashboard indicators sheet")
+    indicators, seen_keys, seen_codes = [], set(), {}
+    for row in rows:
+        key = row["Indicator key"]
+        if key in seen_keys:
+            warnings.append(f"Indicator {key}: appears twice in the indicator sheet; the first row is used.")
+            continue
+        smart, dhs = row["SMART code"] or None, row["DHS ID"] or None
+        if not smart and not dhs:
+            warnings.append(f"Indicator {key}: no SMART code and no DHS ID; left out of the selector.")
+            continue
+        for code in (smart, dhs):
+            if code and code in seen_codes:
+                warnings.append(f"Indicator {key}: code {code} is already used by {seen_codes[code]}; row left out.")
+                break
+        else:
+            seen_keys.add(key)
+            for code in (smart, dhs):
+                if code:
+                    seen_codes[code] = key
+            indicators.append({
+                "key": key,
+                "group": row["Group"] or "Other",
+                "label": row["Label"] or key,
+                "unit": row["Unit"],
+                "smart_code": smart,
+                "dhs_id": dhs,
+                "phases": parse_phases(row, warnings),
+                "definition": {src: text for src, text in (("SMART", row["SMART definition"]),
+                                                           ("DHS", row["DHS definition"])) if text},
+                "selector": True,
+            })
+    if len(indicators) < MIN_INDICATORS:
+        raise SourceError("Dashboard indicators sheet: no usable indicator row.")
+    return indicators
+
 
 # ---------------------------------------------------------------------------
 # Small helpers
@@ -265,7 +290,7 @@ def build_smart_surveys(rows, warnings):
     return surveys
 
 
-def smart_value(row, warnings):
+def smart_value(row, codes, warnings):
     """One Consolidation row -> one value, or None when the row has no usable value."""
     rid = row["Result ID"] or "(no Result ID)"
     try:
@@ -282,10 +307,10 @@ def smart_value(row, warnings):
         return None
 
     code = row["Indicator code"].strip()
-    key = SMART_CODE_TO_KEY.get(code)
+    key = codes.get(code)
     if key is None:
-        warnings.append(f"{rid}: indicator code '{code}' is not in the indicator list "
-                        "(scripts/build_results.py, INDICATORS); row left out.")
+        warnings.append(f"{rid}: indicator code '{code}' is not in the Dashboard indicators sheet "
+                        "(column SMART code); row left out.")
         return None
 
     # Rule 11.3.6: rows flagged by the extraction's automatic check are kept, and listed.
@@ -349,14 +374,15 @@ def check_ids(values, smart_surveys, planning, warnings):
             warnings.append(f"{sid}: country {iso3} in the results but {planning[sid]} in the planning tracker.")
 
 
-def build_smart(results_text, surveys_text, planning, warnings):
+def build_smart(results_text, surveys_text, planning, indicators, warnings):
     result_rows = read_table(results_text, "Result ID", SMART_RESULT_COLUMNS, "SMART Consolidation sheet")
     survey_rows = read_table(surveys_text, "Assessment ID", SMART_SURVEY_COLUMNS, "SMART Surveys sheet")
     if len(result_rows) < MIN_SMART_VALUES:
         raise SourceError(f"SMART Consolidation sheet: only {len(result_rows)} rows (at least "
                           f"{MIN_SMART_VALUES} expected). Wrong tab or emptied sheet?")
     surveys = build_smart_surveys(survey_rows, warnings)
-    values = [v for v in (smart_value(r, warnings) for r in result_rows) if v]
+    codes = {i["smart_code"]: i["key"] for i in indicators if i["smart_code"]}
+    values = [v for v in (smart_value(r, codes, warnings) for r in result_rows) if v]
     mark_alternative_ages(values)
     check_ids(values, surveys, planning, warnings)
     used = {v["survey"] for v in values}
@@ -384,7 +410,7 @@ def dhs_unit(measurement_type, topic):
     return DHS_UNITS.get(measurement_type, "")
 
 
-def build_dhs(values_text, surveys_text, warnings):
+def build_dhs(values_text, surveys_text, indicators, warnings):
     rows = read_table(values_text, "country",
                       ["country", "iso3", "indicator_id", "indicator", "topic", "measurement_type", "value",
                        "ci_lower", "ci_upper", "denominator_unweighted", "survey_id", "survey_year",
@@ -395,6 +421,7 @@ def build_dhs(values_text, surveys_text, warnings):
     if len(rows) < MIN_DHS_VALUES:
         raise SourceError(f"DHS indicators file: only {len(rows)} rows (at least {MIN_DHS_VALUES} expected).")
     plan_by_id = {p["assessment_id"]: p for p in plan}
+    dhs_keys = {i["dhs_id"]: i["key"] for i in indicators if i["dhs_id"]}
 
     extra_indicators = {}   # DHS indicators outside the selector ("More indicators" in the profile)
     values, surveys = [], {}
@@ -412,13 +439,13 @@ def build_dhs(values_text, surveys_text, warnings):
         if value is None:
             continue
 
-        key = DHS_ID_TO_KEY.get(row["indicator_id"])
+        key = dhs_keys.get(row["indicator_id"])
         if key is None:
             key = row["indicator_id"]
             extra_indicators.setdefault(key, {
                 "key": key, "group": row["topic"] or "Other", "label": row["indicator"],
                 "unit": dhs_unit(row["measurement_type"], row["topic"]), "smart_code": None, "dhs_id": key,
-                "classes": None, "definition": {}, "selector": False,
+                "phases": None, "definition": {}, "selector": False,
             })
 
         sid = row["survey_id"]
@@ -476,10 +503,11 @@ def compact(record):
     return {k: v for k, v in record.items() if v is not None and v is not False}
 
 
-def build(smart_results_text, smart_surveys_text, dhs_values_text, dhs_surveys_text, planning):
+def build(smart_results_text, smart_surveys_text, dhs_values_text, dhs_surveys_text, planning, indicators_text):
     warnings = []
-    smart_surveys, smart_values = build_smart(smart_results_text, smart_surveys_text, planning, warnings)
-    dhs_surveys, dhs_values, dhs_extra = build_dhs(dhs_values_text, dhs_surveys_text, warnings)
+    indicators = load_indicators(indicators_text, warnings)
+    smart_surveys, smart_values = build_smart(smart_results_text, smart_surveys_text, planning, indicators, warnings)
+    dhs_surveys, dhs_values, dhs_extra = build_dhs(dhs_values_text, dhs_surveys_text, indicators, warnings)
 
     countries = {}
     for s in smart_surveys + dhs_surveys:
@@ -487,7 +515,7 @@ def build(smart_results_text, smart_surveys_text, dhs_values_text, dhs_surveys_t
             countries.setdefault(s["iso3"], s["country"])
 
     results = {
-        "indicators": INDICATORS + sorted(dhs_extra, key=lambda i: (i["group"], i["label"])),
+        "indicators": indicators + sorted(dhs_extra, key=lambda i: (i["group"], i["label"])),
         "countries": dict(sorted(countries.items())),
         "surveys": [compact(s) for s in smart_surveys + dhs_surveys],
         "values": [compact(v) for v in smart_values + dhs_values],
@@ -558,6 +586,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--smart-results", help="Local CSV of the Consolidation sheet instead of $SMART_RESULTS_CSV_URL")
     parser.add_argument("--smart-surveys", help="Local CSV of the Surveys sheet instead of $SMART_SURVEYS_CSV_URL")
+    parser.add_argument("--indicators", help="Local CSV of the Dashboard indicators sheet instead of $RESULTS_INDICATORS_CSV_URL")
     parser.add_argument("--out", default=str(DATA_DIR), help="Output folder (default: data/)")
     args = parser.parse_args(argv)
 
@@ -568,6 +597,7 @@ def main(argv=None):
             read_file(DHS_VALUES_FILE),
             read_file(DHS_SURVEYS_FILE),
             load_planning(),
+            read_source(args.indicators, "RESULTS_INDICATORS_CSV_URL"),
         )
     except SourceError as exc:
         print(f"ERROR: {exc}\nThe existing results files were left unchanged.", file=sys.stderr)

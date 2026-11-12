@@ -4,7 +4,7 @@
 
 import { escapeHtml } from '../filters.js';
 import { shortCountry } from '../format.js';
-import { WHO_CLASSES, whoClass, formatValue, formatCi, isOlderThan3Years } from './figures.js';
+import { phaseOf, phasePill, formatValue, formatCi, isOlderThan3Years } from './figures.js';
 
 const CLOCK = '<svg class="ico" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="8" cy="8" r="6.5"></circle><path d="M8 4.5V8l2.5 1.5"></path></svg>';
 
@@ -113,8 +113,7 @@ function oldLine(year) {
 
 function nationalRow(row, rank, indicator) {
   const { value: v, year } = row.figure.main;
-  const cls = whoClass(indicator, v.value);
-  const pill = cls == null ? '' : ` <span class="sev sev-${cls}">${WHO_CLASSES[cls]}</span>`;
+  const pill = phasePill(indicator, v.value) ? ` ${phasePill(indicator, v.value)}` : '';
   const unit = indicator.unit && indicator.unit !== '%' ? ` <span class="mute rank-unit">${escapeHtml(indicator.unit)}</span>` : '';
   const definition = indicator.definition?.[v.source];
   return `<tr class="${isOlderThan3Years(year) ? 'is-old' : ''}">
@@ -162,19 +161,19 @@ function exportCsv(view) {
   const ind = view.indicator;
   const { national, subnational, noData } = splitRows(view.rows, view.sortDir);
   const header = ['Rank', 'Country', 'Country ISO3', 'Indicator', 'Figure', 'Source', 'Survey ID', 'Survey year',
-    'Value', 'Unit', 'CI lower', 'CI upper', 'Definition', 'Age group', 'WHO 2018 class', 'Older than 3 years', 'Review'];
+    'Value', 'Unit', 'CI lower', 'CI upper', 'Definition', 'Age group', 'Phase', 'Phase source', 'Older than 3 years', 'Review'];
   const lines = [header];
   national.forEach((row, i) => {
     const { value: v, year } = row.figure.main;
-    const cls = whoClass(ind, v.value);
+    const phase = phaseOf(ind, v.value);
     lines.push([i + 1, row.name, row.iso3, ind.label, 'National', v.source, v.survey, year, v.value, ind.unit,
-      v.ci_lower, v.ci_upper, ind.definition?.[v.source], v.age_group, cls == null ? '' : WHO_CLASSES[cls],
+      v.ci_lower, v.ci_upper, ind.definition?.[v.source], v.age_group, phase?.label ?? '', phase ? ind.phases.source : '',
       isOlderThan3Years(year) ? 'Yes' : 'No', 'As published']);
   });
   subnational.forEach((row) => {
     const s = row.figure.subnational;
     lines.push(['', row.name, row.iso3, ind.label, `Subnational only (${s.areas} areas)`, s.source, s.survey?.id, s.year,
-      '', '', '', '', '', '', '', isOlderThan3Years(s.year) ? 'Yes' : 'No', 'As published']);
+      '', '', '', '', '', '', '', '', isOlderThan3Years(s.year) ? 'Yes' : 'No', 'As published']);
   });
   noData.forEach((row) => lines.push(['', row.name, row.iso3, ind.label, 'No data']));
 

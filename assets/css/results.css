@@ -46,12 +46,12 @@
   display: inline-flex; align-items: center; padding: 0 7px; border-radius: 10px;
   font-size: 12px; font-weight: 600; line-height: 18px; white-space: nowrap; color: var(--text);
 }
-.sev-0 { background: var(--who-very-low); box-shadow: inset 0 0 0 1px #E9C3D6; }
-.sev-1 { background: var(--who-low); }
-.sev-2 { background: var(--who-medium); }
-.sev-3 { background: var(--who-high); color: #FFFFFF; }
-.sev-4 { background: var(--who-very-high); color: #FFFFFF; }
-/* continuous scale (no WHO classes) */
+.sev-0 { background: var(--phase-1); box-shadow: inset 0 0 0 1px #A9DCA9; }
+.sev-1 { background: var(--phase-2); }
+.sev-2 { background: var(--phase-3); }
+.sev-3 { background: var(--phase-4); color: #FFFFFF; }
+.sev-4 { background: var(--phase-5); color: #FFFFFF; }
+/* continuous scale (no phases) */
 .cont-0 { background: var(--cont-1); box-shadow: inset 0 0 0 1px #C5DBE1; }
 .cont-1 { background: var(--cont-2); }
 .cont-2 { background: var(--cont-3); }
@@ -65,8 +65,8 @@
 .legend-scale-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
 .legend-scale-row .lbl { margin-right: 4px; text-transform: none; letter-spacing: 0; font-size: 12px; color: var(--text); font-weight: 700; }
 .res-legend .legend { font-size: 13px; }
-.swatch.sw-hatch { background: repeating-linear-gradient(45deg, #D46A9F 0 2px, #FFFFFF 2px 5px); box-shadow: inset 0 0 0 1px #E9C3D6; }
-.swatch.sw-dots { background: radial-gradient(circle, #FFFFFF 1px, transparent 1.3px) 0 0 / 5px 5px, var(--who-medium); }
+.swatch.sw-hatch { background: repeating-linear-gradient(45deg, #7A847E 0 2px, #FFFFFF 2px 5px); box-shadow: inset 0 0 0 1px #B9C0BB; }
+.swatch.sw-dots { background: radial-gradient(circle, #FFFFFF 1px, transparent 1.3px) 0 0 / 5px 5px, var(--phase-3); }
 .swatch.sw-hatch-cont { background: repeating-linear-gradient(45deg, #3E8196 0 2px, #FFFFFF 2px 5px); box-shadow: inset 0 0 0 1px #C5DBE1; }
 .swatch.sw-dots-cont { background: radial-gradient(circle, #FFFFFF 1px, transparent 1.3px) 0 0 / 5px 5px, var(--cont-3); }
 

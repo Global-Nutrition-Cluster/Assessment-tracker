@@ -12,7 +12,7 @@
 // Values are shown as published; every value carries the "As published" badge (rule 11.3.6).
 
 import { escapeHtml } from '../filters.js';
-import { WHO_CLASSES, whoClass, formatValue, formatCi, isOlderThan3Years } from './figures.js';
+import { phaseOf, phasePill, formatValue, formatCi, isOlderThan3Years } from './figures.js';
 
 const TABS = [
   { key: 'acute', label: 'Acute malnutrition', groups: ['Acute malnutrition', 'Overweight'] },
@@ -47,10 +47,7 @@ function formatPeriod(start, end) {
 const esc = escapeHtml;
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
-function pill(indicator, value) {
-  const cls = whoClass(indicator, value);
-  return cls == null ? '' : `<span class="sev sev-${cls}">${WHO_CLASSES[cls]}</span>`;
-}
+const pill = phasePill;   // phase name, coloured like the map (rule 11.3.7)
 
 // --- the profile ----------------------------------------------------------------------------
 
@@ -377,7 +374,7 @@ function dotPlot(values, indicator) {
 
   const rowHtml = rows.map((r) => {
     const v = byKey.get(r.key);
-    const cls = whoClass(indicator, v.value);
+    const cls = phaseOf(indicator, v.value)?.colour ?? null;
     const child = (LEVEL_ORDER[r.level] ?? 1) === 2;
     const ci = v.ci_lower != null && v.ci_upper != null
       ? `<span class="dp-ci" style="left:${pct(v.ci_lower)};width:calc(${pct(v.ci_upper)} - ${pct(v.ci_lower)})"></span>` : '';
@@ -397,7 +394,7 @@ function dotPlot(values, indicator) {
     <figure class="pf-plot">
       <figcaption>
         <span><strong>${caption}</strong></span>
-        <span class="mute">${indicator.classes ? 'Dots coloured by WHO 2018 class' : 'No WHO classes for this indicator'}${national ? ` · dashed line = national ${formatValue(national.value, indicator.unit)}` : ''}</span>
+        <span class="mute">${indicator.phases ? `Dots coloured by phase (${esc(indicator.phases.source)})` : 'No phases for this indicator'}${national ? ` · dashed line = national ${formatValue(national.value, indicator.unit)}` : ''}</span>
       </figcaption>
       <div class="dp" role="img" aria-label="${esc(`${indicator.label}: ${rows.length} areas. The same values are in the table below.`)}">
         <div class="dp-row dp-headrow" aria-hidden="true"><div>Area</div><div></div><div>Value</div><div>N</div></div>
