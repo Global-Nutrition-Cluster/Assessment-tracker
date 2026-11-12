@@ -1,5 +1,15 @@
 {
- "updated_at": "2026-10-22T13:20:09+00:00",
- "row_count": 143,
- "warnings": []
+ "updated_at": "2026-11-12T09:54:57+00:00",
+ "row_count": 40,
+ "warnings": [
+  "MLI-2022-SMART-01: End Date '########' is not a recognised date; left empty.",
+  "NER-2021-SMART-01: Start date '########' is not a recognised date; left empty.",
+  "NER-2021-SMART-01: End Date '########' is not a recognised date; left empty.",
+  "NGA-2024-SMART-01: Start date '########' is not a recognised date; left empty.",
+  "NGA-2024-SMART-01: End Date '########' is not a recognised date; left empty.",
+  "SDN-2022-SMART-01: Start date '########' is not a recognised date; left empty.",
+  "SDN-2022-SMART-01: End Date '########' is not a recognised date; left empty.",
+  "18 rows of other assessment types left out (MSNA: 6, IPC AMN: 5, IPC: 1, VASyR/MSNA: 1, IPC AFI: 1, Community Nutrition Sentinel Site Survey: 1, Mass MUAC screening: 1, NVA (rounds 2 and 3): 1, NVA: 1). The planning view tracks SMART and Rapid SMART only: these rows can be removed from the sheet.",
+  "SSD-2026-SMART-06: duplicate Assessment ID."
+ ]
 }

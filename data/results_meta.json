@@ -1,5 +1,5 @@
 {
- "updated_at": "2026-11-11T12:55:54+00:00",
+ "updated_at": "2026-11-12T09:54:59+00:00",
  "counts": {
   "smart_surveys": 7,
   "smart_values": 1148,
@@ -20,11 +20,6 @@
   "AFG-2022-SMART-01-R364: no value; row left out.",
   "NER-2021-SMART-01-R249: no value; row left out.",
   "NER-2021-SMART-01-R357: no value; row left out.",
-  "AFG-2022-SMART-01: Assessment ID not found in the planning tracker.",
-  "MLI-2022-SMART-01: Assessment ID not found in the planning tracker.",
-  "NER-2021-SMART-01: Assessment ID not found in the planning tracker.",
-  "NGA-2024-SMART-01: Assessment ID not found in the planning tracker.",
-  "SDN-2022-SMART-01: Assessment ID not found in the planning tracker.",
-  "SOM-2025-SMART-01: Assessment ID not found in the planning tracker."
+  "SSD-2026-SMART-01: Assessment ID not found in the planning tracker."
  ]
 }
