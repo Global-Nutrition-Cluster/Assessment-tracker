@@ -37,7 +37,7 @@ export async function createResultsMap(root, { onCountry }) {
 
   const css = getComputedStyle(document.documentElement);
   const token = (name) => css.getPropertyValue(name).trim();
-  const CLASS_COLORS = ['--phase-1', '--phase-2', '--phase-3', '--phase-4', '--phase-5'].map(token);   // IPC colours
+  const IPC_COLORS = ['--phase-1', '--phase-2', '--phase-3', '--phase-4', '--phase-5'].map(token);   // "Phase palette" = IPC
   const STEP_COLORS = ['--cont-1', '--cont-2', '--cont-3', '--cont-4', '--cont-5'].map(token);
   const COLORS = { noSurvey: '#E8EAE6', noData: '#C2C6C0', border: '#FFFFFF', hover: token('--text') };
 
@@ -116,9 +116,16 @@ export async function createResultsMap(root, { onCountry }) {
     }));
   };
 
+  function isIpc() {
+    return view.indicator.phases?.palette === 'ipc';
+  }
+
   function colourOf(main) {
     const value = main.value.value;
-    if (view.indicator.phases) return CLASS_COLORS[phaseOf(view.indicator, value).colour];
+    if (view.indicator.phases) {
+      const palette = view.indicator.phases.palette === 'ipc' ? IPC_COLORS : STEP_COLORS;
+      return palette[phaseOf(view.indicator, value).colour];
+    }
     return STEP_COLORS[continuousIndex(view.steps, value)];
   }
 
@@ -128,7 +135,7 @@ export async function createResultsMap(root, { onCountry }) {
       const colour = colourOf(figure.main);
       return isOlderThan3Years(figure.main.year) ? patterns.dotted(colour) : colour;
     }
-    if (figure.subnational) return patterns.hatched(view.indicator.phases ? '#7A847E' : '#3E8196');   // neutral: no phase
+    if (figure.subnational) return patterns.hatched(isIpc() ? '#7A847E' : '#3E8196');   // never a phase colour
     return COLORS.noData;
   }
 
@@ -181,7 +188,7 @@ export async function createResultsMap(root, { onCountry }) {
     let scale;
     if (view.indicator.phases) {
       scale = `<span class="lbl">Phases · ${escapeHtml(view.indicator.phases.source)}</span>${phaseLegend(view.indicator)
-        .map((p) => `<span class="sev sev-${p.colour}">${escapeHtml(p.text)}</span>`).join('')}`;
+        .map((p) => `<span class="sev ${p.cls}">${escapeHtml(p.text)}</span>`).join('')}`;
     } else if (view.steps) {
       const { min, max, limits } = view.steps;
       const edges = [min, ...limits, max].map((x) => +x.toPrecision(3));
@@ -193,9 +200,9 @@ export async function createResultsMap(root, { onCountry }) {
     return `
       <div class="legend-scale-row">${scale}</div>
       <ul class="legend">
-        <li><span class="swatch sw-hatch ${view.indicator.phases ? '' : 'sw-hatch-cont'}"></span>Subnational data only</li>
+        <li><span class="swatch sw-hatch ${isIpc() ? '' : 'sw-hatch-cont'}"></span>Subnational data only</li>
         <li><span class="swatch" style="background:${COLORS.noData}"></span>No data for this indicator</li>
-        <li><span class="swatch sw-dots ${view.indicator.phases ? '' : 'sw-dots-cont'}"></span>Dotted: survey older than 3 years</li>
+        <li><span class="swatch sw-dots ${isIpc() ? '' : 'sw-dots-cont'}"></span>Dotted: survey older than 3 years</li>
         <li><span class="swatch" style="background:${COLORS.noSurvey}"></span>No survey in the tracker</li>
       </ul>`;
   }

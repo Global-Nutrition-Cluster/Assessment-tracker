@@ -374,7 +374,7 @@ function dotPlot(values, indicator) {
 
   const rowHtml = rows.map((r) => {
     const v = byKey.get(r.key);
-    const cls = phaseOf(indicator, v.value)?.colour ?? null;
+    const cls = phaseOf(indicator, v.value)?.cls ?? null;
     const child = (LEVEL_ORDER[r.level] ?? 1) === 2;
     const ci = v.ci_lower != null && v.ci_upper != null
       ? `<span class="dp-ci" style="left:${pct(v.ci_lower)};width:calc(${pct(v.ci_upper)} - ${pct(v.ci_lower)})"></span>` : '';
@@ -382,7 +382,7 @@ function dotPlot(values, indicator) {
       <div class="dp-label"><span class="pf-level">${esc(r.level)}</span>${esc(r.area)}</div>
       <div class="dp-track">
         ${national ? `<span class="dp-nat" style="left:${pct(national.value)}"></span>` : ''}
-        ${ci}<span class="dp-dot ${cls == null ? 'dp-neutral' : `sev-${cls}`}" style="left:${pct(v.value)}"></span>
+        ${ci}<span class="dp-dot ${cls == null ? 'dp-neutral' : cls}" style="left:${pct(v.value)}"></span>
       </div>
       <div class="dp-value"><strong>${formatValue(v.value, indicator.unit)}</strong>${pill(indicator, v.value)}</div>
       <div class="dp-n">${v.sample != null ? v.sample.toLocaleString('en-GB') : ''}</div>

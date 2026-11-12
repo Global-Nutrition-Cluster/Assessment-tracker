@@ -90,7 +90,8 @@ class IndicatorSheet(unittest.TestCase):
     def test_phases_are_read(self):
         (ind,), warnings = self.load(indicator_row("CDR", "CDR", "", "1;2", "Below alert;Alert;Emergency", "GNC"))
         self.assertEqual(ind["phases"], {"source": "GNC", "thresholds": [1, 2], "higher_is_better": False,
-                                         "labels": ["Below alert", "Alert", "Emergency"], "colours": [0, 1, 2]})
+                                         "labels": ["Below alert", "Alert", "Emergency"], "colours": [0, 1, 2],
+                                         "palette": "blue"})
         self.assertEqual(warnings, [])
 
     def test_decimal_comma_thresholds(self):
@@ -115,6 +116,18 @@ class IndicatorSheet(unittest.TestCase):
         (ind,) = br.load_indicators(header + "\n" + row + ',"","1;3;4;5"\n', warnings)
         self.assertEqual(ind["phases"]["colours"], [0, 2, 3, 4])
         (ind,) = br.load_indicators(header + "\n" + row + ',"","1;3;9"\n', warnings)
+        self.assertIsNone(ind["phases"])
+        self.assertEqual(len(warnings), 1)
+
+    def test_phase_palette(self):
+        header = INDICATOR_HEADER + ",Phase palette"
+        row = indicator_row("GAM_WHZ", "GAM", "", "5;10;15;30", "Acceptable;Alert;Serious;Critical;Extremely critical", "IPC AMN v3")
+        warnings = []
+        (ind,) = br.load_indicators(header + "\n" + row + ',"IPC"\n', warnings)
+        self.assertEqual(ind["phases"]["palette"], "ipc")
+        (ind,) = br.load_indicators(header + "\n" + row + ',""\n', warnings)
+        self.assertEqual(ind["phases"]["palette"], "blue")      # default
+        (ind,) = br.load_indicators(header + "\n" + row + ',"pink"\n', warnings)
         self.assertIsNone(ind["phases"])
         self.assertEqual(len(warnings), 1)
 

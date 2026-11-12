@@ -28,13 +28,20 @@ function phaseColour(phases, i) {
   return phases.colours?.at(i) ?? i;
 }
 
-/** { index, label, colour } of a value, or null when the indicator has no phases. */
+/** CSS class of colour step i: IPC colours (sev-0…4) when the sheet says "Phase palette" = IPC,
+ *  otherwise the blue scale (cont-0…4). Used by the map, the pills and the profile dots. */
+export function phaseClass(phases, step) {
+  return `${phases.palette === 'ipc' ? 'sev' : 'cont'}-${step}`;
+}
+
+/** { index, label, colour, cls } of a value, or null when the indicator has no phases. */
 export function phaseOf(indicator, value) {
   const phases = indicator?.phases;
   if (!phases || value == null) return null;
   const found = phases.thresholds.findIndex((threshold) => value < threshold);
   const index = found === -1 ? phases.thresholds.length : found;
-  return { index, label: phases.labels.at(index), colour: phaseColour(phases, index) };
+  const colour = phaseColour(phases, index);
+  return { index, label: phases.labels.at(index), colour, cls: phaseClass(phases, colour) };
 }
 
 /** Legend items: "Very low < 2.5", "Low 2.5–<5", … "Very high ≥ 15", with their colour step. */
@@ -45,14 +52,15 @@ export function phaseLegend(indicator) {
     if (i === 0) range = `< ${t[0]}`;
     else if (i === t.length) range = `≥ ${t[i - 1]}`;
     else range = `${t[i - 1]}–<${t[i]}`;
-    return { text: `${name} ${range}`, colour: phaseColour(indicator.phases, i) };
+    const colour = phaseColour(indicator.phases, i);
+    return { text: `${name} ${range}`, colour, cls: phaseClass(indicator.phases, colour) };
   });
 }
 
 /** Pill with the phase name, coloured like the map ('' when the indicator has no phases). */
 export function phasePill(indicator, value) {
   const phase = phaseOf(indicator, value);
-  return phase ? `<span class="sev sev-${phase.colour}">${escapeHtml(phase.label)}</span>` : '';
+  return phase ? `<span class="sev ${phase.cls}">${escapeHtml(phase.label)}</span>` : '';
 }
 
 /** Value as published, with its unit. Percentages get one decimal (10 -> 10.0%), nothing is rounded away. */

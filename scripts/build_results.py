@@ -70,6 +70,8 @@ INDICATOR_COLUMNS = [
 NO_PHASES = "none"          # keyword in "Phase thresholds" for an indicator without phases
 DIRECTION_COLUMN = "Higher value is"   # optional column: worse (default) or better (e.g. dietary diversity)
 COLOURS_COLUMN = "Phase colours"       # optional column: colour step 1-5 of each phase, e.g. 1;3;4;5
+PALETTE_COLUMN = "Phase palette"       # optional column: IPC (IPC phase colours) or blue (default)
+PALETTES = ("ipc", "blue")
 MAX_PHASES = 5              # the map has five colours
 MIN_INDICATORS = 1
 
@@ -89,6 +91,8 @@ def parse_phases(row, warnings):
     or the keyword none. "Phase labels" = one name per phase, from the lowest value to the highest,
     so one more than the thresholds. "Higher value is" (optional) = worse (default) or better.
     "Phase colours" (optional) = the colour step 1-5 of each phase (see phase_colours).
+    "Phase palette" (optional) = IPC for the IPC phase colours (green-yellow-orange-red), or blue
+    (default): the IPC colours are kept for the indicators the owner marks IPC (GAM by WHZ).
     "Phase source" = who set the phases (WHO 2018, GNC, IPC...). Values below the first threshold
     are in the first phase; a value equal to a threshold goes to the next phase (WHO: 10 is High).
     """
@@ -122,11 +126,14 @@ def parse_phases(row, warnings):
     colours = phase_colours(row.get(COLOURS_COLUMN, ""), len(labels), direction == "better")
     if not problem and colours is None:
         problem = f"'{COLOURS_COLUMN}' must give one number from 1 to 5 per phase"
+    palette = (row.get(PALETTE_COLUMN) or "blue").strip().lower()
+    if not problem and palette not in PALETTES:
+        problem = f"'{PALETTE_COLUMN}' must be IPC or blue, not '{palette}'"
     if problem:
         warnings.append(f"Indicator {key}: {problem}. Shown without phases.")
         return None
     return {"source": source, "thresholds": thresholds, "labels": labels,
-            "higher_is_better": direction == "better", "colours": colours}
+            "higher_is_better": direction == "better", "colours": colours, "palette": palette}
 
 
 def phase_colours(text, count, higher_is_better):
