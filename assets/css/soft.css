@@ -166,3 +166,18 @@ body { background: var(--soft-page); }
 #profile-title { display: flex; align-items: center; gap: 10px; }
 .pf-flag { flex: none; width: 32px; height: 24px; border-radius: 4px; object-fit: cover; box-shadow: 0 0 0 1px rgba(31, 36, 33, 0.08); }
 #profile-close:hover, #profile-close:focus-visible { background: #C62828; color: #FFFFFF; }
+
+/* Results: indicator bar under the KPI tiles, on one line (13 Nov 2026): labels beside their control,
+   definitions cut after two lines (full text on hover), so the map and the list do not move down */
+.res-controls { align-items: center; gap: 10px 20px; }
+.res-indicator { align-items: center; gap: 8px 16px; }
+.res-controls .field { flex-direction: row; align-items: center; gap: 10px; }
+.res-indicator .field { flex: 0 1 430px; }
+.res-indicator .field .sel { flex: 1 1 auto; min-width: 0; }
+.res-definition {
+  margin: 0; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden;
+}
+@media (max-width: 639px) {
+  .res-controls .field { flex-wrap: wrap; }
+  .res-indicator .field { flex-basis: 100%; }
+}
