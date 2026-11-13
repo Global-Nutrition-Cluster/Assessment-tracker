@@ -1,6 +1,7 @@
 // Results map (CLAUDE.md 11.4.5): Leaflet (vendored, global `L`) + Natural Earth countries, no tile service.
 // Each country is coloured by its national figure for the chosen indicator and source (figures.js):
-//   - the indicator's phases (from the Dashboard indicators sheet: WHO 2018, GNC…); five equal steps when it has none;
+//   - the indicator's phases (from the Dashboard indicators sheet: WHO 2018, GNC…); when it has none, one colour
+//     (GNC green) wherever there is a national figure: no choropleth (owner's decision, 13 Nov 2026);
 //   - hatched = subnational data only; grey = no data for this indicator; light grey = no survey;
 //   - dotted = survey older than 3 years (rule 11.3.5).
 // Hovering shows the figure next to the cursor; clicking a country with results opens its profile.
@@ -9,7 +10,6 @@ import { escapeHtml } from '../filters.js';
 import { shortCountry } from '../format.js';
 import {
   phaseOf, phaseLegend, phasePill, formatValue, formatCi, isOlderThan3Years,
-  continuousSteps, continuousIndex,
 } from './figures.js';
 
 const VIEW = [[-35, -19], [45, 95]]; // Africa, the Middle East and South Asia (most SMART and DHS countries)
@@ -39,7 +39,10 @@ export async function createResultsMap(root, { onCountry }) {
   const token = (name) => css.getPropertyValue(name).trim();
   const IPC_COLORS = ['--phase-1', '--phase-2', '--phase-3', '--phase-4', '--phase-5'].map(token);   // "Phase palette" = IPC
   const STEP_COLORS = ['--cont-1', '--cont-2', '--cont-3', '--cont-4', '--cont-5'].map(token);
-  const COLORS = { noSurvey: '#E8EAE6', noData: '#C2C6C0', border: '#FFFFFF', hover: token('--text') };
+  const COLORS = {
+    noSurvey: '#E8EAE6', noData: '#C2C6C0', border: '#FFFFFF', hover: token('--text'),
+    data: token('--gnc-green'),   // indicators without phases: one colour where there is a national figure
+  };
 
   const info = root.querySelector('.map-info');
   const geo = await fetch('geo/countries.geojson', { cache: 'force-cache' }).then((r) => r.json());
@@ -49,7 +52,7 @@ export async function createResultsMap(root, { onCountry }) {
   map.attributionControl.setPrefix(false).addAttribution('Boundaries: Natural Earth');
   map.fitBounds(VIEW);
 
-  let view = null; // { figures, indicator, source, countryNames, steps }
+  let view = null; // { figures, indicator, source, countryNames }
 
   const countries = L.geoJSON(geo, {
     style: () => ({ weight: 0.8, color: COLORS.border, fillColor: COLORS.noSurvey, fillOpacity: 1 }),
@@ -104,11 +107,11 @@ export async function createResultsMap(root, { onCountry }) {
    * @param {object} v.countryNames iso3 -> name (data/results.json)
    */
   return function update(v) {
-    view = { ...v, steps: v.indicator.phases ? null : continuousSteps(v.figures) };
+    view = { ...v };
     root.querySelector('#map-title').textContent = shortLabel(v.indicator);
     root.querySelector('.map-scope').textContent = `Latest national figure per country · ${SOURCE_NAMES[v.source]}`;
     root.querySelector('.map').setAttribute('aria-label',
-      `Map of the latest national figure per country for ${v.indicator.label}, ${SOURCE_NAMES[v.source]}. The same figures are in the ranked list.`);
+      `Map of the latest national figure per country for ${v.indicator.label}, ${SOURCE_NAMES[v.source]}. The same figures are in the list "Latest results by country".`);
     root.querySelector('.map-legend').innerHTML = legendHtml();
 
     countries.setStyle((feature) => ({
@@ -126,7 +129,19 @@ export async function createResultsMap(root, { onCountry }) {
       const palette = view.indicator.phases.palette === 'ipc' ? IPC_COLORS : STEP_COLORS;
       return palette[phaseOf(view.indicator, value).colour];
     }
-    return STEP_COLORS[continuousIndex(view.steps, value)];
+    return COLORS.data;
+  }
+
+  // Hatch colour for "Subnational data only": never a phase colour
+  function hatchColour() {
+    if (!view.indicator.phases) return '#6E9A1F';   // darker GNC green, next to the green countries
+    return isIpc() ? '#7A847E' : '#3E8196';
+  }
+
+  // Legend swatch classes matching the hatch and dots of the current palette
+  function swatchKind() {
+    if (!view.indicator.phases) return 'green';
+    return isIpc() ? '' : 'cont';
   }
 
   function fill(figure) {
@@ -135,7 +150,7 @@ export async function createResultsMap(root, { onCountry }) {
       const colour = colourOf(figure.main);
       return isOlderThan3Years(figure.main.year) ? patterns.dotted(colour) : colour;
     }
-    if (figure.subnational) return patterns.hatched(isIpc() ? '#7A847E' : '#3E8196');   // never a phase colour
+    if (figure.subnational) return patterns.hatched(hatchColour());
     return COLORS.noData;
   }
 
@@ -171,11 +186,10 @@ export async function createResultsMap(root, { onCountry }) {
     const v = main.value;
     const pill = phasePill(view.indicator, v.value) ? ` ${phasePill(view.indicator, v.value)}` : '';
     const ci = formatCi(v);
-    const old = isOlderThan3Years(main.year) ? '<span class="tip-line tip-old">Survey older than 3 years</span>' : '';
     const unitText = unit && unit !== '%' ? ` <span class="mute">${escapeHtml(unit)}</span>` : '';
     return `<span class="tip-value">${formatValue(v.value, unit)}${unitText}${pill} <span class="src">${v.source}</span></span>
       <span class="tip-line">${ci ? `95% CI ${ci}` : 'No CI published'} · National · Survey ${main.year ?? ''}</span>
-      ${definitionOf(v.source) ? `<span class="tip-line mute">${escapeHtml(definitionOf(v.source))}</span>` : ''}${old}`;
+      ${definitionOf(v.source) ? `<span class="tip-line mute">${escapeHtml(definitionOf(v.source))}</span>` : ''}`;
   }
 
   function definitionOf(source) {
@@ -189,20 +203,18 @@ export async function createResultsMap(root, { onCountry }) {
     if (view.indicator.phases) {
       scale = `<span class="lbl">Phases · ${escapeHtml(view.indicator.phases.source)}</span>${phaseLegend(view.indicator)
         .map((p) => `<span class="sev ${p.cls}">${escapeHtml(p.text)}</span>`).join('')}`;
-    } else if (view.steps) {
-      const { min, max, limits } = view.steps;
-      const edges = [min, ...limits, max].map((x) => +x.toPrecision(3));
-      scale = `<span class="lbl">${escapeHtml(view.indicator.unit || 'Value')}</span>${[0, 1, 2, 3, 4]
-        .map((i) => `<span class="sev cont-${i}">${edges[i]}–${edges[i + 1]}</span>`).join('')}`;
     } else {
-      scale = '<span class="mute">No national figure for this indicator and source.</span>';
+      // No phases: one colour, no scale (the values are in the list and the hover box)
+      scale = `<span class="lbl">No phases for this indicator</span>
+        <span class="legend-item"><span class="swatch" style="background:${COLORS.data}"></span>National figure available</span>`;
     }
+    const kind = swatchKind();
     return `
       <div class="legend-scale-row">${scale}</div>
       <ul class="legend">
-        <li><span class="swatch sw-hatch ${isIpc() ? '' : 'sw-hatch-cont'}"></span>Subnational data only</li>
+        <li><span class="swatch sw-hatch ${kind ? `sw-hatch-${kind}` : ''}"></span>Subnational data only</li>
         <li><span class="swatch" style="background:${COLORS.noData}"></span>No data for this indicator</li>
-        <li><span class="swatch sw-dots ${isIpc() ? '' : 'sw-dots-cont'}"></span>Dotted: survey older than 3 years</li>
+        <li><span class="swatch sw-dots ${kind ? `sw-dots-${kind}` : ''}"></span>Dotted: survey older than 3 years</li>
         <li><span class="swatch" style="background:${COLORS.noSurvey}"></span>No survey in the tracker</li>
       </ul>`;
   }

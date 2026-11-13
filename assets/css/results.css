@@ -96,7 +96,6 @@
 .rank-tbl th { position: sticky; top: 0; z-index: 1; white-space: nowrap; }
 .rank-tbl td { vertical-align: top; padding: 8px 6px; }
 .rank-tbl th .th, .rank-tbl th button { padding: 7px 6px; }
-.rank-tbl .c-rank { width: 28px; color: var(--text-muted); }
 .rank-tbl .c-ci { white-space: nowrap; }
 .rank-tbl .c-review { width: 1%; white-space: nowrap; }
 .rank-tbl .sub { display: block; font-size: 12px; color: var(--text-muted); }
@@ -106,10 +105,8 @@
 }
 .rank-country:hover { color: var(--link); text-decoration: underline; }
 .rank-meta { display: block; margin-top: 2px; font-size: 12px; color: var(--text-secondary); }
-.rank-old { display: flex; align-items: center; gap: 4px; margin-top: 2px; font-size: 12px; color: var(--text-muted); }
 .rank-value { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-family: var(--font-title); font-size: 15px; font-weight: 700; }
 .rank-value .rank-unit { font-family: var(--font-body); font-size: 11px; font-weight: 400; }
-tr.is-old .rank-value { color: var(--text-secondary); }
 .rank-group th {
   position: static; padding: 7px 6px; text-align: left; font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
   text-transform: uppercase; color: var(--gnc-slate); background: var(--surface-hover);
@@ -153,7 +150,6 @@ tr.is-old .rank-value { color: var(--text-secondary); }
   display: inline-block; padding: 0 6px; border-radius: 3px; background: var(--surface-alt);
   font-size: 11px; line-height: 17px; color: var(--text-secondary); white-space: nowrap;
 }
-.pf-old { display: inline-flex; align-items: center; gap: 3px; font-size: 12px; color: var(--text-muted); }
 
 /* Tabs */
 .pf-tabs { display: flex; flex-wrap: wrap; gap: 4px 20px; border-bottom: 1px solid var(--border); }

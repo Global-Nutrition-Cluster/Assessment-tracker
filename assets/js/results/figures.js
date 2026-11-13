@@ -145,17 +145,3 @@ export function countryFigures(data, indicatorKey, source, surveysById) {
   return figures;
 }
 
-/** Five equal steps between the smallest and largest national value, for indicators without phases. */
-export function continuousSteps(figures) {
-  const values = [...figures.values()].filter((f) => f.main).map((f) => f.main.value.value);
-  if (!values.length) return null;
-  const min = Math.min(...values);
-  const max = Math.max(...values);
-  const step = (max - min) / 5 || 1;
-  return { min, max, limits: [1, 2, 3, 4].map((i) => min + step * i) };
-}
-
-export function continuousIndex(steps, value) {
-  const index = steps.limits.findIndex((limit) => value < limit);
-  return index === -1 ? 4 : index;
-}

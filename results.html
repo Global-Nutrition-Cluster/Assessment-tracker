@@ -13,6 +13,8 @@
   <link rel="stylesheet" href="assets/css/tokens.css">
   <link rel="stylesheet" href="assets/css/main.css">
   <link rel="stylesheet" href="assets/css/results.css">
+  <!-- "Soft" look (owner's choice, 13 Nov 2026): grey page, white rounded blocks, no borders. Loaded last. -->
+  <link rel="stylesheet" href="assets/css/soft.css">
   <script src="assets/vendor/leaflet-1.9.4/leaflet.js"></script>
   <script type="module" src="assets/js/results/main.js"></script>
 </head>
@@ -52,7 +54,7 @@
     <!-- KPI tiles (11.4.4) -->
     <section class="kpi-band res-kpis" id="kpis" aria-label="Key figures"></section>
 
-    <!-- Map and ranked list side by side (11.4.5 and 11.4.6) -->
+    <!-- Map and "Latest results by country" side by side (11.4.5 and 11.4.6) -->
     <section class="views">
       <section class="card" id="map-card" aria-labelledby="map-title">
         <div class="card-head"><h2 id="map-title">Map</h2></div>
@@ -77,8 +79,8 @@
                (deaths/10,000/day, recall of a few months) and DHS mortality (per 1,000 live births, 5 years) are separate
                indicators and never share a scale. "Among children reported ill" shares are not prevalences.
              Thresholds and age of data: Colours follow the phases set for each indicator; the map legend names the phases
-               and who set them. Indicators without phases use a blue scale in five equal steps. Surveys older than
-               3 years are marked on the map and in the lists. -->
+               and who set them. Indicators without phases are shown in one colour where there is a national
+               figure. Surveys older than 3 years are dotted on the map. -->
         <div>
           <h3>Definitions</h3>
           <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.</p>
