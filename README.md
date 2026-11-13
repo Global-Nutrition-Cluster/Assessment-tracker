@@ -1,10 +1,8 @@
 # GNC Nutrition Assessment Tracker
 
-A public dashboard of the Global Nutrition Cluster showing which nutrition assessments (SMART, Rapid SMART, MICS, DHS, IPC AMN) are planned, ongoing or completed in each country, and where data is missing or outdated.
-
-Two pages:
-- **Planning view** (`index.html`): which assessments are planned, ongoing or completed.
-- **Results** (`results.html`): the latest SMART and DHS results by country (map, ranked list, country profiles).
+A public dashboard of the Global Nutrition Cluster with two pages:
+- **Planning view** (`index.html`): which SMART and Rapid SMART surveys are planned, ongoing or completed this year in each country, and whether they are funded (map, survey list by country).
+- **Results** (`results.html`): the latest SMART and DHS results by country (map, "Latest results by country" list, country profiles).
 
 The site is static and published with GitHub Pages. The data comes from Google Sheets maintained by the GNC and from the DHS Program API.
 
@@ -38,6 +36,7 @@ Warnings about the results (rows without a value, values outside their CI, Asses
 - Keep the column names unchanged (see `CLAUDE.md`, section 4.2).
 - Format the date columns as `yyyy-mm-dd` to avoid day/month confusion.
 - Write released results as `Results released (yyyy-mm-dd)` in the Validation column.
+- **Report links: paste the plain web address** (`https://…`) in the cell. A Google Sheets link chip (the title of a page shown as a chip) is published as its title only, without the address, so the site cannot use it: such values are left out with a warning.
 - Update the `Data as of` row of the Settings tab when the tracker has been reviewed: it is the date shown on the Planning view.
 - Only publish the tab meant to be public. The published CSV can be read by anyone with the link.
 
@@ -45,7 +44,7 @@ Warnings about the results (rows without a value, values outside their CI, Asses
 
 - `CLAUDE.md` is the technical brief: business rules, page specification, brand tokens.
 - Preview the site locally: `python -m http.server 8000` in the repository folder, then open http://localhost:8000 (opening `index.html` directly does not work because the page loads JSON files).
-- Run the tests: `python -m unittest discover -s scripts/tests -v`
+- Run the tests: `python -m unittest discover -s scripts/tests -v`, and the JavaScript checks: `python scripts/check_js.py` (needs Node.js). The **Tests** workflow runs both on every pull request.
 - Build the data from a local CSV: `python scripts/build_data.py --input my_export.csv`
 - Build the results from local CSVs: `python scripts/build_results.py --smart-results consolidation.csv --smart-surveys surveys.csv --indicators dashboard_indicators.csv`
 

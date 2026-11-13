@@ -31,7 +31,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from build_data import SourceError, clean, fetch_csv  # noqa: E402  (same helpers as the Planning data)
+from build_data import SourceError, clean, fetch_csv, web_link  # noqa: E402  (same helpers as the Planning data)
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
@@ -291,7 +291,7 @@ def build_smart_surveys(rows, warnings):
             "survey_year": smart_survey_year(end, start),
             "coverage": clean(row["Geographic coverage"]),
             "recall_period": clean(row["Mortality recall period"]),
-            "report_url": clean(row.get(SMART_REPORT_LINK_COLUMN, "")),
+            "report_url": web_link(row.get(SMART_REPORT_LINK_COLUMN, ""), warnings, sid),
             "notes": clean(row["Notes"]),
         }
     return surveys
@@ -473,7 +473,7 @@ def build_dhs(values_text, surveys_text, indicators, warnings):
                 "release_date": clean(row["release_date"]),
                 "retrieval_date": clean(row["retrieval_date"]),
                 "coverage": "National",
-                "report_url": clean(p.get("report_link")),
+                "report_url": web_link(p.get("report_link"), warnings, sid),
                 "notes": None,
             }
         values.append({

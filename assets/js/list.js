@@ -6,10 +6,8 @@
 //     map, that country is unfolded.
 // Rows are read-only. The Assessment ID is not shown (owner's decision, Oct 2026) but stays in the CSV export.
 
-import { STATUS_LABELS } from './icons.js';
-import { formatDate, fundingLabel, validationLabel, shortCountry } from './format.js';
-import { escapeHtml } from './filters.js';
-import { statusLabel, countByStatus, SUMMARY_ORDER, SHORT_LABELS } from './status-label.js';
+import { formatDate, fundingLabel, validationLabel, shortCountry, escapeHtml } from './format.js';
+import { statusLabel, countByStatus, SUMMARY_ORDER, SHORT_LABELS, STATUS_LABELS } from './status-label.js';
 
 // Order used when sorting by status: what needs attention first
 const STATUS_RANK = { ongoing: 0, planned: 1, completed: 2, released: 3, not_planned: 4 };

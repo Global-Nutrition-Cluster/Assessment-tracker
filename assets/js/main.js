@@ -1,15 +1,14 @@
 // Entry point: loads the data and draws the blocks.
-// No filter bar, timeline or coverage matrix on the page (their modules stay in assets/js/ so they can be put
-// back). The page shows SMART surveys of the current year. Two selections remain (Nov 2026): the KPI tiles
+// The page shows the SMART surveys of the current year (no filter bar, timeline, matrix or detail panel:
+// removed by the owner in Oct–Nov 2026). Two selections remain (Nov 2026): the KPI tiles
 // filter by status, and a click on a map country filters the KPI tiles and the survey list to that country.
 
 import { loadData, applyFilters } from './data.js';
 import { readState, writeState } from './state.js';
-import { escapeHtml } from './filters.js';
+import { escapeHtml, formatDate } from './format.js';
 import { createKpis } from './kpis.js';
 import { createList } from './list.js';
 import { createMap } from './map.js';
-import { formatDate } from './format.js';
 
 const app = {
   surveys: [],

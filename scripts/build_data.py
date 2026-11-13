@@ -111,6 +111,18 @@ def clean(value):
     return value or None
 
 
+def web_link(value, warnings, where):
+    """A report link is kept only when it is a web address (http:// or https://), so a typo or a
+    "javascript:" value from a sheet can never become a clickable link on the site. Anything else -> None + warning."""
+    value = clean(value)
+    if value is None:
+        return None
+    if re.match(r"(?i)^https?://\S+$", value):
+        return value
+    warnings.append(f"{where}: report link '{value[:60]}' is not a web address (http:// or https://); left out.")
+    return None
+
+
 # Rule 1: assessment type -> type_group
 TYPE_GROUPS = {
     "smart": "SMART",
@@ -280,7 +292,7 @@ def normalise(record, warnings):
         "survey_year": survey_year(record["Assessment ID"], start),
         "lead_org": clean(record["Lead organization"]),
         "partners": clean(record["Partners"]),
-        "report_url": clean(record["Report Link"]),
+        "report_url": web_link(record["Report Link"], warnings, record["Assessment ID"]),
         "funding": funding_value,
         "funding_gap": funding_gap(funding_value),
     }

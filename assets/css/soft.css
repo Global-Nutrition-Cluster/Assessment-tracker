@@ -106,7 +106,6 @@ body { background: var(--soft-page); }
 
 /* KPI tiles (read-only here); the tile of the source not shown is greyed, no dashed border */
 .res-kpi:hover { background: #FFFFFF; }
-.res-kpi.is-off, .res-kpi.is-off:hover { background: #EEF0EC; border: 0; }
 
 /* Badges: borderless pills. One colour per source (owner's choice, 13 Nov 2026), away from the status,
    IPC and blue phase colours: SMART violet, DHS raspberry (MICS later); "ALL" stays grey.
@@ -127,7 +126,6 @@ body { background: var(--soft-page); }
 
 /* "Latest results by country": rows as grey rounded bars (shared .tbl rules above); group heading plain */
 .rank-tbl .rank-group th { background: none; padding-top: 12px; }
-
 
 /* Country profile: a white block; survey cards, plot, tiles and boxes as grey rounded blocks inside it */
 .res-profile { border-top: 0; }

@@ -232,3 +232,21 @@ class DataAsOf(unittest.TestCase):
             warnings = []
             self.assertIsNone(bd.load_data_as_of(str(out / "missing.csv"), warnings))
             self.assertEqual(len(warnings), 1)
+
+
+class WebLink(unittest.TestCase):
+    """Report links must be web addresses (audit, Nov 2026)."""
+
+    def test_web_addresses_kept(self):
+        warnings = []
+        self.assertEqual(bd.web_link(" https://example.org/report.pdf ", warnings, "X"), "https://example.org/report.pdf")
+        self.assertEqual(bd.web_link("HTTP://example.org", warnings, "X"), "HTTP://example.org")
+        self.assertIsNone(bd.web_link("", warnings, "X"))
+        self.assertEqual(warnings, [])
+
+    def test_other_values_left_out_with_a_warning(self):
+        warnings = []
+        self.assertIsNone(bd.web_link("javascript:alert(1)", warnings, "X"))
+        self.assertIsNone(bd.web_link("see shared drive", warnings, "X"))
+        self.assertIsNone(bd.web_link("www.example.org", warnings, "X"))
+        self.assertEqual(len(warnings), 3)

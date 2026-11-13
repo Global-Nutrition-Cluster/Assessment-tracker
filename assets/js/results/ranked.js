@@ -4,8 +4,7 @@
 // together, then "No data for this indicator". A row opens the country profile. "Export CSV" exports every row.
 // (The file keeps its old name, ranked.js.)
 
-import { escapeHtml } from '../filters.js';
-import { shortCountry } from '../format.js';
+import { escapeHtml, shortCountry } from '../format.js';
 import { phaseOf, phasePill, formatValue, formatCi } from './figures.js';
 
 /**

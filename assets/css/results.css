@@ -1,6 +1,6 @@
 /* Results page (results.html, CLAUDE.md section 11).
    Loaded after main.css: it reuses the header, cards, KPI tiles and compact sizes of the Planning view,
-   and only adds what is new. Values follow the Results mockup in design/results/. */
+   and only adds what is new. The soft look (soft.css) is loaded after it. */
 
 /* ---------- Indicator selector + Source toggle ---------- */
 .res-controls {
@@ -26,7 +26,7 @@
 .res-kpi { cursor: default; }
 .res-kpi:hover { background: var(--surface); }
 .res-kpi .kpi-label { gap: 6px; color: var(--text); }
-.res-kpi.is-off, .res-kpi.is-off:hover { background: var(--surface-alt); border-style: dashed; }   /* other source selected (no opacity: text keeps its contrast) */
+   /* other source selected (no opacity: text keeps its contrast) */
 .res-kpi.is-soon .kpi-value { color: var(--text-faint); }
 
 /* ---------- Country profile (filled in step 5) ---------- */
@@ -67,7 +67,7 @@
 .res-tip .tip-value { font-family: var(--font-title); font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .res-tip .tip-value .mute { font-family: var(--font-body); font-size: 12px; font-weight: 400; }
 .res-tip .tip-line { display: block; font-size: 12px; }
-.res-tip .tip-old { color: var(--text-secondary); font-style: italic; }
+
 .res-tip .tip-also { display: block; margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--border-row); font-size: 12px; color: var(--text-secondary); }
 .res-tip .tip-action { display: block; margin-top: 2px; font-size: 12px; font-weight: 700; color: var(--link); }
 .res-tip .src { vertical-align: 1px; }
@@ -119,7 +119,6 @@
 .pf-actions { display: flex; gap: 8px; }
 .pf-actions .btn { gap: 6px; }
 .pf-h { margin: 4px 0 0; font-size: 14px; font-weight: 700; }
-
 
 .pf-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 12px; }
 .pf-card {

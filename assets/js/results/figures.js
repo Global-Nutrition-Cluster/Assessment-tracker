@@ -7,7 +7,7 @@
 //   - a country with only subnational values for the indicator is "subnational only".
 
 import { matchSource } from './data.js';
-import { escapeHtml } from '../filters.js';
+import { escapeHtml } from '../format.js';
 
 export const CURRENT_YEAR = new Date().getFullYear();
 

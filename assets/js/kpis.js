@@ -50,7 +50,7 @@ export function createKpis(root, onSelect) {
       ongoing: 'Data collection or analysis',
       completed: `${count((s) => s.display_status === 'completed')} awaiting release`,
       // Most SMART rows have no release date yet, so "last 12 months" cannot be computed reliably
-      released: 'In the selected period',
+      released: `This year (${new Date().getFullYear()})`,
     };
 
     root.querySelectorAll('.kpi').forEach((tile) => {
