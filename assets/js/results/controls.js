@@ -7,7 +7,7 @@ import { escapeHtml } from '../filters.js';
 function optionLabel(indicator) {
   const sources = indicatorSources(indicator);
   if (sources.length !== 1 || /\((SMART|DHS)\)/.test(indicator.label)) return indicator.label;
-  return `${indicator.label} — ${sources[0]} only`;
+  return `${indicator.label} (${sources[0]} only)`;
 }
 
 function selectHtml(indicators) {
@@ -62,7 +62,9 @@ export function createControls(root, indicators, handlers) {
   const byKey = new Map(indicators.map((i) => [i.key, i]));
   return function update(state) {
     select.value = state.indicator;
-    root.querySelector('#indicator-definition').textContent = definitionText(byKey.get(state.indicator), state.source);
+    const definition = root.querySelector('#indicator-definition');
+    definition.textContent = definitionText(byKey.get(state.indicator), state.source);
+    definition.title = definition.textContent;   // the line is cut after two lines; the full text on hover
     root.querySelectorAll('button[data-source]').forEach((b) => {
       b.setAttribute('aria-pressed', String(b.dataset.source === state.source));
     });

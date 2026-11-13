@@ -8,11 +8,12 @@
 //   4. per SMART survey: a dot plot of one indicator by area (national, admin 1 › admin 2, 95% CI),
 //      with a toggle between the indicators of the group, and every indicator of the group in a table
 //   5. Rapid SMART IDP sites in their own block; DHS national figures as tiles
-//   6. DHS "More indicators" (folded), "Notes from the data"
+//   6. DHS "More indicators" (folded). No "Notes from the data" and no "Not directly comparable" note (removed, 13 Nov 2026)
 // Values are shown as published; every value carries the "As published" badge (rule 11.3.6).
 
 import { escapeHtml } from '../filters.js';
 import { phaseOf, phasePill, formatValue, formatCi } from './figures.js';
+import { flagImg } from './flags.js';
 
 const TABS = [
   { key: 'acute', label: 'Acute malnutrition', groups: ['Acute malnutrition', 'Overweight'] },
@@ -101,7 +102,7 @@ export function createProfile(root, { onClose }) {
     const values = data.values.filter((v) => v.iso3 === iso3);
 
     if (!surveys.length) {
-      root.innerHTML = `${headerHtml(name, 'No survey results in the tracker for this country.')}`;
+      root.innerHTML = `${headerHtml(iso3, name, 'No survey results in the tracker for this country.')}`;
       return;
     }
 
@@ -110,7 +111,7 @@ export function createProfile(root, { onClose }) {
     const tab = tabs.find((t) => t.key === ui.tab);
 
     root.innerHTML = `
-      ${headerHtml(name, subtitle(surveys, values))}
+      ${headerHtml(iso3, name, subtitle(surveys, values))}
       <h3 class="pf-h">Surveys</h3>
       <div class="pf-cards">${surveyCards(name, surveys, values)}</div>
       ${tabs.length ? `
@@ -121,19 +122,18 @@ export function createProfile(root, { onClose }) {
         <div class="pf-panel" id="pf-panel" role="tabpanel" aria-labelledby="tab-${ui.tab}">
           ${tabPanel(tab, surveys, values, indicators)}
         </div>` : ''}
-      ${moreIndicators(surveys, values, indicators)}
-      ${notes(surveys, values, tab, indicators)}`;
+      ${moreIndicators(surveys, values, indicators)}`;
   }
 }
 
 // --- header, banner, survey cards ---------------------------------------------------------
 
-function headerHtml(name, sub) {
+function headerHtml(iso3, name, sub) {
   return `
     <div class="pf-head">
       <div>
         <div class="lbl">Country profile</div>
-        <h2 id="profile-title">${esc(name)}</h2>
+        <h2 id="profile-title">${flagImg(iso3)}${esc(name)}</h2>
         <p class="pf-sub">${esc(sub)}</p>
       </div>
       <div class="pf-actions">
@@ -158,7 +158,7 @@ function subtitle(surveys, values) {
 }
 
 function badge(source) {
-  return `<span class="src">${esc(source)}</span>`;
+  return `<span class="src src-${esc(source).toLowerCase()}">${esc(source)}</span>`;   // colour per source (soft.css)
 }
 
 function reportLink(url, label = 'Report') {
@@ -448,7 +448,6 @@ function dhsBlock(survey, values, indicators, surveys) {
     </div>`;
   }).join('');
 
-  const hasSmart = surveys.some((s) => s.source === 'SMART');
   return `
     <section class="pf-block" aria-label="DHS ${survey.survey_year ?? ''} national">
       <div class="pf-block-head">
@@ -457,7 +456,6 @@ function dhsBlock(survey, values, indicators, surveys) {
         <span class="mute pf-ages">Children 0–59 months · as published</span>
       </div>
       <div class="pf-tiles">${tiles}</div>
-      ${hasSmart ? '<p class="pf-banner pf-info"><strong>Not directly comparable with the SMART block.</strong> Different designs, age groups and definitions (DHS wasting excludes oedema; DHS mortality is per 1,000 live births over 5 years).</p>' : ''}
     </section>`;
 }
 
@@ -492,27 +490,6 @@ function moreIndicators(surveys, values, indicators) {
     </details>`;
 }
 
-/** "Notes from the data": survey notes, then the row notes of the open tab (from the Notes column). */
-function notes(surveys, values, tab, indicators) {
-  const items = [];
-  for (const s of surveys) if (s.notes) items.push(`${s.source} ${s.survey_year ?? ''}: ${s.notes}`);
-  if (tab) {
-    const rowNotes = [...new Set(values
-      .filter((v) => v.note && tab.groups.includes(indicators.get(v.indicator)?.group))
-      .map((v) => `${v.area}: ${v.note}`))];
-    items.push(...rowNotes);
-  }
-  if (!items.length) return '';
-  const LIMIT = 8;
-  const shown = items.slice(0, LIMIT).map((t) => `<li>${esc(t)}</li>`).join('');
-  const hidden = items.slice(LIMIT).map((t) => `<li>${esc(t)}</li>`).join('');
-  return `
-    <section class="pf-notes" aria-labelledby="pf-notes-title">
-      <h3 id="pf-notes-title">Notes from the data</h3>
-      <ul>${shown}</ul>
-      ${hidden ? `<details><summary>${items.length - LIMIT} more notes</summary><ul>${hidden}</ul></details>` : ''}
-    </section>`;
-}
 
 async function copyLink(button) {
   const url = window.location.href;

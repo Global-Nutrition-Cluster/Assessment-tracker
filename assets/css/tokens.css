@@ -84,6 +84,6 @@
   --cont-1: #E3EEF1;
   --cont-2: #B3D3DC;
   --cont-3: #79AFBF;
-  --cont-4: #3E8196;
+  --cont-4: #3A7C90;   /* darkened from #3E8196 so white text on it passes AA (4.7:1) */
   --cont-5: #1D5466;
 }

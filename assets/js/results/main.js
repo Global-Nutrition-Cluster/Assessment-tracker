@@ -79,7 +79,7 @@ function render() {
   const figures = countryFigures(data, state.indicator, state.source, app.surveysById);
 
   app.updateControls(state);
-  app.updateKpis(data, state);
+  app.updateKpis(data);   // fixed totals: same tiles whatever the indicator and the source
   app.updateMap?.({ figures, indicator, source: state.source, countryNames: data.countries });
   app.updateRanked({ figures, indicator, countryNames: data.countries });
   app.updateProfile(state.country, data, app.indicators);
