@@ -518,17 +518,23 @@ body { font-size: 14px; }
 
 /* ---- Planning view, Nov 2026: status labels, one-colour map, country rows ---------------------------- */
 
-/* Status label on its status colour (replaces the status icons). Dark text keeps AA contrast on every colour. */
+/* Status label (owner's choice, 13 Nov 2026): white label, thin grey border, a dot of the status colour before
+   the word, dark text. The colour is only in the dot, so the table stays calm; the word carries the meaning. */
 .st-label {
-  display: inline-block; padding: 1px 7px; border-radius: 4px; white-space: nowrap;
-  font-size: 12px; font-weight: 600; line-height: 18px; color: #1A1F1C;
+  display: inline-flex; align-items: center; gap: 5px; padding: 0 6px; border-radius: 3px;
+  background: #FFFFFF; border: 1px solid #D5DAD3; white-space: nowrap;
+  font-size: 11px; font-weight: 600; line-height: 16px; color: #2B312D;
 }
-.st-planned { background: var(--status-planned); }
-.st-ongoing { background: var(--status-ongoing); }
-.st-completed { background: var(--status-completed); }
-.st-released { background: var(--status-released); }
-.st-not_planned { background: var(--status-not-planned); }
-.kpi-label .st-label { font-size: 13px; padding: 1px 8px; }
+.st-label::before {
+  content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--st-colour, #A9AFA8);
+}
+.st-planned { --st-colour: var(--status-planned); }
+.st-ongoing { --st-colour: var(--status-ongoing); }
+.st-completed { --st-colour: var(--status-completed); }
+.st-released { --st-colour: var(--status-released); }
+.st-not_planned { --st-colour: var(--status-not-planned); }
+.kpi-label .st-label { font-size: 12px; line-height: 18px; padding: 0 7px; }
+.kpi-label .st-label::before { width: 8px; height: 8px; }
 .st-summary { display: flex; flex-wrap: wrap; gap: 4px; }
 
 /* Map: one colour; legend square for "No survey" */
@@ -559,4 +565,5 @@ body { font-size: 14px; }
 .tbl-grouped .sub-row td:first-child { padding-left: 26px; }
 .tbl-grouped .sub-row[hidden] { display: none; }
 .nested-place { color: var(--text-secondary); }
-.tbl .st-label { white-space: normal; }   /* long labels wrap so the table keeps its width */
+.tbl .st-label { white-space: normal; align-items: baseline; }
+.tbl .st-label::before { align-self: center; }   /* long labels wrap so the table keeps its width */
