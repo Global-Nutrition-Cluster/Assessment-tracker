@@ -1,14 +1,17 @@
-// KPI band: four tiles (status icon, no coloured top bar since Oct 2026) that count surveys by stage and act as a status filter.
+// KPI band: four tiles that count surveys by stage and act as a status filter. The label of each tile is
+// written on its status colour (Nov 2026: no icons any more, same labels as in the survey list).
 // The counts follow every filter except Status, so the four tiles stay comparable;
 // clicking a tile sets the Status filter, clicking it again clears it.
 
-import { statusIcon } from './icons.js';
+import { statusLabel } from './status-label.js';
 
+// `colour` = the status colour of the label; "Completed" counts released surveys too but keeps the
+// light green of "Completed (awaiting release)"
 const TILES = [
-  { key: 'planned', label: 'Planned', icon: 'planned' },
-  { key: 'ongoing', label: 'Ongoing', icon: 'ongoing' },
-  { key: 'completed', label: 'Completed', icon: 'completed' },
-  { key: 'released', label: 'Results released', icon: 'released' },
+  { key: 'planned', label: 'Planned', colour: 'planned' },
+  { key: 'ongoing', label: 'Ongoing', colour: 'ongoing' },
+  { key: 'completed', label: 'Completed', colour: 'completed' },
+  { key: 'released', label: 'Results released', colour: 'released' },
 ];
 
 /**
@@ -18,7 +21,7 @@ const TILES = [
 export function createKpis(root, onSelect) {
   root.innerHTML = TILES.map((t) => `
     <button type="button" class="kpi" data-key="${t.key}" aria-pressed="false">
-      <span class="kpi-label">${statusIcon(t.icon, 18)}${t.label}</span>
+      <span class="kpi-label">${statusLabel(t.colour, t.label)}</span>
       <span class="kpi-value">–</span>
       <span class="kpi-sub"></span>
     </button>`).join('');
@@ -30,7 +33,7 @@ export function createKpis(root, onSelect) {
     onSelect(currentStatus === tile.dataset.key ? 'all' : tile.dataset.key);
   });
 
-  /** @param {object[]} surveys  surveys filtered by everything except Status */
+  /** @param {object[]} surveys  surveys filtered by everything except Status (the map country applies) */
   return function update(surveys, status) {
     currentStatus = status;
     const count = (test) => surveys.filter(test).length;

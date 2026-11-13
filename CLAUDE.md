@@ -33,7 +33,8 @@ A public, static web dashboard for the Global Nutrition Cluster (GNC). It shows 
 │   ├── css/main.css
 │   ├── css/results.css         # Results page only (loaded after main.css)
 │   ├── js/main.js              # bootstraps the page, loads data, draws the blocks
-│   ├── js/state.js             # KPI status + map mode <-> URL query string
+│   ├── js/state.js             # KPI status + map country <-> URL query string
+│   ├── js/status-label.js      # status labels on their status colour (KPI tiles, map hover, list)
 │   ├── js/kpis.js
 │   ├── js/map.js
 │   ├── js/timeline.js          # not used since Nov 2026 (kept)
@@ -70,6 +71,7 @@ A public, static web dashboard for the Global Nutrition Cluster (GNC). It shows 
 
 - The Google Sheet URL (published as CSV) is stored as the repository **variable** `SHEET_CSV_URL` (Settings → Secrets and variables → Actions → Variables). Never hard-code it.
 - The sheet may have a title row and a blank row above the header. **Detect the header row** by finding the row whose first cell is `Assessment ID`.
+- **"Data as of" date** (owner's decision, Nov 2026): a **Settings** tab of the same sheet, two columns `Setting | Value`, row `Data as of | yyyy-mm-dd` (dd/mm/yyyy accepted), published as CSV in the repository variable `PLANNING_SETTINGS_CSV_URL`. Read by `build_data.py` into `meta.json` (`data_as_of`). Missing, unreadable or not a date → a warning, `data_as_of = null`, and the page shows the date of the last data update instead; it never fails the run.
 
 ### 4.2 Source columns
 
@@ -109,13 +111,13 @@ Write each rule as a small, tested function.
 7. **Funding:** `funded`, `partial`, `unfunded` or `null`. `funding_gap = true` when `partial` or `unfunded`.
 8. **Dates:** output ISO `YYYY-MM-DD` or `null`. Never invent an end date.
 9. **No date-based flags. Ever.** Start and end dates are indicative and change often. Do not compute or display "overdue", "late", "delayed", "start date passed" or any similar flag, in the data or in the UI.
-10. **Freshness** (per country, computed in the browser so it follows filters): age in years of the most recent **released** SMART result, using `release_date`, else `survey_year`. Buckets: `< 1 year`, `1–2`, `2–3`, `> 3 years`, `never`. Never use start or end dates.
+10. **Freshness**: removed from the Planning view with the "Data freshness" map (owner's decision, 13 Nov 2026). The age of the data is shown on the Results page only ("Older than 3 years", rule 11.3.5).
 
 ### 4.4 Output
 
 `data/surveys.json`: an array of objects with snake_case keys (`id`, `region`, `country`, `iso3`, `admin1`, `admin1_pcode`, `type_raw`, `type_group`, `status`, `display_status`, `sub_stage`, `start_date`, `end_date`, `release_date`, `survey_year`, `lead_org`, `partners`, `report_url`, `funding`, `funding_gap`).
 
-`data/meta.json`: `{ "updated_at", "row_count", "warnings": [...] }`. The page shows "Data updated <date>" in the footer.
+`data/meta.json`: `{ "updated_at", "data_as_of", "row_count", "warnings": [...] }`. The page shows "Data as of <data_as_of>" next to the title (else the date of `updated_at`).
 
 ### 4.5 Workflow `update-data.yml`
 
@@ -129,22 +131,22 @@ Write each rule as a small, tested function.
 One page, top to bottom. It covers **SMART and Rapid SMART surveys of the current calendar year** (`survey_year`); there is no filter bar. The mockup in `design/` gave the original look; the decisions below replace it where they differ (Oct–Nov 2026, compact layout merged into `main` on 9 Nov 2026).
 
 1. **Header:** GNC logo, divider, product name "Nutrition Assessment Tracker", and section tabs on the right. Tabs "Planning view" and "Results"; Methodology and Data & downloads come when those pages exist (no dead links). Green 4 px bottom border.
-2. **Page title:** "Planning view" + one-sentence description on the left; "Data as of <date from meta.json>" on the right, on the same line as the title.
+2. **Page title:** "Planning view" + one-sentence description on the left; "Data as of <date>" on the right, on the same line as the title: the date of the Settings tab (4.1), else the last data update.
 3. **No filter bar** (removed by the owner): no Period, Region, Country, Assessment type, Status or Funding dropdowns. `filters.js` stays in the repo, unused, in case filters come back.
-4. **KPI band:** four compact tiles with a status icon (no coloured top bar). Clicking a tile shows only that status in the map and the list; clicking it again clears it (the only filter left, kept in the URL as `?status=`).
+4. **KPI band:** four compact tiles, **no icons** (owner's decision, 13 Nov 2026): the label of each tile is written on its status colour (Planned blue, Ongoing orange, Completed light green, Results released dark green; dark text for AA contrast; `status-label.js`). Clicking a tile shows only that status in the map and the list; clicking it again clears it (`?status=`). The counts follow the country chosen on the map.
    - Planned: "X with funding gap"
    - Ongoing: "Data collection or analysis"
    - Completed: all completed surveys (released or not), sub-line "X awaiting release"
    - Results released: sub-line "In the selected period" (most SMART rows have no release date, so "last 12 months" cannot be computed reliably)
-5. **Map** "SMART assessments", left half of the main row. Leaflet 1.9.4 (vendored in `assets/vendor/`) with `geo/countries.geojson` and **no tile service**. The boundaries come from Natural Earth 1:50m, with ISO3 codes fixed and Somaliland / Northern Cyprus merged into Somalia / Cyprus (`scripts/prepare_geo.py`, run by hand). Segmented toggle "Status" / "Data freshness", a one-line caption, a legend of colour squares and labels (no icons), and the UN boundaries disclaimer under the map. **No numbers or markers on the map, and clicking does nothing.**
-   - **Hover:** the country is outlined and an info box next to the cursor lists its SMART surveys (ID, Admin 1, status icon and label; up to 5 + "N more"). The box follows the cursor and flips left / up to stay inside the map. On touch screens a tap shows it at the tapped point; a tap on the sea hides it.
-   - **Status mode:** a country takes the colour of its **most active** SMART survey (`ongoing` > `planned` > `completed` > `released`): only blue, orange and the two greens; countries with no survey, or only "Not planned" ones, stay light grey.
-   - **Freshness mode:** countries coloured by the age of their last released SMART results (rule 4.3.10), with the `--fresh-*` scale and "Never" hatched. It ignores the year and the KPI status selection.
-6. **Survey list**, right half of the main row (`assets/js/list.js`). Same height as the map card (`contain: size` on the card); the table scrolls vertically, with a sticky header row; **no pagination** and no horizontal scroll on desktop. Columns: Country (Admin 1 underneath), Type, Status (icon + label, Validation underneath), Lead organization, Funding badge, Report link, Start, End. Missing values are left **empty**. Sortable by Country, Type, Status, Funding and Start. No Assessment ID column (it stays in the CSV export). Rows are read-only. "Export CSV" button (all listed rows).
+5. **Map** "SMART assessments", left half of the main row. Leaflet 1.9.4 (vendored in `assets/vendor/`) with `geo/countries.geojson` and **no tile service**. The boundaries come from Natural Earth 1:50m, with ISO3 codes fixed and Somaliland / Northern Cyprus merged into Somalia / Cyprus (`scripts/prepare_geo.py`, run by hand). A one-line caption, a two-square legend and the UN boundaries disclaimer under the map. **No "Data freshness" mode and no numbers or markers on the map** (owner's decision, 13 Nov 2026).
+   - **One colour:** a country with at least one SMART survey in the current selection (KPI status applied; "Not planned" ones do not count) is GNC green (`--gnc-green`); the others are light grey. The status colours are kept for the KPI tiles and the list, so the map is never read as a status map.
+   - **Hover:** the country is outlined and an info box next to the cursor counts its SMART surveys of the year **by status** (status label on its colour + count; every status, whatever the KPI selection). The box follows the cursor and flips left / up to stay inside the map.
+   - **Click:** filters the KPI tiles and the survey list to that country (`?country=MLI`), with a dark outline on the map and a removable "Country: Mali ×" chip above the list. A second click on the same country, a click on the sea or on a country without survey, or the chip's × clears it. On touch screens a tap shows the box and filters.
+6. **Survey list**, right half of the main row (`assets/js/list.js`). Same height as the map card (`contain: size` on the card); the table scrolls vertically, with a sticky header row; **no pagination** and no horizontal scroll on desktop. **One row per country** (owner's decision, 13 Nov 2026): a country with one survey shows it on its row; a country with several surveys gets a summary row (▸ button, "N surveys", types, status labels with counts, "N funding gaps") and its surveys underneath, folded by default and **unfolded when the country is chosen on the map**. Columns: Country (Admin 1 underneath), Type, Status (label on its status colour, Validation underneath), Lead organization, Funding badge, Report link, Start, End. Missing values are left **empty**. Sortable by Country, Type, Status, Funding and Start (a country sorts by its first survey in that order). Count line "N countries · M surveys". No Assessment ID column (it stays in the CSV export). Rows are read-only. "Export CSV" button (one line per listed survey).
 7. **No timeline, no coverage matrix and no detail panel** (removed by the owner). `timeline.js` and `matrix.js` stay in the repo, unused; `panel.js` was deleted.
 8. **Footer:** "Global Nutrition Cluster · nutritioncluster.net" and "Assessment status is reported by country Nutrition Clusters. Start and end dates are indicative."
 
-**URL state:** only the KPI status selection and the map mode live in the query string (for example `?status=planned&map=freshness`). Parameters that no longer exist (`year`, `region`, `country`, `type`, `funding`, `survey`) are ignored and dropped on load.
+**URL state:** only the KPI status selection and the country chosen on the map live in the query string (for example `?status=planned&country=MLI`). Parameters that no longer exist (`map`, `year`, `region`, `type`, `funding`, `survey`) are ignored and dropped on load.
 
 **Type and spacing:** compact sizes (14 px body text, 24 px page title, 26 px KPI numbers, 13 px table), set in the "Compact layout" block at the end of `main.css`.
 
@@ -154,7 +156,7 @@ One page, top to bottom. It covers **SMART and Rapid SMART surveys of the curren
 - **< 1300 px:** map and survey list stacked; the list is limited to 600 px high and scrolls.
 - **Mobile < 640 px:** KPI tiles in a 2 × 2 grid, map full width, survey list scrolls sideways (eight columns do not fit).
 - Status is never conveyed by colour alone: always add a label or an icon.
-- WCAG AA contrast, keyboard navigation for the KPI tiles, map toggle and list (the scrollable list area is focusable), and `aria` labels on the map. A "Skip to the dashboard" link comes first. Accessible names start with the visible text (Lighthouse label-content-name-mismatch).
+- WCAG AA contrast, keyboard navigation for the KPI tiles, the list's ▸ buttons, the country chip and the list (the scrollable list area is focusable), and `aria` labels on the map. A "Skip to the dashboard" link comes first. Accessible names start with the visible text (Lighthouse label-content-name-mismatch).
 - Check with axe-core (no violations) and Lighthouse after any UI change.
 
 ## 7. Brand tokens (GNC brand book 2020)
@@ -183,7 +185,7 @@ One page, top to bottom. It covers **SMART and Rapid SMART surveys of the curren
 }
 ```
 
-Load Source Sans 3 from Google Fonts. The freshness scale runs from `--gnc-green-dark` (recent) through lighter greens to `--gnc-grey` (never). The funding badges are neutral (outline style) so they never compete with status colours.
+Load Source Sans 3 from Google Fonts. The Planning map uses `--gnc-green` only (countries with a survey). The funding badges are neutral (outline style) so they never compete with status colours.
 
 ## 8. How to work in this repo
 
@@ -199,8 +201,9 @@ Load Source Sans 3 from Google Fonts. The freshness scale runs from `--gnc-green
 - [x] The nightly workflow refreshes `data/surveys.json` from the Google Sheet, and a broken sheet does not break the site.
 - [x] No "overdue" or date-based flag appears anywhere.
 - [x] The KPI counts match the survey list.
-- [x] The map toggles between Status and Freshness, and Freshness uses only release dates or survey years.
-- [x] No numbers on the map; clicking the map does nothing; hovering shows the country's surveys next to the cursor.
+- [x] The map has one colour (GNC green = SMART survey this year), no Freshness mode, no numbers; hovering counts the country's surveys by status; clicking filters the KPI tiles and the list to that country (shared by link).
+- [x] The list has one row per country; countries with several surveys unfold (unfolded when chosen on the map).
+- [x] "Data as of" comes from the Settings tab of the sheet.
 - [x] The survey list has the same height as the map, scrolls vertically, and has no horizontal scroll at 1300 px and wider.
 - [x] It works on mobile (375 px) without horizontal page scroll (only the list scrolls sideways).
 - [x] axe-core: no violations.
@@ -232,7 +235,7 @@ Second page of the tracker: the latest nutrition survey results by country. Visu
 
 - The **planning tracker** (main Google Sheet) is the only place where an Assessment ID is created. An ID is never reused for another survey, even after a survey is cancelled.
 - In the SMART results workbook, the "Assessment ID" column of the Surveys sheet is a **drop-down list fed from the tracker** (IMPORTRANGE of the tracker's ID column + data validation "reject input"). The Consolidation sheet takes the ID from the Surveys sheet, never typed by hand.
-- Past SMART surveys used on the Results page are listed in the tracker too (Status Completed, Validation "Results released"), so every result ID exists there; they also feed the Freshness map.
+- Past SMART surveys used on the Results page are listed in the tracker too (Status Completed, Validation "Results released"), so every result ID exists there.
 - `build_results.py` checks every SMART result ID against `data/surveys.json` (it cannot see two different surveys sharing one ID in the same country, such as SSD-2026-SMART-01 Pibor vs Guit County: that is what the drop-down prevents): unknown ID, or same ID with a different country ISO3 → warning in `results_meta.json` (the results are still shown). The warnings are listed in the workflow log.
 
 ### 11.3 Normalisation rules (`build_results.py`, each a small tested function)
@@ -250,14 +253,14 @@ Second page of the tracker: the latest nutrition survey results by country. Visu
 
 1. **Header**: same as the Planning view, with the tabs "Planning view" and "Results" on both pages.
 2. **Page title** "Results" + one sentence; "Data as of <date>" on the right.
-3. **Indicator selector** (default: Wasting — GAM by WHZ) with its definition line, and the **Source toggle** All · SMART · DHS · MICS (soon, disabled). The toggle applies to the map, the KPI tiles and the ranked list.
-4. **KPI tiles** (4): Countries with results (with "X with both SMART and DHS"), SMART surveys, DHS surveys, MICS "Soon".
+3. **Indicator selector** (default: Wasting — GAM by WHZ) with its definition line (the SMART and DHS definitions only; the phases are in the map legend), and the **Source toggle** All · SMART · DHS · MICS (disabled, no "soon" label). The toggle applies to the map, the KPI tiles and the ranked list.
+4. **KPI tiles** (4): Countries with results (with "X with both SMART and DHS"), SMART surveys, DHS surveys, MICS shown as "--" with no sub-line.
 5. **Map** — follows the Source toggle (owner's decision, Nov 2026): "SMART" → SMART values only; "DHS" → DHS values only (MICS later); **"All" → SMART and DHS**: each country shows its **most recent national value**, any source (same survey year → SMART first), with a source badge; the hover box adds the other source on an "Also:" line (as in the mockup). The caption names the source shown. Countries coloured by the phase of that value, legend "Phases · <source>" (indicators without phases: five equal steps between the lowest and highest national value, in a blue-teal scale so they are never read as phases); "Subnational data only" hatched; no data and no survey in light grey; survey older than 3 years dotted. Hover box like the Planning view (value, phase, CI, level, survey year, definition). **Click opens the country profile** (unlike the Planning map; on touch screens a tap opens it directly). National figure = general population, 6–59 months when both age groups exist, most recent survey (`assets/js/results/figures.js`, shared with the ranked list). UN disclaimer under the map.
 6. **Ranked list** next to the map, same height, vertical scroll: rank, country, source badge, year, level, value with its phase, 95% CI, "As published" badge, "Older than 3 years". Subnational-only and no-data countries come last, under their own group headings. The Value column sorts high → low (default) or low → high. Clicking a country name opens its profile. "Export CSV" (every row, with survey ID, CI, definition, phase and phase source). Code: `assets/js/results/ranked.js`.
-7. **"How to read these figures"** card: Definitions, Comparability, Thresholds and age of data.
+7. **"How to read these figures"** card: Definitions, Comparability, Thresholds and age of data. Static text in `results.html` (not from a sheet), kept generic: no source or threshold named, the map legend gives them. For the demo (12 Nov 2026) the three boxes hold lorem ipsum; the final texts are in an HTML comment just above them.
 8. **Country profile** (`assets/js/results/profile.js`), under the overview, opened by a map click or a ranked-list row; URL `results.html#country=MLI`; Copy link, Close. As in the Mali and Niger mockups:
    - a banner "Latest survey is more than 3 years old" when the newest survey's year is more than 3 years ago (rule 11.3.5);
-   - survey cards: each SMART survey (+ its Rapid SMART IDP component), DHS (or "No recent survey"), MICS "Coming soon"; lead, data collection period, coverage, report link and "As published";
+   - survey cards: each SMART survey (+ its Rapid SMART IDP component), DHS (or "No recent survey"); no MICS card until MICS data exist; lead, data collection period, coverage, report link and "As published";
    - indicator group tabs (Acute malnutrition, Mortality, Morbidity, Stunting, Underweight; only the groups with data);
    - per SMART survey, general population: a dot plot of one indicator by area (national first, admin 1 sorted by value, each followed by its admin 2 / strata), 95% CI lines, dashed national line, value + phase, N; a toggle above it switches between the indicators of the group; every indicator of the group by area in a folded table (value, CI, n/N); the other age group (e.g. 0–59 months) listed under it;
    - Rapid SMART IDP sites in their own block with the same chart; DHS national figures as tiles, with the "Not directly comparable" note;

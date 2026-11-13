@@ -201,3 +201,34 @@ class TrackedTypes(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class DataAsOf(unittest.TestCase):
+    """The "Data as of" date comes from the Settings tab of the planning sheet (Nov 2026)."""
+
+    def test_read_from_the_settings_tab(self):
+        warnings = []
+        settings = bd.read_settings("Setting,Value\nData as of,2026-11-10\nOther,x\n")
+        self.assertEqual(bd.data_as_of(settings, warnings), "2026-11-10")
+        self.assertEqual(warnings, [])
+
+    def test_day_first_date_accepted(self):
+        warnings = []
+        self.assertEqual(bd.data_as_of({"Data as of": "25/11/2026"}, warnings), "2026-11-25")
+
+    def test_missing_or_bad_date_gives_a_warning(self):
+        warnings = []
+        self.assertIsNone(bd.data_as_of({}, warnings))
+        self.assertIsNone(bd.data_as_of({"Data as of": "soon"}, warnings))
+        self.assertEqual(len(warnings), 2)
+
+    def test_written_in_meta_and_unreadable_tab_does_not_fail(self):
+        surveys, warnings = bd.build(sample_csv(filler_rows(11)))
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            self.assertTrue(bd.write_outputs(surveys, warnings, out, "2026-11-10"))
+            self.assertEqual(json.loads((out / "meta.json").read_text())["data_as_of"], "2026-11-10")
+            self.assertTrue(bd.write_outputs(surveys, warnings, out, "2026-11-12"))   # a new date alone rewrites meta
+            warnings = []
+            self.assertIsNone(bd.load_data_as_of(str(out / "missing.csv"), warnings))
+            self.assertEqual(len(warnings), 1)

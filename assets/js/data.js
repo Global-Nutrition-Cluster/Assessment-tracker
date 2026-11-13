@@ -67,7 +67,9 @@ export function applyFilters(surveys, state, ignore = []) {
     // The page covers SMART and Rapid SMART only; blocks that show other types skip 'type'
     (skip.has('type') || matchType(s, 'smart')) &&
     (skip.has('status') || matchStatus(s, state.status)) &&
-    (skip.has('funding') || matchFunding(s, state.funding))
+    (skip.has('funding') || matchFunding(s, state.funding)) &&
+    // Country chosen by a click on the map (Planning view)
+    (skip.has('country') || !state.country || state.country === 'all' || s.iso3 === state.country)
   );
 }
 

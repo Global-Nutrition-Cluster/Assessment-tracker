@@ -1,7 +1,7 @@
 // Entry point: loads the data and draws the blocks.
-// compact-layout branch: no filter bar, timeline or coverage matrix on the page (their modules stay in
-// assets/js/ so they can be put back). The page shows the default view: SMART surveys of the current year;
-// the KPI tiles still filter by status. No detail panel (removed by the owner, Nov 2026).
+// No filter bar, timeline or coverage matrix on the page (their modules stay in assets/js/ so they can be put
+// back). The page shows SMART surveys of the current year. Two selections remain (Nov 2026): the KPI tiles
+// filter by status, and a click on a map country filters the KPI tiles and the survey list to that country.
 
 import { loadData, applyFilters } from './data.js';
 import { readState, writeState } from './state.js';
@@ -9,6 +9,7 @@ import { escapeHtml } from './filters.js';
 import { createKpis } from './kpis.js';
 import { createList } from './list.js';
 import { createMap } from './map.js';
+import { formatDate } from './format.js';
 
 const app = {
   surveys: [],
@@ -33,11 +34,13 @@ async function start() {
   app.updateKpis = createKpis(document.getElementById('kpis'),
     (status) => setState({ ...app.state, status }));
 
-  app.updateList = createList(document.getElementById('list-card'));
+  app.updateList = createList(document.getElementById('list-card'), {
+    onClearCountry: () => setState({ ...app.state, country: 'all' }),
+  });
 
   try {
     app.updateMap = await createMap(document.getElementById('map-card'), {
-      onMode: (map) => setState({ ...app.state, map }),
+      onCountry: (country) => setState({ ...app.state, country }),
     });
   } catch (error) {
     console.error(error);
@@ -45,7 +48,7 @@ async function start() {
   }
 
   renderDataDate();
-  writeState(app.state); // drops parameters that no longer exist (e.g. country, type) from old shared links
+  writeState(app.state); // drops parameters that no longer exist (e.g. map, type) from old shared links
   render();
 }
 
@@ -60,26 +63,21 @@ function render() {
   const filtered = applyFilters(surveys, state);
 
   app.updateKpis(applyFilters(surveys, state, ['status']), state.status);
-  app.updateList(filtered);
+  const countryName = surveys.find((s) => s.iso3 === state.country)?.country || state.country;
+  app.updateList(filtered, state.country, countryName);
   app.updateMap?.({
-    mode: state.map,
-    surveys: filtered,
-    freshSurveys: freshnessSurveys(surveys, state),
+    surveys: applyFilters(surveys, state, ['country']),            // colours: KPI status applies
+    allSurveys: applyFilters(surveys, state, ['country', 'status']), // hover summary: every status
+    country: state.country,
   });
 }
 
-/**
- * Surveys used by the "Data freshness" map (rule 4.3.10): every assessment type, latest release ever,
- * so only the Region filter applies (Period, Status and Funding are ignored).
- */
-function freshnessSurveys(surveys, state) {
-  return applyFilters(surveys, state, ['year', 'status', 'funding', 'type']);
-}
-
+// "Data as of": the date set in the Settings tab of the planning sheet (meta.data_as_of, Nov 2026),
+// else the date of the last data update
 function renderDataDate() {
-  const updated = app.meta.updated_at ? new Date(app.meta.updated_at) : null;
-  document.getElementById('data-date').textContent = updated
-    ? updated.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+  const { data_as_of: asOf, updated_at: updated } = app.meta;
+  document.getElementById('data-date').textContent = asOf ? formatDate(asOf)
+    : updated ? new Date(updated).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
     : 'unknown';
 }
 

@@ -26,6 +26,7 @@ Warnings about the results (rows without a value, values outside their CI, Asses
 
 - **Settings → Secrets and variables → Actions → Variables:**
   - `SHEET_CSV_URL` = the "Publish to web" CSV link of the tracker tab;
+  - `PLANNING_SETTINGS_CSV_URL` = the CSV link of the "Settings" tab of the tracker (two columns `Setting | Value`; the row `Data as of | yyyy-mm-dd` gives the date shown on the Planning view);
   - `SMART_RESULTS_CSV_URL` and `SMART_SURVEYS_CSV_URL` = the CSV links of the Consolidation and Surveys tabs of the SMART results workbook;
   - `RESULTS_INDICATORS_CSV_URL` = the CSV link of the "Dashboard indicators" tab (labels, definitions and phases of the indicators in the Results selector; `none` in Phase thresholds = no phases);
   - `DHS_INDICATORS_CSV_URL` (optional) = the CSV link of the DHS indicator list.
@@ -36,7 +37,8 @@ Warnings about the results (rows without a value, values outside their CI, Asses
 
 - Keep the column names unchanged (see `CLAUDE.md`, section 4.2).
 - Format the date columns as `yyyy-mm-dd` to avoid day/month confusion.
-- Write released results as `Results released (yyyy-mm-dd)` in the Validation column: the date feeds the "freshness" map.
+- Write released results as `Results released (yyyy-mm-dd)` in the Validation column.
+- Update the `Data as of` row of the Settings tab when the tracker has been reviewed: it is the date shown on the Planning view.
 - Only publish the tab meant to be public. The published CSV can be read by anyone with the link.
 
 ## Working on the code

@@ -1,7 +1,8 @@
 // Page state <-> URL query string, so a view can be shared by link.
-// Example: ?status=planned&map=freshness
-// Since Nov 2026 there is no filter bar: year, region and funding stay at their defaults (SMART surveys of the
-// current year) and only the KPI status selection and the map mode come from the URL. Old parameters are ignored.
+// Example: ?status=planned&country=MLI
+// There is no filter bar: year, region and funding stay at their defaults (SMART surveys of the current year).
+// Only the KPI status selection and the country chosen on the map come from the URL (Nov 2026).
+// Old parameters (map, year, region, type, funding, survey) are ignored and dropped on load.
 // Values equal to the defaults are left out of the URL to keep links short.
 
 const CURRENT_YEAR = String(new Date().getFullYear());
@@ -11,10 +12,10 @@ export const DEFAULTS = Object.freeze({
   region: 'all',        // a region code, or 'all'
   status: 'all',        // 'all' | 'planned' | 'ongoing' | 'completed' | 'released' | 'not_planned'
   funding: 'all',       // 'all' | 'funded' | 'gap' | 'partial' | 'unfunded'
-  map: 'status',        // 'status' | 'freshness'
+  country: 'all',       // an ISO3 code chosen by clicking the map, or 'all'
 });
 
-const KEYS = ['status', 'map']; // the only parts of the state that can change on the page
+const KEYS = ['status', 'country']; // the only parts of the state that can change on the page
 
 export function readState(search = window.location.search) {
   const params = new URLSearchParams(search);
@@ -23,7 +24,7 @@ export function readState(search = window.location.search) {
     const value = params.get(key);
     if (value) state[key] = value;
   }
-  if (state.map !== 'freshness') state.map = 'status';
+  if (!/^[A-Z]{3}$/.test(state.country)) state.country = 'all';
   return state;
 }
 

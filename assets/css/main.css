@@ -515,3 +515,48 @@ body { font-size: 14px; }
 #list-card .tbl td { padding: 6px; }
 #list-card .status-cell { align-items: flex-start; }
 #list-card .status-cell .st-icon { margin-top: 2px; }
+
+/* ---- Planning view, Nov 2026: status labels, one-colour map, country rows ---------------------------- */
+
+/* Status label on its status colour (replaces the status icons). Dark text keeps AA contrast on every colour. */
+.st-label {
+  display: inline-block; padding: 1px 7px; border-radius: 4px; white-space: nowrap;
+  font-size: 12px; font-weight: 600; line-height: 18px; color: #1A1F1C;
+}
+.st-planned { background: var(--status-planned); }
+.st-ongoing { background: var(--status-ongoing); }
+.st-completed { background: var(--status-completed); }
+.st-released { background: var(--status-released); }
+.st-not_planned { background: var(--status-not-planned); }
+.kpi-label .st-label { font-size: 13px; padding: 1px 8px; }
+.st-summary { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* Map: one colour; legend square for "No survey" */
+.swatch-none { background: #E3E6E1; box-shadow: inset 0 0 0 1px #C9CEC8; }
+.map-tip .tip-row { align-items: center; justify-content: space-between; gap: 12px; }
+
+/* Survey list: one row per country, ▸ unfolds its surveys */
+.list-note { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 0 2px 0 8px; border-radius: 12px;
+  background: var(--surface-hover); border: 1px solid var(--border-input); color: var(--text); font-size: 12px;
+}
+.chip button {
+  border: 0; background: none; cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 6px;
+  color: var(--text); border-radius: 10px;
+}
+.chip button:hover { background: var(--border-row); }
+.row-toggle {
+  display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none;
+  font: inherit; color: inherit; cursor: pointer; text-align: left;
+}
+.row-toggle .caret {
+  width: 0; height: 0; border-style: solid; border-width: 5px 0 5px 7px;
+  border-color: transparent transparent transparent currentColor; transition: transform .15s;
+}
+.row-toggle[aria-expanded="true"] .caret { transform: rotate(90deg); }
+.tbl-grouped .group-row td { background: var(--surface-alt); }
+.tbl-grouped .sub-row td:first-child { padding-left: 26px; }
+.tbl-grouped .sub-row[hidden] { display: none; }
+.nested-place { color: var(--text-secondary); }
+.tbl .st-label { white-space: normal; }   /* long labels wrap so the table keeps its width */

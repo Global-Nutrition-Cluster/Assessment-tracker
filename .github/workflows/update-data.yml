@@ -28,6 +28,7 @@ jobs:
       - name: Build data from the sheet
         env:
           SHEET_CSV_URL: ${{ vars.SHEET_CSV_URL }}
+          PLANNING_SETTINGS_CSV_URL: ${{ vars.PLANNING_SETTINGS_CSV_URL }}
         run: python scripts/build_data.py
 
       # Results page (CLAUDE.md 11.1). If the SMART results sheets cannot be read, the planning
