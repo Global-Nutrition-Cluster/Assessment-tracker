@@ -1,9 +1,15 @@
 {
- "updated_at": "2026-11-13T19:52:03+00:00",
+ "updated_at": "2026-11-13T21:56:03+00:00",
  "data_as_of": "2026-11-10",
  "row_count": 40,
  "warnings": [
-  "18 rows of other assessment types left out (MSNA: 6, IPC AMN: 5, IPC: 1, VASyR/MSNA: 1, IPC AFI: 1, Community Nutrition Sentinel Site Survey: 1, Mass MUAC screening: 1, NVA (rounds 2 and 3): 1, NVA: 1). The planning view tracks SMART and Rapid SMART only: these rows can be removed from the sheet.",
-  "SSD-2026-SMART-06: duplicate Assessment ID."
+  "SSD-2026-SMART-01: report link 'SMART Survey Report for Guit County, June 2026 - South Sudan' is not a web address (http:// or https://); left out.",
+  "SSD-2026-SMART-02: report link 'Standardized Monitoring and Assessment of Relief and Transit' is not a web address (http:// or https://); left out.",
+  "SSD-2026-SMART-03: report link 'SMART Survey Report for Aweil North County, June 2026 - Sout' is not a web address (http:// or https://); left out.",
+  "SSD-2026-SMART-05: report link 'SMART Survey Report for Abyei Administrative Area, June 2026' is not a web address (http:// or https://); left out.",
+  "SSD-2026-SMART-06: report link 'SMART Survey Report for Pibor County, June 2026 - South Suda' is not a web address (http:// or https://); left out.",
+  "YEM-2026-SMART-01: report link 'SMART Survey - Al Hodeidah Southern Lowland and Taiz - Jan 2' is not a web address (http:// or https://); left out.",
+  "YEM-2026-SMART-02: report link 'SMART Survey - Abyan and Lahj Lowlands - Nov 2025' is not a web address (http:// or https://); left out.",
+  "18 rows of other assessment types left out (MSNA: 6, IPC AMN: 5, IPC: 1, VASyR/MSNA: 1, IPC AFI: 1, Community Nutrition Sentinel Site Survey: 1, Mass MUAC screening: 1, NVA (rounds 2 and 3): 1, NVA: 1). The planning view tracks SMART and Rapid SMART only: these rows can be removed from the sheet."
  ]
 }
