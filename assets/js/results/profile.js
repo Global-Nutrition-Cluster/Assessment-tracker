@@ -2,7 +2,7 @@
 // Opened by a click on the map or the ranked list; shareable as results.html#country=MLI.
 //
 // Layout, from the Mali and Niger mockups in design/results/:
-//   1. title, Copy link, Close; a banner when the newest survey is older than 3 years (rule 11.3.5)
+//   1. title, Copy link, Close (no "older than 3 years" banner since 13 Nov 2026: the age shows on the map legend only)
 //   2. survey cards: one per SMART survey (+ its Rapid SMART component), DHS (or "No recent survey")
 //   3. indicator group tabs (Acute malnutrition, Mortality, Morbidity, Stunting, Underweight)
 //   4. per SMART survey: a dot plot of one indicator by area (national, admin 1 › admin 2, 95% CI),
@@ -12,7 +12,7 @@
 // Values are shown as published; every value carries the "As published" badge (rule 11.3.6).
 
 import { escapeHtml } from '../filters.js';
-import { phaseOf, phasePill, formatValue, formatCi, isOlderThan3Years } from './figures.js';
+import { phaseOf, phasePill, formatValue, formatCi } from './figures.js';
 
 const TABS = [
   { key: 'acute', label: 'Acute malnutrition', groups: ['Acute malnutrition', 'Overweight'] },
@@ -24,7 +24,6 @@ const TABS = [
 const GENERAL = 'General population';
 const LEVEL_ORDER = { National: 0, 'Admin 1': 1, 'Admin 2': 2, Stratum: 2 };
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const CLOCK = '<svg class="ico" width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><circle cx="8" cy="8" r="6.5"></circle><path d="M8 4.5V8l2.5 1.5"></path></svg>';
 
 // --- small formatting helpers ------------------------------------------------------------
 
@@ -112,7 +111,6 @@ export function createProfile(root, { onClose }) {
 
     root.innerHTML = `
       ${headerHtml(name, subtitle(surveys, values))}
-      ${oldBanner(surveys)}
       <h3 class="pf-h">Surveys</h3>
       <div class="pf-cards">${surveyCards(name, surveys, values)}</div>
       ${tabs.length ? `
@@ -159,14 +157,6 @@ function subtitle(surveys, values) {
   return `${plural(surveys.length, 'survey')} from ${plural(sources.size, 'source')} · ${levels.join(', ') || 'no area'}`;
 }
 
-/** Rule 11.3.5: age of the newest survey, from its survey year. Dates of data collection are only quoted. */
-function oldBanner(surveys) {
-  const newest = surveys[0];
-  if (!isOlderThan3Years(newest.survey_year)) return '';
-  const period = formatPeriod(newest.start_date, newest.end_date);
-  return `<div class="pf-banner">${CLOCK}<span><strong>Latest survey is more than 3 years old</strong>${period ? ` (data collected ${esc(period)})` : ''}. Figures may not reflect the current situation.</span></div>`;
-}
-
 function badge(source) {
   return `<span class="src">${esc(source)}</span>`;
 }
@@ -175,17 +165,13 @@ function reportLink(url, label = 'Report') {
   return url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${label}<span class="visually-hidden"> (opens in a new tab)</span></a>` : '';
 }
 
-function oldTag(year) {
-  return isOlderThan3Years(year) ? `<span class="pf-old">${CLOCK}Older than 3 years</span>` : '';
-}
-
 function surveyCards(countryName, surveys, values) {
   const cards = [];
   for (const s of surveys.filter((x) => x.source === 'SMART')) {
     const period = formatPeriod(s.start_date, s.end_date);
     cards.push(`
       <article class="pf-card">
-        <div class="pf-card-top">${badge('SMART')}<strong>${s.survey_year ?? ''}</strong>${oldTag(s.survey_year)}</div>
+        <div class="pf-card-top">${badge('SMART')}<strong>${s.survey_year ?? ''}</strong></div>
         <h4>${esc(s.title || s.id)}</h4>
         ${s.lead_org ? `<p>${esc(s.lead_org)}</p>` : ''}
         <p class="mute">${[period && `Data collection ${esc(period)}`, s.coverage && esc(s.coverage)].filter(Boolean).join(' · ')}</p>
@@ -213,7 +199,7 @@ function surveyCards(countryName, surveys, values) {
     const retrieved = s.retrieval_date ? `retrieved ${formatDay(s.retrieval_date)}` : '';
     cards.push(`
       <article class="pf-card">
-        <div class="pf-card-top">${badge('DHS')}<strong>${s.survey_year ?? ''}</strong><span class="pf-tag">${esc(s.id)}</span>${oldTag(s.survey_year)}</div>
+        <div class="pf-card-top">${badge('DHS')}<strong>${s.survey_year ?? ''}</strong><span class="pf-tag">${esc(s.id)}</span></div>
         <h4>${esc(s.title || s.id)}</h4>
         ${s.lead_org ? `<p>${esc(s.lead_org)}</p>` : ''}
         <p class="mute">${[released, retrieved].filter(Boolean).join(' · ')}</p>

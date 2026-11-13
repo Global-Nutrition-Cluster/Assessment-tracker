@@ -88,3 +88,71 @@ body { background: var(--soft-page); }
 #list-card .tbl td { padding: 7px 4px; }
 #list-card .tbl td:first-child, #list-card .tbl th:first-child .th, #list-card .tbl th:first-child button { padding-left: 10px; }
 #list-card .st-label { padding: 1px 7px; }
+
+/* ======================= Results page (results.html loads this file after results.css) ======================= */
+
+/* Indicator selector: a white rounded field, no border; Source toggle: a white pill, active option black */
+.res-controls .sel { border: 0; border-radius: 999px; background-color: #FFFFFF; padding-left: 16px; height: 38px; }
+.segmented { border: 0; border-radius: 999px; background: #FFFFFF; padding: 4px; gap: 2px; overflow: visible; }
+.segmented button { border-radius: 999px; background: none; height: 30px; padding: 0 14px; }
+.segmented button + button { border-left: 0; }
+.segmented button[aria-pressed="true"] { background: var(--text); color: #FFFFFF; }
+.res-controls .segmented button:disabled { background: none; color: var(--text-faint); }
+
+/* KPI tiles (read-only here); the tile of the source not shown is greyed, no dashed border */
+.res-kpi:hover { background: #FFFFFF; }
+.res-kpi.is-off, .res-kpi.is-off:hover { background: #EEF0EC; border: 0; }
+
+/* Badges: borderless pills */
+.src { border: 0; border-radius: 999px; padding: 0 7px; background: #E9ECE7; color: #2F3531; }
+.rev { border: 0; border-radius: 999px; padding: 0 8px; background: #EEF0EC; color: #3F4541; }
+.sev, .pf-tag, .pf-level { border-radius: 999px; }
+.sev-0, .cont-0 { box-shadow: none; }
+
+/* Map: no-phase indicators in GNC green (swatches matching the hatch and the dots) */
+.swatch.sw-hatch-green { background: repeating-linear-gradient(45deg, #6E9A1F 0 2px, #FFFFFF 2px 5px); }
+.swatch.sw-dots-green { background: radial-gradient(circle, #FFFFFF 1px, transparent 1.3px) 0 0 / 5px 5px, var(--gnc-green); }
+.swatch.sw-hatch, .swatch.sw-hatch-cont { box-shadow: none; }
+.legend-scale-row .legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.res-tip .tip-also { border-top: 0; padding-top: 2px; }
+
+/* "Latest results by country": rows as grey rounded bars (shared .tbl rules above); group heading plain */
+.rank-tbl .rank-group th { background: none; padding-top: 12px; }
+
+/* How to read these figures: a white block */
+.res-howto { border: 0; border-radius: var(--soft-radius); background: #FFFFFF; padding: 20px 22px; }
+
+/* Country profile: a white block; survey cards, plot, tiles and boxes as grey rounded blocks inside it */
+.res-profile { border-top: 0; }
+.pf-banner { border: 0; border-radius: var(--soft-radius-small); background: var(--soft-row); }
+.pf-card, .pf-plot, .pf-tile, .pf-more-box { border: 0; border-radius: 16px; background: var(--soft-row); }
+.pf-card-empty { border: 0; background: var(--soft-row); }
+.pf-tag { background: #FFFFFF; }
+.pf-notes { border: 0; border-radius: 16px; background: #FBF7E8; }
+.dp-row.is-national { background: #FFFFFF; border-radius: 8px; }
+.is-national .pf-level { background: var(--soft-row); }
+.dp-dot.dp-neutral { background: var(--gnc-green); }   /* indicators without phases: same green as the map */
+
+/* Tabs of the indicator groups: pills, active one black */
+.pf-tabs { border-bottom: 0; gap: 6px; }
+.pf-tabs button { border: 0; border-radius: 999px; padding: 6px 14px; background: var(--soft-row); }
+.pf-tabs button[aria-selected="true"] { background: var(--text); color: #FFFFFF; font-weight: 600; }
+@media (max-width: 899px) {
+  .pf-plot-toggle button { border-bottom: 0; margin-bottom: 0; }
+}
+
+/* Folded tables of the profile: no lines, grey rounded rows like the survey list */
+.pf-table .tbl { border-spacing: 0 3px; }
+.pf-table .tbl tbody th { background: var(--soft-row); border-radius: 8px 0 0 8px; }
+.pf-table .tbl tbody td:last-child { border-radius: 0 8px 8px 0; }
+.pf-table .tbl tbody td:first-child { border-radius: 0; }
+.pf-table .tbl tr.is-national > * { background: var(--soft-row-group); }
+.pf-table .tbl thead th { background: #FFFFFF; }
+
+/* The chart's indicator toggle sits on the white profile: a grey pill */
+.pf-plot-toggle.segmented { background: var(--soft-row); }
+.legend-scale-row .swatch { display: inline-block; width: 18px; height: 12px; border-radius: 2px; }
+
+/* Secondary buttons (Copy link, Close): grey pills on the white blocks */
+.btn:not(.btn-primary) { background: var(--soft-page); }
+.btn:not(.btn-primary):hover { background: #E8EBE6; }
