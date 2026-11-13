@@ -71,15 +71,16 @@
   :root { --page-pad: 16px; }
 }
 
-/* Results page (CLAUDE.md 11.3.7): WHO 2018 prevalence classes, from the Results mockup */
+/* Results page (CLAUDE.md 11.3.7): phase colours = the IPC phase colours (owner's decision, Nov 2026).
+   Colour 1 = IPC Phase 1 (Minimal) … colour 5 = Phase 5 (Famine / Extremely critical). */
 :root {
-  --who-very-low: #FBE6F0;
-  --who-low: #F4B6D2;
-  --who-medium: #E07AAE;
-  --who-high: #A3286D;
-  --who-very-high: #6B0F4A;
-  /* Indicators without WHO classes (mortality, morbidity, MUAC…): five equal steps, a different hue
-     so they are never read as WHO classes */
+  --phase-1: #CDFACD;   /* IPC Phase 1, light green */
+  --phase-2: #FAE61E;   /* IPC Phase 2, yellow */
+  --phase-3: #E67800;   /* IPC Phase 3, orange */
+  --phase-4: #C80000;   /* IPC Phase 4, red */
+  --phase-5: #640000;   /* IPC Phase 5, dark red */
+  /* Indicators without phases: five equal steps, a different hue
+     so they are never read as phases */
   --cont-1: #E3EEF1;
   --cont-2: #B3D3DC;
   --cont-3: #79AFBF;

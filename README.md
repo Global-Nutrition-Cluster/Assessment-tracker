@@ -26,7 +26,9 @@ Warnings about the results (rows without a value, values outside their CI, Asses
 
 - **Settings → Secrets and variables → Actions → Variables:**
   - `SHEET_CSV_URL` = the "Publish to web" CSV link of the tracker tab;
+  - `PLANNING_SETTINGS_CSV_URL` = the CSV link of the "Settings" tab of the tracker (two columns `Setting | Value`; the row `Data as of | yyyy-mm-dd` gives the date shown on the Planning view);
   - `SMART_RESULTS_CSV_URL` and `SMART_SURVEYS_CSV_URL` = the CSV links of the Consolidation and Surveys tabs of the SMART results workbook;
+  - `RESULTS_INDICATORS_CSV_URL` = the CSV link of the "Dashboard indicators" tab (labels, definitions and phases of the indicators in the Results selector; `none` in Phase thresholds = no phases);
   - `DHS_INDICATORS_CSV_URL` (optional) = the CSV link of the DHS indicator list.
 - **Settings → Actions → General → Workflow permissions:** select "Read and write permissions" so the workflow can commit the data.
 - **Settings → Pages:** deploy from the `main` branch, root folder.
@@ -35,7 +37,8 @@ Warnings about the results (rows without a value, values outside their CI, Asses
 
 - Keep the column names unchanged (see `CLAUDE.md`, section 4.2).
 - Format the date columns as `yyyy-mm-dd` to avoid day/month confusion.
-- Write released results as `Results released (yyyy-mm-dd)` in the Validation column: the date feeds the "freshness" map.
+- Write released results as `Results released (yyyy-mm-dd)` in the Validation column.
+- Update the `Data as of` row of the Settings tab when the tracker has been reviewed: it is the date shown on the Planning view.
 - Only publish the tab meant to be public. The published CSV can be read by anyone with the link.
 
 ## Working on the code
@@ -44,7 +47,7 @@ Warnings about the results (rows without a value, values outside their CI, Asses
 - Preview the site locally: `python -m http.server 8000` in the repository folder, then open http://localhost:8000 (opening `index.html` directly does not work because the page loads JSON files).
 - Run the tests: `python -m unittest discover -s scripts/tests -v`
 - Build the data from a local CSV: `python scripts/build_data.py --input my_export.csv`
-- Build the results from local CSVs: `python scripts/build_results.py --smart-results consolidation.csv --smart-surveys surveys.csv`
+- Build the results from local CSVs: `python scripts/build_results.py --smart-results consolidation.csv --smart-surveys surveys.csv --indicators dashboard_indicators.csv`
 
 ## Licence
 

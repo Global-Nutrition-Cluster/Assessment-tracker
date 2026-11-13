@@ -515,3 +515,55 @@ body { font-size: 14px; }
 #list-card .tbl td { padding: 6px; }
 #list-card .status-cell { align-items: flex-start; }
 #list-card .status-cell .st-icon { margin-top: 2px; }
+
+/* ---- Planning view, Nov 2026: status labels, one-colour map, country rows ---------------------------- */
+
+/* Status label (owner's choice, 13 Nov 2026): white label, thin grey border, a dot of the status colour before
+   the word, dark text. The colour is only in the dot, so the table stays calm; the word carries the meaning. */
+.st-label {
+  display: inline-flex; align-items: center; gap: 5px; padding: 0 6px; border-radius: 3px;
+  background: #FFFFFF; border: 1px solid #D5DAD3; white-space: nowrap;
+  font-size: 11px; font-weight: 600; line-height: 16px; color: #2B312D;
+}
+.st-label::before {
+  content: ""; flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--st-colour, #A9AFA8);
+}
+.st-planned { --st-colour: var(--status-planned); }
+.st-ongoing { --st-colour: var(--status-ongoing); }
+.st-completed { --st-colour: var(--status-completed); }
+.st-released { --st-colour: var(--status-released); }
+.st-not_planned { --st-colour: var(--status-not-planned); }
+.kpi-label .st-label { font-size: 12px; line-height: 18px; padding: 0 7px; }
+.kpi-label .st-label::before { width: 8px; height: 8px; }
+.st-summary { display: flex; flex-wrap: wrap; gap: 4px; }
+
+/* Map: one colour; legend square for "No survey" */
+.swatch-none { background: #E3E6E1; box-shadow: inset 0 0 0 1px #C9CEC8; }
+.map-tip .tip-row { align-items: center; justify-content: space-between; gap: 12px; }
+
+/* Survey list: one row per country, ▸ unfolds its surveys */
+.list-note { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 4px; padding: 0 2px 0 8px; border-radius: 12px;
+  background: var(--surface-hover); border: 1px solid var(--border-input); color: var(--text); font-size: 12px;
+}
+.chip button {
+  border: 0; background: none; cursor: pointer; font-size: 15px; line-height: 1; padding: 2px 6px;
+  color: var(--text); border-radius: 10px;
+}
+.chip button:hover { background: var(--border-row); }
+.row-toggle {
+  display: inline-flex; align-items: center; gap: 6px; padding: 0; border: 0; background: none;
+  font: inherit; color: inherit; cursor: pointer; text-align: left;
+}
+.row-toggle .caret {
+  width: 0; height: 0; border-style: solid; border-width: 5px 0 5px 7px;
+  border-color: transparent transparent transparent currentColor; transition: transform .15s;
+}
+.row-toggle[aria-expanded="true"] .caret { transform: rotate(90deg); }
+.tbl-grouped .group-row td { background: var(--surface-alt); }
+.tbl-grouped .sub-row td:first-child { padding-left: 26px; }
+.tbl-grouped .sub-row[hidden] { display: none; }
+.nested-place { color: var(--text-secondary); }
+.tbl .st-label { white-space: normal; align-items: baseline; }
+.tbl .st-label::before { align-self: center; }   /* long labels wrap so the table keeps its width */

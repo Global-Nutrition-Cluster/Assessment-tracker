@@ -62,6 +62,108 @@ DHS_SURVEYS = ("assessment_id,country,iso3,survey_year,start_date,end_date,relea
                "report_link\nML2023DHS,Mali,MLI,2023,2023-11-01,2024-04-01,2025-10-02,INSTAT,https://dhs/ml\n")
 
 
+INDICATOR_HEADER = ",".join(br.INDICATOR_COLUMNS)
+
+
+def indicator_row(key, smart="", dhs="", thresholds="none", labels="", source="", group="Acute malnutrition"):
+    cells = [key, group, f"Label {key}", "%", smart, dhs, "SMART def", "DHS def", thresholds, labels, source]
+    return ",".join(f'"{c}"' for c in cells)
+
+
+INDICATORS_CSV = "\n".join([
+    "Dashboard indicators,,,",
+    INDICATOR_HEADER,
+    indicator_row("GAM_WHZ", "GAM_WHZ", "CN_NUTS_C_WH2", "2.5;5;10;15", "Very low;Low;Medium;High;Very high", "WHO 2018"),
+    indicator_row("STUNT", "STUNT", "", "none", group="Stunting"),
+    indicator_row("U5MR", "", "CM_ECMR_C_U5M", "none", group="Mortality"),
+]) + "\n"
+
+
+class IndicatorSheet(unittest.TestCase):
+    """Rules 11.3.0 and 11.3.7: the Dashboard indicators sheet."""
+
+    def load(self, *rows):
+        warnings = []
+        indicators = br.load_indicators(INDICATOR_HEADER + "\n" + "\n".join(rows) + "\n", warnings)
+        return indicators, warnings
+
+    def test_phases_are_read(self):
+        (ind,), warnings = self.load(indicator_row("CDR", "CDR", "", "1;2", "Below alert;Alert;Emergency", "GNC"))
+        self.assertEqual(ind["phases"], {"source": "GNC", "thresholds": [1, 2], "higher_is_better": False,
+                                         "labels": ["Below alert", "Alert", "Emergency"], "colours": [0, 1, 2],
+                                         "palette": "blue"})
+        self.assertEqual(warnings, [])
+
+    def test_decimal_comma_thresholds(self):
+        (ind,), _ = self.load(indicator_row("X", "X", "", "2,5;5", "A;B;C", "WHO 2018"))
+        self.assertEqual(ind["phases"]["thresholds"], [2.5, 5])
+
+    def test_higher_value_is_better(self):
+        row = indicator_row("MDD", "MDD", "", "10;20;40;70", "Extremely critical;Critical;Serious;Alert;Acceptable", "GNC")
+        header = INDICATOR_HEADER + ",Higher value is"
+        warnings = []
+        (ind,) = br.load_indicators(header + "\n" + row + ',"better"\n', warnings)
+        self.assertTrue(ind["phases"]["higher_is_better"])
+        self.assertEqual(ind["phases"]["colours"], [4, 3, 2, 1, 0])   # lowest values = most severe
+        (ind,) = br.load_indicators(header + "\n" + row + ',"upside"\n', warnings)
+        self.assertIsNone(ind["phases"])
+        self.assertEqual(len(warnings), 1)
+
+    def test_phase_colours(self):
+        header = INDICATOR_HEADER + ",Higher value is,Phase colours"
+        row = indicator_row("CDR", "CDR", "", "0.5;1;2", "Acceptable/Alert;Serious;Critical;Extremely critical", "GNC")
+        warnings = []
+        (ind,) = br.load_indicators(header + "\n" + row + ',"","1;3;4;5"\n', warnings)
+        self.assertEqual(ind["phases"]["colours"], [0, 2, 3, 4])
+        (ind,) = br.load_indicators(header + "\n" + row + ',"","1;3;9"\n', warnings)
+        self.assertIsNone(ind["phases"])
+        self.assertEqual(len(warnings), 1)
+
+    def test_phase_palette(self):
+        header = INDICATOR_HEADER + ",Phase palette"
+        row = indicator_row("GAM_WHZ", "GAM", "", "5;10;15;30", "Acceptable;Alert;Serious;Critical;Extremely critical", "IPC AMN v3")
+        warnings = []
+        (ind,) = br.load_indicators(header + "\n" + row + ',"IPC"\n', warnings)
+        self.assertEqual(ind["phases"]["palette"], "ipc")
+        (ind,) = br.load_indicators(header + "\n" + row + ',""\n', warnings)
+        self.assertEqual(ind["phases"]["palette"], "blue")      # default
+        (ind,) = br.load_indicators(header + "\n" + row + ',"pink"\n', warnings)
+        self.assertIsNone(ind["phases"])
+        self.assertEqual(len(warnings), 1)
+
+    def test_keyword_none_means_no_phases(self):
+        (ind,), warnings = self.load(indicator_row("X", "X", "", "None"))
+        self.assertIsNone(ind["phases"])
+        self.assertEqual(warnings, [])
+
+    def test_empty_thresholds_warn(self):
+        (ind,), warnings = self.load(indicator_row("X", "X", "", ""))
+        self.assertIsNone(ind["phases"])
+        self.assertTrue(any("none" in w for w in warnings))
+
+    def test_bad_phases_warn_and_are_dropped(self):
+        for thresholds, labels, source in [("5;2", "A;B;C", "WHO"), ("1;2", "A;B", "WHO"),
+                                           ("1;2", "A;B;C", ""), ("a;b", "A;B;C", "WHO"),
+                                           ("1;2;3;4;5", "A;B;C;D;E;F", "WHO")]:
+            (ind,), warnings = self.load(indicator_row("X", "X", "", thresholds, labels, source))
+            self.assertIsNone(ind["phases"], thresholds)
+            self.assertEqual(len(warnings), 1, thresholds)
+
+    def test_duplicate_key_or_code_is_left_out(self):
+        inds, warnings = self.load(indicator_row("A", "GAM"), indicator_row("A", "OTHER"), indicator_row("B", "GAM"))
+        self.assertEqual([i["key"] for i in inds], ["A"])
+        self.assertEqual(len(warnings), 2)
+
+    def test_row_without_code_is_left_out(self):
+        inds, warnings = self.load(indicator_row("A", "GAM"), indicator_row("B"))
+        self.assertEqual(len(inds), 1)
+        self.assertEqual(len(warnings), 1)
+
+    def test_missing_column_fails(self):
+        with self.assertRaises(br.SourceError):
+            br.load_indicators(INDICATOR_HEADER.replace("Phase source", "Source") + "\n" + indicator_row("A", "GAM"), [])
+
+
 class NumberAndTextRules(unittest.TestCase):
     def test_parse_number(self):
         self.assertEqual(br.parse_number("10.8"), 10.8)
@@ -89,7 +191,7 @@ class NumberAndTextRules(unittest.TestCase):
 
 class SmartRules(unittest.TestCase):
     def build(self, rows, planning=None, report=""):
-        return br.build(results_csv(rows), surveys_csv(report), DHS_VALUES, DHS_SURVEYS, planning)
+        return br.build(results_csv(rows), surveys_csv(report), DHS_VALUES, DHS_SURVEYS, planning, INDICATORS_CSV)
 
     def test_header_detected_below_a_title_row(self):
         results, counts, _ = self.build(filler(br.MIN_SMART_VALUES))
@@ -102,7 +204,7 @@ class SmartRules(unittest.TestCase):
     def test_missing_column_fails(self):
         with self.assertRaises(br.SourceError):
             br.build(results_csv(filler(200)).replace("Indicator code", "Code"), surveys_csv(),
-                     DHS_VALUES, DHS_SURVEYS, None)
+                     DHS_VALUES, DHS_SURVEYS, None, INDICATORS_CSV)
 
     def test_6_59_months_is_the_main_figure(self):  # rule 11.3.4
         rows = filler(br.MIN_SMART_VALUES) + [result_row("A", age="6-59 months", value="10.8"),
@@ -163,7 +265,7 @@ class SmartRules(unittest.TestCase):
 class DhsRules(unittest.TestCase):
     def setUp(self):
         self.results, self.counts, _ = br.build(results_csv(filler(br.MIN_SMART_VALUES)), surveys_csv(),
-                                                DHS_VALUES, DHS_SURVEYS, None)
+                                                DHS_VALUES, DHS_SURVEYS, None, INDICATORS_CSV)
         self.dhs = [v for v in self.results["values"] if v["source"] == "DHS"]
 
     def test_shared_key_for_wasting(self):  # rule 11.3.2
@@ -191,7 +293,7 @@ class DhsRules(unittest.TestCase):
 class Outputs(unittest.TestCase):
     def test_written_only_when_changed(self):
         results, counts, warnings = br.build(results_csv(filler(br.MIN_SMART_VALUES)), surveys_csv(),
-                                             DHS_VALUES, DHS_SURVEYS, None)
+                                             DHS_VALUES, DHS_SURVEYS, None, INDICATORS_CSV)
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
             self.assertTrue(br.write_outputs(results, counts, warnings, out))

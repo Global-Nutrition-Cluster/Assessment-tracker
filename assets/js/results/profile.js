@@ -3,7 +3,7 @@
 //
 // Layout, from the Mali and Niger mockups in design/results/:
 //   1. title, Copy link, Close; a banner when the newest survey is older than 3 years (rule 11.3.5)
-//   2. survey cards: one per SMART survey (+ its Rapid SMART component), DHS (or "No recent survey"), MICS soon
+//   2. survey cards: one per SMART survey (+ its Rapid SMART component), DHS (or "No recent survey")
 //   3. indicator group tabs (Acute malnutrition, Mortality, Morbidity, Stunting, Underweight)
 //   4. per SMART survey: a dot plot of one indicator by area (national, admin 1 › admin 2, 95% CI),
 //      with a toggle between the indicators of the group, and every indicator of the group in a table
@@ -12,7 +12,7 @@
 // Values are shown as published; every value carries the "As published" badge (rule 11.3.6).
 
 import { escapeHtml } from '../filters.js';
-import { WHO_CLASSES, whoClass, formatValue, formatCi, isOlderThan3Years } from './figures.js';
+import { phaseOf, phasePill, formatValue, formatCi, isOlderThan3Years } from './figures.js';
 
 const TABS = [
   { key: 'acute', label: 'Acute malnutrition', groups: ['Acute malnutrition', 'Overweight'] },
@@ -47,10 +47,7 @@ function formatPeriod(start, end) {
 const esc = escapeHtml;
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
-function pill(indicator, value) {
-  const cls = whoClass(indicator, value);
-  return cls == null ? '' : `<span class="sev sev-${cls}">${WHO_CLASSES[cls]}</span>`;
-}
+const pill = phasePill;   // phase name, coloured like the map (rule 11.3.7)
 
 // --- the profile ----------------------------------------------------------------------------
 
@@ -231,11 +228,6 @@ function surveyCards(countryName, surveys, values) {
         <p class="mute">No standard DHS published for ${esc(countryName)} from 2020 onwards.</p>
       </article>`);
   }
-  cards.push(`
-    <article class="pf-card pf-card-empty">
-      <div class="pf-card-top">${badge('MICS')}<strong>Coming soon</strong></div>
-      <p class="mute">MICS results will appear here as their own block, with their own definitions and levels.</p>
-    </article>`);
   return cards.join('');
 }
 
@@ -377,7 +369,7 @@ function dotPlot(values, indicator) {
 
   const rowHtml = rows.map((r) => {
     const v = byKey.get(r.key);
-    const cls = whoClass(indicator, v.value);
+    const cls = phaseOf(indicator, v.value)?.cls ?? null;
     const child = (LEVEL_ORDER[r.level] ?? 1) === 2;
     const ci = v.ci_lower != null && v.ci_upper != null
       ? `<span class="dp-ci" style="left:${pct(v.ci_lower)};width:calc(${pct(v.ci_upper)} - ${pct(v.ci_lower)})"></span>` : '';
@@ -385,7 +377,7 @@ function dotPlot(values, indicator) {
       <div class="dp-label"><span class="pf-level">${esc(r.level)}</span>${esc(r.area)}</div>
       <div class="dp-track">
         ${national ? `<span class="dp-nat" style="left:${pct(national.value)}"></span>` : ''}
-        ${ci}<span class="dp-dot ${cls == null ? 'dp-neutral' : `sev-${cls}`}" style="left:${pct(v.value)}"></span>
+        ${ci}<span class="dp-dot ${cls == null ? 'dp-neutral' : cls}" style="left:${pct(v.value)}"></span>
       </div>
       <div class="dp-value"><strong>${formatValue(v.value, indicator.unit)}</strong>${pill(indicator, v.value)}</div>
       <div class="dp-n">${v.sample != null ? v.sample.toLocaleString('en-GB') : ''}</div>
@@ -397,7 +389,7 @@ function dotPlot(values, indicator) {
     <figure class="pf-plot">
       <figcaption>
         <span><strong>${caption}</strong></span>
-        <span class="mute">${indicator.classes ? 'Dots coloured by WHO 2018 class' : 'No WHO classes for this indicator'}${national ? ` · dashed line = national ${formatValue(national.value, indicator.unit)}` : ''}</span>
+        <span class="mute">${indicator.phases ? `Dots coloured by phase (${esc(indicator.phases.source)})` : 'No phases for this indicator'}${national ? ` · dashed line = national ${formatValue(national.value, indicator.unit)}` : ''}</span>
       </figcaption>
       <div class="dp" role="img" aria-label="${esc(`${indicator.label}: ${rows.length} areas. The same values are in the table below.`)}">
         <div class="dp-row dp-headrow" aria-hidden="true"><div>Area</div><div></div><div>Value</div><div>N</div></div>

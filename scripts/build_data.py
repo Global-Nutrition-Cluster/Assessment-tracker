@@ -2,8 +2,12 @@
 """Build data/surveys.json and data/meta.json from the GNC tracker Google Sheet.
 
 Usage:
-    python scripts/build_data.py                    # reads the URL in $SHEET_CSV_URL
+    python scripts/build_data.py                    # reads the URLs in $SHEET_CSV_URL and $PLANNING_SETTINGS_CSV_URL
     python scripts/build_data.py --input file.csv   # reads a local CSV (for testing)
+    python scripts/build_data.py --input file.csv --settings settings.csv
+
+The "Settings" tab of the planning sheet (two columns: Setting | Value) gives the "Data as of" date shown
+on the page. If it cannot be read, the page shows the date of the last data update instead (a warning, not an error).
 
 The business rules are numbered as in CLAUDE.md, section 4.3.
 Only the Python standard library is used.
@@ -325,8 +329,52 @@ def build(csv_text):
 # Writing the output
 # ---------------------------------------------------------------------------
 
-def write_outputs(surveys, warnings, data_dir=DATA_DIR):
-    """Write the JSON files only if the data changed. Returns True when files were written."""
+# ---------------------------------------------------------------------------
+# Settings tab ("Data as of" date shown on the Planning view)
+# ---------------------------------------------------------------------------
+
+DATA_AS_OF_SETTING = "Data as of"
+
+
+def read_settings(csv_text):
+    """Return {setting name: value} from the two first columns of the Settings tab (header row optional)."""
+    settings = {}
+    for row in csv.reader(io.StringIO(csv_text)):
+        if len(row) < 2 or not row[0].strip() or row[0].strip().lower() == "setting":
+            continue
+        settings[row[0].strip()] = row[1].strip()
+    return settings
+
+
+def data_as_of(settings, warnings):
+    """ISO date of the "Data as of" setting, or None (with a warning) when it is missing or not a date."""
+    value = settings.get(DATA_AS_OF_SETTING, "")
+    if not value:
+        warnings.append(f"Settings: no '{DATA_AS_OF_SETTING}' row; the page shows the date of the last data update.")
+        return None
+    return parse_date(value, warnings, "Settings", DATA_AS_OF_SETTING)
+
+
+def load_data_as_of(settings_path, warnings):
+    """Read the Settings tab (local file or $PLANNING_SETTINGS_CSV_URL). Never fails the run."""
+    try:
+        if settings_path:
+            text = Path(settings_path).read_text(encoding="utf-8-sig")
+        else:
+            url = os.environ.get("PLANNING_SETTINGS_CSV_URL")
+            if not url:
+                warnings.append("PLANNING_SETTINGS_CSV_URL is not set; the page shows the date of the last data update.")
+                return None
+            text = fetch_csv(url)
+    except (OSError, SourceError) as exc:
+        warnings.append(f"Settings tab could not be read ({exc}); the page shows the date of the last data update.")
+        return None
+    return data_as_of(read_settings(text), warnings)
+
+
+def write_outputs(surveys, warnings, data_dir=DATA_DIR, as_of=None):
+    """Write the JSON files only if the data changed. Returns True when files were written.
+    `as_of` = the "Data as of" date from the Settings tab (ISO string or None)."""
     data_dir.mkdir(parents=True, exist_ok=True)
     surveys_path = data_dir / "surveys.json"
     meta_path = data_dir / "meta.json"
@@ -335,11 +383,13 @@ def write_outputs(surveys, warnings, data_dir=DATA_DIR):
     old_surveys = surveys_path.read_text(encoding="utf-8") if surveys_path.exists() else None
     old_meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
 
-    if new_surveys == old_surveys and old_meta.get("warnings") == warnings:
+    if (new_surveys == old_surveys and old_meta.get("warnings") == warnings
+            and old_meta.get("data_as_of") == as_of):
         return False
 
     meta = {
         "updated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
+        "data_as_of": as_of,
         "row_count": len(surveys),
         "warnings": warnings,
     }
@@ -355,6 +405,7 @@ def write_outputs(surveys, warnings, data_dir=DATA_DIR):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--input", help="Local CSV file to read instead of $SHEET_CSV_URL")
+    parser.add_argument("--settings", help="Local CSV of the Settings tab instead of $PLANNING_SETTINGS_CSV_URL")
     parser.add_argument("--out", default=str(DATA_DIR), help="Output folder (default: data/)")
     args = parser.parse_args(argv)
 
@@ -371,8 +422,9 @@ def main(argv=None):
         print(f"ERROR: {exc}\nThe existing data files were left unchanged.", file=sys.stderr)
         return 1
 
-    changed = write_outputs(surveys, warnings, Path(args.out))
-    print(f"{len(surveys)} surveys, {len(warnings)} warnings. "
+    as_of = load_data_as_of(args.settings, warnings)
+    changed = write_outputs(surveys, warnings, Path(args.out), as_of)
+    print(f"{len(surveys)} surveys, data as of {as_of or 'unknown'}, {len(warnings)} warnings. "
           f"{'Data files updated.' if changed else 'No change.'}")
     for warning in warnings:
         print(f"  warning: {warning}")
