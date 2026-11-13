@@ -181,3 +181,10 @@ body { background: var(--soft-page); }
   .res-controls .field { flex-wrap: wrap; }
   .res-indicator .field { flex-basis: 100%; }
 }
+
+/* Focus: no blue ring on the soft look (owner's request, 13 Nov 2026). Keyboard users still see where they
+   are: a dark GNC green ring everywhere, and on the indicator selector its own green outline gets thicker. */
+:root { --focus: #4E8A2A; }   /* dark GNC green, 4.4:1 on white */
+#indicator-select.sel:focus, #indicator-select.sel:focus-visible {
+  outline: none; box-shadow: inset 0 0 0 3px #4E8A2A;
+}
