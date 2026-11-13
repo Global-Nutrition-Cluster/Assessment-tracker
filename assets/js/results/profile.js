@@ -1,7 +1,7 @@
 // Country profile (CLAUDE.md 11.4.8): every survey and every value of one country, under the map.
 // Opened by a click on the map or the ranked list; shareable as results.html#country=MLI.
 //
-// Layout, from the Mali and Niger mockups in design/results/:
+// Layout, from the first Mali and Niger mockups (CLAUDE.md 11.4.8):
 //   1. title, Copy link, Close (no "older than 3 years" banner since 13 Nov 2026: the age shows on the map legend only)
 //   2. survey cards: one per SMART survey (+ its Rapid SMART component), DHS (or "No recent survey")
 //   3. indicator group tabs (Acute malnutrition, Mortality, Morbidity, Stunting, Underweight)
@@ -11,7 +11,7 @@
 //   6. DHS "More indicators" (folded). No "Notes from the data" and no "Not directly comparable" note (removed, 13 Nov 2026)
 // Values are shown as published; every value carries the "As published" badge (rule 11.3.6).
 
-import { escapeHtml } from '../filters.js';
+import { escapeHtml } from '../format.js';
 import { phaseOf, phasePill, formatValue, formatCi } from './figures.js';
 import { flagImg } from './flags.js';
 

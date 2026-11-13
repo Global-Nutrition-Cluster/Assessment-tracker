@@ -1,7 +1,7 @@
 // Indicator selector and Source toggle (CLAUDE.md 11.4.3).
 
 import { SOURCES, indicatorSources } from './data.js';
-import { escapeHtml } from '../filters.js';
+import { escapeHtml } from '../format.js';
 
 /** Label in the selector: single-source indicators say so, unless the label already names the source. */
 function optionLabel(indicator) {

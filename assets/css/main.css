@@ -1,5 +1,5 @@
 /* Layout and components of the Planning view.
-   Values follow the Claude Design mockup (design/Desktop – Planning view-html/Main.dc.html).
+   First values came from the Claude Design mockup (removed from the repo in Nov 2026; CLAUDE.md is the reference).
    Colours and fonts come from tokens.css. */
 
 *,
@@ -60,17 +60,6 @@ button, select, input { font-family: inherit; }
 .data-asof { font-size: 14px; color: var(--text-muted); text-align: right; white-space: nowrap; }
 .data-asof strong { color: var(--text); }
 
-/* ---------- Filter bar (sticky) ---------- */
-.filter-bar {
-  position: sticky; top: 0; z-index: 20;
-  background: var(--surface);
-  border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);
-}
-.filter-form { padding-top: 12px; padding-bottom: 12px; }
-.filter-fields { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 12px 16px; }
-.filter-form .filter-toggle { display: none; }   /* shown on phones only */
-.filter-count { font-weight: 700; }
-
 .skip-link {
   position: absolute; left: 16px; top: -48px; z-index: 100;
   padding: 10px 14px; border-radius: var(--radius-input);
@@ -83,9 +72,6 @@ button, select, input { font-family: inherit; }
   *, *::before, *::after { transition: none !important; animation: none !important; scroll-behavior: auto !important; }
 }
 .field { display: flex; flex-direction: column; gap: 4px; flex: 1 1 160px; min-width: 0; }
-.field.w-140 { flex-basis: 140px; }
-.field.w-170 { flex-basis: 170px; }
-.field.w-180 { flex-basis: 180px; }
 
 .sel {
   appearance: none;
@@ -142,16 +128,6 @@ button, select, input { font-family: inherit; }
 .card-head h2 { margin: 0; font-family: var(--font-title); font-size: 20px; font-weight: 700; }
 .card-note { font-size: 14px; color: var(--text-muted); }
 
-.placeholder {
-  display: grid; place-items: center; min-height: 180px; padding: 16px;
-  border: 1px dashed var(--border-input); border-radius: var(--radius-input);
-  background: var(--surface-alt); color: var(--text-muted); font-size: 14px; text-align: center;
-}
-.placeholder.tall { min-height: 420px; }
-
-/* Status icon (circle + glyph), used everywhere so status never relies on colour alone */
-.st-icon { flex: none; display: block; }
-
 /* ---------- Map ---------- */
 .segmented { display: flex; border: 1px solid var(--border-input); border-radius: var(--radius-input); overflow: hidden; }
 .segmented button {
@@ -175,108 +151,15 @@ button, select, input { font-family: inherit; }
 .map-info[hidden] { display: none; }
 .map-tip .tip-list { display: flex; flex-direction: column; gap: 3px; margin-top: 6px; }
 .map-tip .tip-row { display: flex; align-items: flex-start; gap: 6px; }
-.map-tip .tip-row .st-icon { margin-top: 3px; }
-.map-tip .tip-fresh { display: block; margin-top: 2px; }
-.map-tip .tip-more { font-size: 12px; color: var(--text-muted); padding-left: 18px; }
+.map-tip .tip-row 
 .map-tip .tip-hint { display: block; margin-top: 6px; font-size: 12px; color: var(--text-muted); }
 
 .map-legend { display: flex; flex-wrap: wrap; gap: 10px 32px; font-size: 14px; }
 .legend { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px 18px; }
 .legend li { display: flex; align-items: center; gap: 6px; }
 .legend .swatch { width: 18px; height: 12px; border-radius: 2px; }
-.legend-block { display: flex; flex-direction: column; gap: 6px; }
-.legend-scale { gap: 0; }
-.legend-scale li { flex-direction: column; align-items: stretch; gap: 4px; min-width: 88px; }
-.legend-scale .bar { height: 12px; }
-.legend-scale .bar-never { background: repeating-linear-gradient(45deg, #6E6E6E 0 2px, #B5B5B5 2px 5px); }
-.legend-note { font-size: 13px; color: var(--text-muted); }
+
 .map-disclaimer { margin: 0; font-size: 12px; color: var(--text-muted); }
-
-/* ---------- Timeline ---------- */
-.tl-scroll { position: relative; overflow-x: auto; }
-.tl { --tl-label: 168px; min-width: 560px; position: relative; }
-.tl-head { display: grid; grid-template-columns: var(--tl-label) 1fr; border-bottom: 1px solid var(--border); }
-.tl-label-col { padding: 0 0 6px; align-self: end; }
-.tl-months { display: grid; grid-template-columns: repeat(18, minmax(0, 1fr)); }
-.tl-month { font-size: 12px; color: var(--text-muted); text-align: center; padding-bottom: 6px; line-height: 1.25; }
-.tl-jan { border-left: 1px solid #8F958F; }
-.tl-year { display: block; font-weight: 700; color: var(--text); min-height: 15px; }
-.tl-body { position: relative; }
-.tl-grid {
-  position: absolute; left: var(--tl-label); right: 0; top: 0; bottom: 0;
-  background-image: linear-gradient(to right, #EEF0EC 1px, transparent 1px);
-  background-size: calc(100% / 18) 100%;
-}
-.tl-today { position: absolute; top: -4px; bottom: 0; border-left: 2px dashed var(--text); z-index: 3; pointer-events: none; }
-.tl-group { position: relative; border-bottom: 1px solid var(--border-row); padding-bottom: 6px; }
-.tl-country { padding: 8px 0 2px; font-size: 14px; font-weight: 700; color: var(--text); }
-.tl-row { display: grid; grid-template-columns: var(--tl-label) 1fr; align-items: center; min-height: 26px; }
-.tl-name {
-  all: unset; cursor: pointer; display: flex; align-items: center; gap: 6px; min-width: 0;
-  padding-left: 4px; font-size: 13px; color: var(--text-secondary); white-space: nowrap;
-}
-.tl-name span { overflow: hidden; text-overflow: ellipsis; text-decoration: underline; text-decoration-color: var(--border-input); text-underline-offset: 2px; }
-.tl-name:focus-visible, .tl-more:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.tl-track { position: relative; height: 26px; }
-.tl-bar { position: absolute; top: 6px; height: 14px; border: 0; border-radius: 2px; padding: 0; cursor: pointer; z-index: 2; }
-.tl-bar.cut-left { border-radius: 0 2px 2px 0; }
-.tl-bar.cut-right { border-radius: 2px 0 0 2px; }
-.tl-bar.cut-left.cut-right { border-radius: 0; }
-.tl-bar:hover { filter: brightness(0.92); }
-.tl-planned, .swatch-planned { background: var(--status-planned); }
-.tl-ongoing, .swatch-ongoing { background: var(--status-ongoing); }
-.tl-completed, .swatch-completed { background: var(--status-completed); }
-.tl-released, .swatch-released { background: var(--status-released); }
-.tl-legend { font-size: 13px; color: var(--text-secondary); }
-.tl-legend .swatch { width: 20px; height: 10px; }
-.tl-more {
-  all: unset; cursor: pointer; display: inline-block; margin: 2px 0 2px 22px; min-height: 24px;
-  font-size: 13px; font-weight: 600; color: var(--link); text-decoration: underline; text-underline-offset: 2px;
-}
-.tl-footnote { margin: 0; font-size: 13px; }
-.tl-empty { margin: 0; padding: 24px 0; text-align: center; color: var(--text-muted); font-size: 14px; }
-
-/* Phone version of the timeline: list grouped by month */
-.tl-mobile { display: none; }
-.tl-m-month { margin: 12px 0 4px; font-family: var(--font-title); font-size: 15px; }
-.tl-m-month:first-child { margin-top: 0; }
-.tl-m-list { list-style: none; margin: 0; padding: 0; }
-.tl-m-item {
-  all: unset; cursor: pointer; box-sizing: border-box; width: 100%;
-  display: flex; gap: 8px; align-items: flex-start; padding: 8px 0; border-bottom: 1px solid var(--border-row);
-  font-size: 14px; line-height: 1.4;
-}
-.tl-m-item .st-icon { margin-top: 3px; }
-.tl-m-item .mute { display: block; font-size: 13px; }
-.tl-m-item:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-
-/* ---------- Coverage matrix ---------- */
-.mx-scroll { position: relative; overflow-x: auto; }
-.mx { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 14px; }
-.mx th, .mx td { border-bottom: 1px solid var(--border-row); padding: 6px 8px; text-align: left; }
-.mx thead th { font-weight: 600; color: var(--text-secondary); background: var(--surface-alt); }
-.mx .mx-country { position: sticky; left: 0; z-index: 1; width: 260px; background: var(--surface); font-weight: 600; color: var(--text); }
-.mx thead .mx-country { background: var(--surface-alt); }
-.mx-region { font-weight: 400; color: var(--text-muted); font-size: 13px; }
-.mx-cell {
-  all: unset; cursor: pointer; box-sizing: border-box;
-  display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 10px; border-radius: 3px;
-  font-weight: 600; font-size: 14px; color: var(--text-strong);
-}
-.mx-cell:hover { filter: brightness(0.94); }
-.mx-cell:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.mx-planned { background: var(--status-planned); }
-.mx-ongoing { background: var(--status-ongoing); }
-.mx-completed { background: var(--status-completed); }
-.mx-released { background: var(--status-released); }
-.mx-not_planned { background: var(--status-not-planned); }
-.mx-icon { display: flex; }
-.mx-icon circle { fill: #FFFFFF; fill-opacity: 0.9; }      /* white disc on the coloured cell, as in the mockup */
-.mx-icon path { stroke: var(--text-strong); }
-.mx-extra { font-weight: 400; font-size: 12px; }
-.mx-faded { opacity: 0.28; }
-.mx td.empty { padding: 24px 8px; text-align: center; color: var(--text-muted); }
-.mx-note { margin: 0; font-size: 13px; }
 
 /* ---------- Survey list ---------- */
 .table-scroll { position: relative; overflow-x: auto; max-width: 100%; }  /* relative: keeps hidden labels inside the scroll area */
@@ -295,85 +178,17 @@ button, select, input { font-family: inherit; }
 .tbl td { padding: 9px 12px; border-bottom: 1px solid var(--border-row); vertical-align: top; color: var(--text); }
 .tbl tbody tr:hover td { background: var(--surface-hover); }
 .tbl td.empty { padding: 24px 12px; text-align: center; color: var(--text-muted); }
-.nowrap { white-space: nowrap; }
-.strong { font-weight: 600; }
-.status-cell { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
 
-.rowbtn {
-  all: unset; cursor: pointer; color: var(--link); font-weight: 600;
-  text-decoration: underline; text-underline-offset: 2px;
-}
-.rowbtn:hover { color: var(--link-hover); }
-.rowbtn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.strong { font-weight: 600; }
 
 .fund {
   display: inline-block; font-size: 12px; font-weight: 600; color: var(--text-secondary);
   border: 1px solid var(--border-badge); border-radius: 10px; padding: 1px 8px; white-space: nowrap;
 }
 
-.pager { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 14px; color: var(--text-muted); }
-.pager-buttons { display: flex; gap: 8px; }
 .btn-small { height: 36px; padding: 0 14px; font-size: 14px; }
 .btn:disabled { opacity: 0.45; cursor: default; }
 .btn-primary:disabled:hover { background: var(--gnc-green); }
-
-/* ---------- Detail panel (side panel on desktop) ---------- */
-body.panel-open { overflow: hidden; }
-.panel-backdrop { position: fixed; inset: 0; z-index: 40; background: rgba(31, 36, 33, 0.32); }
-.panel {
-  position: fixed; top: 0; right: 0; bottom: 0; z-index: 41;
-  width: min(440px, 100%);
-  background: var(--surface); border-left: 1px solid var(--border);
-  display: flex; flex-direction: column; overflow-y: auto;   /* desktop: the whole panel scrolls, actions follow the fields */
-}
-.panel[hidden], .panel-backdrop[hidden] { display: none; }
-.panel-handle { display: none; }
-.panel-head {
-  border-top: 4px solid var(--gnc-green);
-  padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
-  display: flex; justify-content: space-between; align-items: flex-start; gap: 12px;
-}
-.panel-heading { display: flex; flex-direction: column; gap: 6px; }
-.panel-heading h2 { margin: 0; font-family: var(--font-title); font-size: 22px; font-weight: 700; }
-.panel-status { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; font-size: 15px; font-weight: 600; }
-.btn-icon {
-  flex: none; width: 40px; height: 40px; display: flex; align-items: center; justify-content: center;
-  border: 1px solid var(--border-input); border-radius: var(--radius-input); background: var(--surface);
-  color: var(--text); cursor: pointer;
-}
-.btn-icon:hover { background: var(--surface-hover); }
-.panel-body { padding: 8px 24px 16px; }
-.panel-fields { margin: 0; display: grid; grid-template-columns: 132px 1fr; font-size: 15px; }
-.panel-fields dt { padding: 10px 0; border-bottom: 1px solid var(--border-row); color: var(--text-muted); font-size: 14px; }
-.panel-fields dd { margin: 0; padding: 10px 0 10px 8px; border-bottom: 1px solid var(--border-row); overflow-wrap: anywhere; }
-.panel-gaps {
-  margin-top: 16px; padding: 12px 14px; display: flex; gap: 8px;
-  border: 1px solid var(--border); border-radius: var(--radius-input);
-  background: var(--surface-alt); font-size: 14px; color: var(--text-secondary);
-}
-.panel-gaps .notice-icon { display: none; flex: none; margin-top: 2px; }
-.panel-foot { padding: 0 24px 24px; display: flex; gap: 10px; flex-wrap: wrap; }
-.btn-large { height: 44px; padding: 0 18px; font-size: 16px; }
-.panel-back {
-  all: unset; cursor: pointer; align-self: flex-start; margin-bottom: 4px;
-  font-size: 14px; font-weight: 600; color: var(--link); text-decoration: underline; text-underline-offset: 2px;
-}
-.panel-back:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.panel-list { list-style: none; margin: 0; padding: 0; }
-.panel-item {
-  all: unset; cursor: pointer; box-sizing: border-box; width: 100%;
-  display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border-row);
-  font-size: 15px; line-height: 1.4;
-}
-.panel-item:hover strong { text-decoration: underline; }
-.panel-item .st-icon { margin-top: 3px; }
-.panel-item .mute { display: block; font-size: 13px; }
-.panel-item:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.no-report {
-  display: flex; align-items: center; height: 44px; padding: 0 16px;
-  border: 1px dashed var(--border-badge); border-radius: var(--radius-input);
-  color: var(--text-muted); font-size: 14px;
-}
 
 /* ---------- Footer ---------- */
 .site-footer { border-top: 1px solid var(--border); background: var(--surface-alt); }
@@ -391,44 +206,18 @@ body.panel-open { overflow: hidden; }
   .page-title h1 { font-size: 26px; }
   .page-title p { font-size: 16px; }
   .data-asof { text-align: left; }
-  /* Phone: a compact sticky bar with a "Filters" button that unfolds the dropdowns */
-  .filter-form .filter-toggle { display: inline-flex; width: 100%; justify-content: center; }
-  .filter-fields { display: none; margin-top: 12px; }
-  .filter-form.is-open .filter-fields { display: flex; }
-  .filter-form.is-open { max-height: calc(100vh - 16px); overflow-y: auto; }
+
   .field { flex: 1 1 calc(50% - 8px); }
-  .filter-fields .btn { flex: 1 1 100%; justify-content: center; }
+
   .kpi-band { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .kpi { padding: 10px 12px; }
   .kpi-value { font-size: 28px; }
   .map { height: 380px; }
-  .mx .mx-country { width: 150px; }
-  .tl-scroll { display: none; }
-  .tl-mobile { display: block; }
-
-  /* Detail panel becomes a bottom sheet (design/Mobile – Survey detail sheet-html) */
-  .panel-backdrop { background: rgba(31, 36, 33, 0.45); }
-  .panel {
-    top: auto; left: 0; width: 100%; height: min(86vh, 724px);
-    border-left: 0; border-radius: 12px 12px 0 0;
-  }
-  .panel-handle { display: block; width: 40px; height: 4px; margin: 8px auto 0; border-radius: 2px; background: var(--border-input); }
-  .panel-head { border-top: 0; padding: 10px 16px 14px; }
-  .panel-heading h2 { font-size: 21px; }
-  .btn-icon { width: 44px; height: 44px; }
-  .panel { overflow: hidden; }
-  .panel-body { flex: 1; overflow-y: auto; padding: 4px 16px 16px; }   /* phone: fields scroll, button stays at the bottom */
-  .panel-fields { grid-template-columns: 128px 1fr; }
-  .panel-gaps { margin-top: 14px; border-color: #E4B98A; background: #FDF6EE; color: #5A3410; }
-  .panel-gaps .notice-icon { display: block; }
-  .panel-foot { padding: 12px 16px 20px; border-top: 1px solid var(--border); }
-  .panel-foot > * { flex: 1; justify-content: center; height: 48px; }
 }
 
 /* ======================================================================
-   Compact layout (test branch "compact-layout", Nov 2026)
-   Smaller type and tighter spacing everywhere; map and survey list side by side.
-   These rules come last so they override the sizes above; delete this block to go back.
+   Compact layout (Nov 2026): smaller type and tighter spacing everywhere; map and survey list side by side.
+   These rules come after the base sizes above and override them.
    ====================================================================== */
 body { font-size: 14px; }
 
@@ -468,7 +257,7 @@ body { font-size: 14px; }
 .map { height: 460px; }
 .map-legend { font-size: 13px; gap: 8px 24px; }
 .legend { gap: 6px 14px; }
-.legend-note { font-size: 12px; }
+
 .map-disclaimer { font-size: 11px; }
 
 .tbl { min-width: 720px; font-size: 13px; }
@@ -476,7 +265,6 @@ body { font-size: 14px; }
 .tbl th .th { padding: 7px 8px; }
 .tbl td { padding: 6px 8px; }
 .fund { font-size: 11px; padding: 0 6px; }
-.pager { font-size: 13px; }
 
 .site-footer .wrap { padding-top: 14px; padding-bottom: 14px; font-size: 13px; }
 
@@ -486,12 +274,9 @@ body { font-size: 14px; }
   .map { height: 340px; }
 }
 
-/* Countries are not clickable any more: no hand cursor on the map */
-.map path.leaflet-interactive { cursor: default; }
-
-/* Survey list next to the map (compact-layout branch, Nov 2026):
+/* Survey list next to the map (Nov 2026):
    the list card takes the map card's height and scrolls vertically; columns wrap instead of scrolling sideways. */
-.status-cell { white-space: normal; }
+
 .tbl td .sub { display: block; font-size: 12px; color: var(--text-muted); }
 .tbl { min-width: 0; table-layout: auto; }
 .tbl th { white-space: normal; position: sticky; top: 0; z-index: 1; }   /* header stays visible while scrolling */
@@ -513,8 +298,6 @@ body { font-size: 14px; }
 }
 #list-card .tbl th button, #list-card .tbl th .th { padding: 7px 6px; }
 #list-card .tbl td { padding: 6px; }
-#list-card .status-cell { align-items: flex-start; }
-#list-card .status-cell .st-icon { margin-top: 2px; }
 
 /* ---- Planning view, Nov 2026: status labels, one-colour map, country rows ---------------------------- */
 

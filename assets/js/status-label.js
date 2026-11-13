@@ -1,8 +1,14 @@
-// Status labels coloured with the status colour (Nov 2026: replaces the status icons).
-// The colour sits behind the words, so status is never shown by colour alone. Dark text on every
-// status colour keeps WCAG AA contrast (white on the orange or the blue would not).
+// Status labels: pills tinted with the status colour (soft look, CLAUDE.md section 7; they replaced the
+// status icons in Nov 2026). The words carry the meaning, so status is never shown by colour alone.
 
-import { STATUS_LABELS } from './icons.js';
+// Full names (KPI tiles, CSV export) — display statuses of rule 4.3.3
+export const STATUS_LABELS = {
+  planned: 'Planned',
+  ongoing: 'Ongoing',
+  completed: 'Completed (awaiting release)',
+  released: 'Results released',
+  not_planned: 'Not planned',
+};
 
 /** `<span class="st-label st-planned">Planned</span>`; `text` replaces the label (e.g. "Planned 2"). */
 export function statusLabel(status, text) {

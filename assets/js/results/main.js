@@ -10,7 +10,7 @@ import { createProfile } from './profile.js';
 import { readState, writeState } from './state.js';
 import { createControls } from './controls.js';
 import { createResultsKpis } from './kpis.js';
-import { escapeHtml } from '../filters.js';
+import { escapeHtml } from '../format.js';
 
 const app = { data: null, state: null, surveysById: null, indicators: null,
   updateControls: null, updateKpis: null, updateMap: null, updateRanked: null, updateProfile: null };

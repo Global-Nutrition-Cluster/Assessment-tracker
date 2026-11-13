@@ -6,8 +6,7 @@
 //   - dotted = survey older than 3 years (rule 11.3.5).
 // Hovering shows the figure next to the cursor; clicking a country with results opens its profile.
 
-import { escapeHtml } from '../filters.js';
-import { shortCountry } from '../format.js';
+import { escapeHtml, shortCountry } from '../format.js';
 import {
   phaseOf, phaseLegend, phasePill, formatValue, formatCi, isOlderThan3Years,
 } from './figures.js';

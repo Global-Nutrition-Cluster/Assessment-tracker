@@ -1,4 +1,11 @@
-// Small formatting helpers shared by the list, the detail panel and the CSV export.
+// Small formatting helpers shared by both pages (Planning view and Results).
+
+/** Escape text before putting it into HTML (every value from the sheets goes through this). */
+export function escapeHtml(text) {
+  return String(text ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  })[c]);
+}
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 

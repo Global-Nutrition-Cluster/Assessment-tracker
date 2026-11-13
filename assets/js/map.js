@@ -6,8 +6,7 @@
 //   - Click: the survey list is filtered to that country (click it again, or the sea, to clear).
 //     On touch screens a tap does both: it shows the box and filters the list.
 
-import { shortCountry } from './format.js';
-import { escapeHtml } from './filters.js';
+import { shortCountry, escapeHtml } from './format.js';
 import { statusLabel, countByStatus, SUMMARY_ORDER, SHORT_LABELS } from './status-label.js';
 
 const AFRICA_VIEW = [[-35, -19], [38, 56]]; // Africa and Yemen, as in the mockup

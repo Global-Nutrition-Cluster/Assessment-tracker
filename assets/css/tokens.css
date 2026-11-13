@@ -1,5 +1,5 @@
 /* Design tokens. Brand colours from the GNC brand book 2020 (CLAUDE.md section 7);
-   neutrals, sizes and radii from the Claude Design mockup in design/. */
+   neutrals, sizes and radii from the first Claude Design mockup. */
 :root {
   /* Brand palette */
   --gnc-green: #9CCB38;         /* primary; "Completed, awaiting release" */
@@ -21,12 +21,6 @@
   --status-released: var(--gnc-green-dark);
   --status-not-planned: #A9AFA8;
 
-  /* Freshness scale (map, "Data freshness" mode) */
-  --fresh-1: #4E8F2A;           /* < 1 year */
-  --fresh-2: #8DBE3F;           /* 1–2 years */
-  --fresh-3: #C9DF97;           /* 2–3 years */
-  --fresh-4: #C4C4C4;           /* > 3 years */
-  --fresh-never: #6E6E6E;       /* never (hatched) */
 
   /* Text */
   --text: #1F2421;
