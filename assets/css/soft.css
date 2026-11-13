@@ -1,0 +1,76 @@
+/* "Soft" look — TEST (owner's request, 13 Nov 2026), Planning view only, loaded after main.css by index.html.
+   No borders anywhere: a light grey page, white blocks with large rounded corners, and pills tinted with
+   the status colour (dark text) instead of outlined labels. To drop the test, remove the <link> to this
+   file in index.html: the page goes back to main.css as it was. */
+
+:root {
+  --soft-page: #F2F3F1;        /* page background */
+  --soft-row: #F5F6F4;         /* rows inside a white block */
+  --soft-row-group: #ECEEEA;   /* summary row of a country with several surveys */
+  --soft-radius: 22px;         /* white blocks */
+  --soft-radius-small: 12px;   /* rows, map, tooltip */
+}
+
+body { background: var(--soft-page); }
+
+/* Header on the page background; tabs as a white pill with the active tab in black */
+.site-header { border-bottom: 0; }
+.brand-divider { background: #D3D7D1; }
+.site-nav { background: #FFFFFF; border-radius: 999px; padding: 5px; gap: 2px; }
+.site-nav a { padding: 7px 18px; border-radius: 999px; font-size: 15px; }
+.site-nav a[aria-current="page"] { border-bottom: 0; background: var(--text); color: #FFFFFF; font-weight: 600; }
+.site-nav a:not([aria-current]):hover { background: var(--soft-page); }
+
+/* KPI tiles and cards: white, rounded, no border */
+.kpi, .card { border: 0; border-radius: var(--soft-radius); background: #FFFFFF; }
+.kpi { padding: 14px 18px; }
+.kpi:hover { background: #FAFBF9; }
+.kpi[aria-pressed="true"] { background: var(--text); }
+.kpi[aria-pressed="true"] .kpi-value, .kpi[aria-pressed="true"] .kpi-sub { color: #FFFFFF; }
+.card { padding: 22px; }
+
+/* Status pills: tinted background, no border, no dot (the word carries the meaning) */
+.st-label {
+  border: 0; border-radius: 999px; padding: 1px 9px; gap: 0;
+  font-size: 11px; font-weight: 600; line-height: 16px; color: #1F2421;
+}
+.st-label::before { display: none; }
+.st-planned { background: #DCEFF6; }
+.st-ongoing { background: #FCE3CC; }
+.st-completed { background: #E7F2CF; }
+.st-released { background: #D6EACB; }
+.st-not_planned { background: #E6E8E5; }
+.kpi-label .st-label { font-size: 12px; line-height: 20px; padding: 0 11px; }
+
+/* Funding badges and the country chip: white pills, no border */
+.fund { border: 0; border-radius: 999px; background: #FFFFFF; padding: 1px 9px; }
+.chip { border: 0; border-radius: 999px; background: var(--soft-page); padding: 1px 3px 1px 10px; }
+.chip button:hover { background: #E2E5E0; }
+
+/* Export button: a green pill */
+.btn { border: 0; border-radius: 999px; }
+.btn-primary { padding: 0 18px; }
+
+/* Map: rounded, no border on the tooltip (a soft shadow instead) */
+.map-box { border-radius: var(--soft-radius-small); }
+.map-info { border: 0; border-radius: var(--soft-radius-small); box-shadow: 0 6px 24px rgba(31, 36, 33, 0.14); }
+.legend .swatch-none { box-shadow: none; background: #E3E6E1; }
+
+/* Survey list: no lines; every row is a grey rounded bar inside the white card */
+.tbl { border-collapse: separate; border-spacing: 0 6px; }
+.tbl th { background: #FFFFFF; border-bottom: 0; color: var(--text-muted); }
+.tbl td { border-bottom: 0; background: var(--soft-row); }
+.tbl td:first-child { border-radius: var(--soft-radius-small) 0 0 var(--soft-radius-small); }
+.tbl td:last-child { border-radius: 0 var(--soft-radius-small) var(--soft-radius-small) 0; }
+.tbl td:only-child { border-radius: var(--soft-radius-small); }
+.tbl tbody tr:hover td { background: #EEF0EC; }
+.tbl-grouped .group-row td { background: var(--soft-row-group); }
+.tbl td.empty { background: none; }
+
+/* Footer on the page background */
+.site-footer { border-top: 0; background: var(--soft-page); }
+
+/* The logo file has a white background: blend it into the grey page */
+.brand img { mix-blend-mode: multiply; }
+/* Pills stay on one line */
+.tbl .st-label { white-space: nowrap; }
