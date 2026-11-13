@@ -93,6 +93,11 @@ body { background: var(--soft-page); }
 
 /* Indicator selector: a white rounded field, no border; Source toggle: a white pill, active option black */
 .res-controls .sel { border: 0; border-radius: 999px; background-color: #FFFFFF; padding-left: 16px; height: 38px; }
+/* The indicator selector stands out (owner's choice, 13 Nov 2026): light GNC green with a GNC green outline
+   (the one outline of the soft look); the definitions beside it in smaller italics */
+#indicator-select.sel { background-color: #EEF6DC; box-shadow: inset 0 0 0 2px var(--gnc-green); font-weight: 600; color: #1F2421; }
+#indicator-select.sel:hover { background-color: #E5F1CB; }
+.res-definition { font-style: italic; font-size: 12px; line-height: 17px; }
 .segmented { border: 0; border-radius: 999px; background: #FFFFFF; padding: 4px; gap: 2px; overflow: visible; }
 .segmented button { border-radius: 999px; background: none; height: 30px; padding: 0 14px; }
 .segmented button + button { border-left: 0; }
@@ -103,8 +108,12 @@ body { background: var(--soft-page); }
 .res-kpi:hover { background: #FFFFFF; }
 .res-kpi.is-off, .res-kpi.is-off:hover { background: #EEF0EC; border: 0; }
 
-/* Badges: borderless pills */
+/* Badges: borderless pills. One colour per source (owner's choice, 13 Nov 2026), away from the status,
+   IPC and blue phase colours: SMART violet, DHS raspberry (MICS later); "ALL" stays grey.
+   Not used on the Source toggle, which keeps black and white. */
 .src { border: 0; border-radius: 999px; padding: 0 7px; background: #E9ECE7; color: #2F3531; }
+.src-smart, .src-rapid { background: #E9E2F6; color: #47307D; }   /* Rapid SMART: same family as SMART */
+.src-dhs { background: #F7E0EC; color: #7A1F55; }
 .rev { border: 0; border-radius: 999px; padding: 0 8px; background: #EEF0EC; color: #3F4541; }
 .sev, .pf-tag, .pf-level { border-radius: 999px; }
 .sev-0, .cont-0 { box-shadow: none; }
@@ -119,8 +128,6 @@ body { background: var(--soft-page); }
 /* "Latest results by country": rows as grey rounded bars (shared .tbl rules above); group heading plain */
 .rank-tbl .rank-group th { background: none; padding-top: 12px; }
 
-/* How to read these figures: a white block */
-.res-howto { border: 0; border-radius: var(--soft-radius); background: #FFFFFF; padding: 20px 22px; }
 
 /* Country profile: a white block; survey cards, plot, tiles and boxes as grey rounded blocks inside it */
 .res-profile { border-top: 0; }

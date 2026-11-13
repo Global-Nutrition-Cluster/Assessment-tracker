@@ -158,7 +158,7 @@ function subtitle(surveys, values) {
 }
 
 function badge(source) {
-  return `<span class="src">${esc(source)}</span>`;
+  return `<span class="src src-${esc(source).toLowerCase()}">${esc(source)}</span>`;   // colour per source (soft.css)
 }
 
 function reportLink(url, label = 'Report') {

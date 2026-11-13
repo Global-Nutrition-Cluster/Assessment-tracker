@@ -7,7 +7,7 @@ import { escapeHtml } from '../filters.js';
 function optionLabel(indicator) {
   const sources = indicatorSources(indicator);
   if (sources.length !== 1 || /\((SMART|DHS)\)/.test(indicator.label)) return indicator.label;
-  return `${indicator.label} — ${sources[0]} only`;
+  return `${indicator.label} (${sources[0]} only)`;
 }
 
 function selectHtml(indicators) {

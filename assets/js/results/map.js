@@ -135,7 +135,7 @@ export async function createResultsMap(root, { onCountry }) {
   // Hatch colour for "Subnational data only": never a phase colour
   function hatchColour() {
     if (!view.indicator.phases) return '#6E9A1F';   // darker GNC green, next to the green countries
-    return isIpc() ? '#7A847E' : '#3E8196';
+    return isIpc() ? '#7A847E' : '#3A7C90';
   }
 
   // Legend swatch classes matching the hatch and dots of the current palette
@@ -167,15 +167,15 @@ export async function createResultsMap(root, { onCountry }) {
       body = figureLines(figure.main, unit);
     } else if (figure.subnational) {
       const s = figure.subnational;
-      body = `<span class="tip-line"><span class="src">${s.source}</span> ${s.year ?? ''} · Subnational data only</span>
+      body = `<span class="tip-line"><span class="src src-${s.source.toLowerCase()}">${s.source}</span> ${s.year ?? ''} · Subnational data only</span>
         <span class="tip-line mute">${s.areas} area${s.areas === 1 ? '' : 's'}, not on the national scale</span>`;
     } else {
       body = '<span class="tip-line mute">No data for this indicator</span>';
     }
 
     const also = figure.others.map((o) => o.subnationalOnly
-      ? `<span class="src">${o.source}</span> ${o.year ?? ''} subnational data only`
-      : `<span class="src">${o.value.source}</span> ${o.year ?? ''} national ${formatValue(o.value.value, unit)}${formatCi(o.value) ? ` [${formatCi(o.value)}]` : ''}${definitionOf(o.value.source) ? `, ${escapeHtml(definitionOf(o.value.source))}` : ''}`);
+      ? `<span class="src src-${o.source.toLowerCase()}">${o.source}</span> ${o.year ?? ''} subnational data only`
+      : `<span class="src src-${o.value.source.toLowerCase()}">${o.value.source}</span> ${o.year ?? ''} national ${formatValue(o.value.value, unit)}${formatCi(o.value) ? ` [${formatCi(o.value)}]` : ''}${definitionOf(o.value.source) ? `, ${escapeHtml(definitionOf(o.value.source))}` : ''}`);
     const alsoHtml = also.length ? `<span class="tip-also">Also: ${also.join('<br>')}</span>` : '';
     const action = figure.main || figure.subnational || figure.others.length
       ? '<span class="tip-action">Click to open the country profile</span>' : '';
@@ -187,7 +187,7 @@ export async function createResultsMap(root, { onCountry }) {
     const pill = phasePill(view.indicator, v.value) ? ` ${phasePill(view.indicator, v.value)}` : '';
     const ci = formatCi(v);
     const unitText = unit && unit !== '%' ? ` <span class="mute">${escapeHtml(unit)}</span>` : '';
-    return `<span class="tip-value">${formatValue(v.value, unit)}${unitText}${pill} <span class="src">${v.source}</span></span>
+    return `<span class="tip-value">${formatValue(v.value, unit)}${unitText}${pill} <span class="src src-${v.source.toLowerCase()}">${v.source}</span></span>
       <span class="tip-line">${ci ? `95% CI ${ci}` : 'No CI published'} · National · Survey ${main.year ?? ''}</span>
       ${definitionOf(v.source) ? `<span class="tip-line mute">${escapeHtml(definitionOf(v.source))}</span>` : ''}`;
   }

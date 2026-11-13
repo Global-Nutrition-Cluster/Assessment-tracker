@@ -32,15 +32,6 @@
 /* ---------- Country profile (filled in step 5) ---------- */
 .res-profile[hidden] { display: none; }
 
-/* ---------- How to read these figures ---------- */
-.res-howto {
-  padding: 14px 16px; border: 1px solid var(--border); border-radius: var(--radius-card); background: var(--surface-alt);
-}
-.res-howto h2 { margin: 0 0 10px; font-family: var(--font-title); font-size: 17px; }
-.res-howto-cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr)); gap: 12px 24px; }
-.res-howto h3 { margin: 0 0 4px; font-size: 13px; font-weight: 700; }
-.res-howto p { margin: 0; font-size: 13px; line-height: 1.45; color: var(--text-secondary); }
-
 /* ---------- WHO 2018 class pills (map legend, hover box, ranked list) ---------- */
 .sev {
   display: inline-flex; align-items: center; padding: 0 7px; border-radius: 10px;
@@ -67,7 +58,7 @@
 .res-legend .legend { font-size: 13px; }
 .swatch.sw-hatch { background: repeating-linear-gradient(45deg, #7A847E 0 2px, #FFFFFF 2px 5px); box-shadow: inset 0 0 0 1px #B9C0BB; }
 .swatch.sw-dots { background: radial-gradient(circle, #FFFFFF 1px, transparent 1.3px) 0 0 / 5px 5px, var(--phase-3); }
-.swatch.sw-hatch-cont { background: repeating-linear-gradient(45deg, #3E8196 0 2px, #FFFFFF 2px 5px); box-shadow: inset 0 0 0 1px #C5DBE1; }
+.swatch.sw-hatch-cont { background: repeating-linear-gradient(45deg, #3A7C90 0 2px, #FFFFFF 2px 5px); box-shadow: inset 0 0 0 1px #C5DBE1; }
 .swatch.sw-dots-cont { background: radial-gradient(circle, #FFFFFF 1px, transparent 1.3px) 0 0 / 5px 5px, var(--cont-3); }
 
 /* Hover box */

@@ -94,7 +94,7 @@ function countryButton(row) {
 }
 
 function sourceLine(source, year, level) {
-  return `<span class="rank-meta"><span class="src">${escapeHtml(source)}</span> ${year ?? ''} · ${level}</span>`;
+  return `<span class="rank-meta"><span class="src src-${escapeHtml(source).toLowerCase()}">${escapeHtml(source)}</span> ${year ?? ''} · ${level}</span>`;
 }
 
 function nationalRow(row, indicator) {

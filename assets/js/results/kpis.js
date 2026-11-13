@@ -17,7 +17,7 @@ function yearRange(surveys) {
 function tile(tag, label, value, sub, extraClass = '') {
   return `
     <div class="kpi res-kpi ${extraClass}">
-      <span class="kpi-label"><span class="src">${tag}</span>${label}</span>
+      <span class="kpi-label"><span class="src src-${tag.toLowerCase()}">${tag}</span>${label}</span>
       <span class="kpi-value">${value}</span>
       <span class="kpi-sub">${sub}</span>
     </div>`;
