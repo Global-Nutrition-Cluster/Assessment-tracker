@@ -120,12 +120,6 @@
 .pf-actions .btn { gap: 6px; }
 .pf-h { margin: 4px 0 0; font-size: 14px; font-weight: 700; }
 
-.pf-banner {
-  display: flex; align-items: flex-start; gap: 8px; margin: 0; padding: 10px 12px;
-  border: 1px solid var(--border); border-radius: var(--radius-input); background: var(--surface-alt); font-size: 13px;
-}
-.pf-banner .ico { flex: none; margin-top: 2px; }
-.pf-info { display: block; }
 
 .pf-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 12px; }
 .pf-card {
@@ -227,17 +221,13 @@
 .pf-tile-value .mute { font-family: var(--font-body); font-size: 12px; font-weight: 400; }
 .pf-tile .sub { display: block; font-size: 12px; color: var(--text-muted); }
 
-/* More indicators, notes */
+/* More indicators */
 .pf-more-box { padding: 10px 14px; border: 1px solid var(--border); border-radius: var(--radius-card); }
 .pf-more-box h4 { margin: 12px 0 4px; font-size: 13px; }
 .pf-more { min-width: 0; font-size: 12px; }
 .pf-more th { font-weight: 400; text-align: left; }
 .pf-more th, .pf-more td { padding: 4px 6px; }
 .pf-more td { white-space: nowrap; font-weight: 700; }
-.pf-notes { padding: 12px 16px; border: 1px solid #EFE6C8; border-radius: var(--radius-card); background: #FFFDF5; font-size: 13px; }
-.pf-notes h3 { margin: 0 0 6px; font-size: 14px; }
-.pf-notes ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 3px; }
-.pf-notes summary { margin-top: 6px; cursor: pointer; color: var(--link); }
 .pf-plot-toggle { flex-wrap: wrap; max-width: 100%; }
 .pf-plot-toggle button { white-space: nowrap; }
 @media (max-width: 899px) {

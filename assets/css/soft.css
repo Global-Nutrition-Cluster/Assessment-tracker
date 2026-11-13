@@ -131,11 +131,9 @@ body { background: var(--soft-page); }
 
 /* Country profile: a white block; survey cards, plot, tiles and boxes as grey rounded blocks inside it */
 .res-profile { border-top: 0; }
-.pf-banner { border: 0; border-radius: var(--soft-radius-small); background: var(--soft-row); }
 .pf-card, .pf-plot, .pf-tile, .pf-more-box { border: 0; border-radius: 16px; background: var(--soft-row); }
 .pf-card-empty { border: 0; background: var(--soft-row); }
 .pf-tag { background: #FFFFFF; }
-.pf-notes { border: 0; border-radius: 16px; background: #FBF7E8; }
 .dp-row.is-national { background: #FFFFFF; border-radius: 8px; }
 .is-national .pf-level { background: var(--soft-row); }
 .dp-dot.dp-neutral { background: var(--gnc-green); }   /* indicators without phases: same green as the map */
@@ -163,3 +161,8 @@ body { background: var(--soft-page); }
 /* Secondary buttons (Copy link, Close): grey pills on the white blocks */
 .btn:not(.btn-primary) { background: var(--soft-page); }
 .btn:not(.btn-primary):hover { background: #E8EBE6; }
+
+/* Country profile: flag before the name; Close turns red on hover (owner's request, 13 Nov 2026) */
+#profile-title { display: flex; align-items: center; gap: 10px; }
+.pf-flag { flex: none; width: 32px; height: 24px; border-radius: 4px; object-fit: cover; box-shadow: 0 0 0 1px rgba(31, 36, 33, 0.08); }
+#profile-close:hover, #profile-close:focus-visible { background: #C62828; color: #FFFFFF; }
