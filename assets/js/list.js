@@ -170,6 +170,12 @@ function notReported(value) {
   return value ? escapeHtml(value) : '';
 }
 
+// Lead organizations such as "UNICEF,WFP,FMOH" or "GOAL/Amhara RENCU" may break after a comma or slash,
+// so a long name never forces the table to scroll sideways
+function breakable(value) {
+  return notReported(value).replace(/([,/])/g, '$1<wbr>');
+}
+
 /** Summary row of a country with several surveys + its surveys (hidden unless unfolded). */
 function groupRows(g, open) {
   const first = g.surveys[0];
@@ -191,7 +197,7 @@ function groupRows(g, open) {
       <span class="sub">${g.surveys.length} surveys</span></td>
     <td>${escapeHtml(types)}</td>
     <td><span class="st-summary">${statuses}</span></td>
-    <td>${leads.length === 1 ? escapeHtml(leads[0]) : ''}</td>
+    <td>${leads.length === 1 ? breakable(leads[0]) : ''}</td>
     <td>${funding ? `<span class="fund">${funding}</span>` : ''}</td>
     <td></td><td></td><td></td>
   </tr>`;
@@ -211,8 +217,8 @@ function surveyRow(s, nested, parent = '', open = true, id = '') {
   return `<tr${attrs}>
     <td>${place}</td>
     <td>${escapeHtml(s.type_raw)}</td>
-    <td>${statusLabel(status)}${validation && validation !== STATUS_LABELS[status] ? `<span class="sub">${escapeHtml(validation)}</span>` : ''}</td>
-    <td>${notReported(s.lead_org)}</td>
+    <td>${statusLabel(status, SHORT_LABELS[status])}${validation && validation !== STATUS_LABELS[status] ? `<span class="sub">${escapeHtml(validation)}</span>` : ''}</td>
+    <td>${breakable(s.lead_org)}</td>
     <td>${funding ? `<span class="fund">${funding}</span>` : ''}</td>
     <td>${s.report_url ? `<a href="${escapeHtml(s.report_url)}" target="_blank" rel="noopener" class="strong">Open<span class="visually-hidden"> report for ${escapeHtml(shortCountry(s.country))}${s.admin1 ? ` ${escapeHtml(s.admin1)}` : ''} (new tab)</span></a>` : ''}</td>
     <td>${notReported(formatDate(s.start_date))}</td>

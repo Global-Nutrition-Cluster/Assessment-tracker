@@ -31,10 +31,11 @@ A public, static web dashboard for the Global Nutrition Cluster (GNC). It shows 
 ├── assets/
 │   ├── css/tokens.css          # brand colours, fonts, spacing (section 7)
 │   ├── css/main.css
+│   ├── css/soft.css            # "soft" look loaded after main.css: grey page, white rounded blocks, no borders (section 7)
 │   ├── css/results.css         # Results page only (loaded after main.css)
 │   ├── js/main.js              # bootstraps the page, loads data, draws the blocks
 │   ├── js/state.js             # KPI status + map country <-> URL query string
-│   ├── js/status-label.js      # status labels: white, coloured dot (KPI tiles, map hover, list)
+│   ├── js/status-label.js      # status labels as tinted pills (KPI tiles, map hover, list)
 │   ├── js/kpis.js
 │   ├── js/map.js
 │   ├── js/timeline.js          # not used since Nov 2026 (kept)
@@ -130,19 +131,19 @@ Write each rule as a small, tested function.
 
 One page, top to bottom. It covers **SMART and Rapid SMART surveys of the current calendar year** (`survey_year`); there is no filter bar. The mockup in `design/` gave the original look; the decisions below replace it where they differ (Oct–Nov 2026, compact layout merged into `main` on 9 Nov 2026).
 
-1. **Header:** GNC logo, divider, product name "Nutrition Assessment Tracker", and section tabs on the right. Tabs "Planning view" and "Results"; Methodology and Data & downloads come when those pages exist (no dead links). Green 4 px bottom border.
+1. **Header:** GNC logo, divider, product name "Nutrition Assessment Tracker", and section tabs on the right (a white pill, active tab black; soft look, section 7). Tabs "Planning view" and "Results"; Methodology and Data & downloads come when those pages exist (no dead links). No bottom border.
 2. **Page title:** "Planning view" + one-sentence description on the left; "Data as of <date>" on the right, on the same line as the title: the date of the Settings tab (4.1), else the last data update.
 3. **No filter bar** (removed by the owner): no Period, Region, Country, Assessment type, Status or Funding dropdowns. `filters.js` stays in the repo, unused, in case filters come back.
-4. **KPI band:** four compact tiles, **no icons** (owner's decision, 13 Nov 2026): each tile has a status label (`status-label.js`): white label, thin grey border, dark 11–12 px text and a dot of the status colour before the word (Planned blue, Ongoing orange, Completed light green, Results released dark green; owner's choice, 13 Nov 2026). Clicking a tile shows only that status in the map and the list; clicking it again clears it (`?status=`). The counts follow the country chosen on the map.
+4. **KPI band:** four compact tiles, **no icons** (owner's decision, 13 Nov 2026): each tile has a status label (`status-label.js`), a pill tinted with its status colour (soft look, section 7). Clicking a tile shows only that status in the map and the list; clicking it again clears it (`?status=`). The counts follow the country chosen on the map.
    - Planned: "X with funding gap"
    - Ongoing: "Data collection or analysis"
    - Completed: all completed surveys (released or not), sub-line "X awaiting release"
    - Results released: sub-line "In the selected period" (most SMART rows have no release date, so "last 12 months" cannot be computed reliably)
 5. **Map** "SMART assessments", left half of the main row. Leaflet 1.9.4 (vendored in `assets/vendor/`) with `geo/countries.geojson` and **no tile service**. The boundaries come from Natural Earth 1:50m, with ISO3 codes fixed and Somaliland / Northern Cyprus merged into Somalia / Cyprus (`scripts/prepare_geo.py`, run by hand). A one-line caption, a two-square legend and the UN boundaries disclaimer under the map. **No "Data freshness" mode and no numbers or markers on the map** (owner's decision, 13 Nov 2026).
    - **One colour:** a country with at least one SMART survey in the current selection (KPI status applied; "Not planned" ones do not count) is GNC green (`--gnc-green`); the others are light grey. The status colours are kept for the KPI tiles and the list, so the map is never read as a status map.
-   - **Hover:** the country is outlined and an info box next to the cursor counts its SMART surveys of the year **by status** (status label with its coloured dot + count; every status, whatever the KPI selection). The box follows the cursor and flips left / up to stay inside the map.
+   - **Hover:** the country is outlined and an info box next to the cursor counts its SMART surveys of the year **by status** (status pill + count; every status, whatever the KPI selection). The box follows the cursor and flips left / up to stay inside the map.
    - **Click:** filters the KPI tiles and the survey list to that country (`?country=MLI`), with a dark outline on the map and a removable "Country: Mali ×" chip above the list. A second click on the same country, a click on the sea or on a country without survey, or the chip's × clears it. On touch screens a tap shows the box and filters.
-6. **Survey list**, right half of the main row (`assets/js/list.js`). Same height as the map card (`contain: size` on the card); the table scrolls vertically, with a sticky header row; **no pagination** and no horizontal scroll on desktop. **One row per country** (owner's decision, 13 Nov 2026): a country with one survey shows it on its row; a country with several surveys gets a summary row (▸ button, "N surveys", types, status labels with counts, "N funding gaps") and its surveys underneath, folded by default and **unfolded when the country is chosen on the map**. Columns: Country (Admin 1 underneath), Type, Status (status label with its coloured dot, Validation underneath), Lead organization, Funding badge, Report link, Start, End. Missing values are left **empty**. Sortable by Country, Type, Status, Funding and Start (a country sorts by its first survey in that order). Count line "N countries · M surveys". No Assessment ID column (it stays in the CSV export). Rows are read-only. "Export CSV" button (one line per listed survey).
+6. **Survey list**, right half of the main row (`assets/js/list.js`). Same height as the map card (`contain: size` on the card); the table scrolls vertically, with a sticky header row; **no pagination** and no horizontal scroll on desktop. **One row per country** (owner's decision, 13 Nov 2026): a country with one survey shows it on its row; a country with several surveys gets a summary row (▸ button, "N surveys", types, status labels with counts, "N funding gaps") and its surveys underneath, folded by default and **unfolded when the country is chosen on the map**. Columns: Country (Admin 1 underneath), Type, Status (status pill with the short name, Validation underneath), Lead organization, Funding badge, Report link, Start, End. Missing values are left **empty**. Sortable by Country, Type, Status, Funding and Start (a country sorts by its first survey in that order). Count line "N countries · M surveys". No Assessment ID column (it stays in the CSV export). Rows are read-only. "Export CSV" button (one line per listed survey).
 7. **No timeline, no coverage matrix and no detail panel** (removed by the owner). `timeline.js` and `matrix.js` stay in the repo, unused; `panel.js` was deleted.
 8. **Footer:** "Global Nutrition Cluster · nutritioncluster.net" and "Assessment status is reported by country Nutrition Clusters. Start and end dates are indicative."
 
@@ -185,7 +186,9 @@ One page, top to bottom. It covers **SMART and Rapid SMART surveys of the curren
 }
 ```
 
-Load Source Sans 3 from Google Fonts. The Planning map uses `--gnc-green` only (countries with a survey). The funding badges are neutral (outline style) so they never compete with status colours.
+**Soft look** (owner's choice, 13 Nov 2026; `assets/css/soft.css`, loaded after `main.css`, Planning view now and Results view next): **no borders anywhere**; page background `#F6F7F5`; white blocks (KPI tiles, cards) with 22 px rounded corners; a selected KPI tile turns black with white text; header tabs as a white pill with the active tab black; status labels as pills tinted with their status colour (Planned `#DCEFF6`, Ongoing `#FCE3CC`, Completed `#E7F2CF`, Results released `#D6EACB`, Not planned `#E6E8E5`), dark text, no dot; table rows as grey rounded bars (`#F5F6F4`, country summary `#ECEEEA`) with no lines; funding badges and chips as borderless pills; Export CSV a quiet grey pill; the map tooltip with a soft shadow; secondary text `#3F4541`. In the list, status labels use the short names (Planned, Ongoing, Awaiting release, Released, Not planned) and lead organizations break after a comma or slash, so the eight columns fit without sideways scrolling from 1300 px.
+
+Load Source Sans 3 from Google Fonts. The Planning map uses `--gnc-green` only (countries with a survey). The funding badges are neutral (borderless pills) so they never compete with status colours.
 
 ## 8. How to work in this repo
 

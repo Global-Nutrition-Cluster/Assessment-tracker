@@ -1,10 +1,12 @@
-/* "Soft" look — TEST (owner's request, 13 Nov 2026), Planning view only, loaded after main.css by index.html.
+/* "Soft" look (owner's choice, 13 Nov 2026), loaded after main.css. Planning view now; Results view next.
    No borders anywhere: a light grey page, white blocks with large rounded corners, and pills tinted with
-   the status colour (dark text) instead of outlined labels. To drop the test, remove the <link> to this
-   file in index.html: the page goes back to main.css as it was. */
+   the status colour (dark text) instead of outlined labels. Removing the <link> to this file in a page
+   brings back the older bordered look of main.css. */
 
 :root {
-  --soft-page: #F2F3F1;        /* page background */
+  --soft-page: #F6F7F5;        /* page background (lightened, 13 Nov 2026) */
+  --text-muted: #3F4541;       /* secondary text a little darker on the grey and white (13 Nov 2026) */
+  --text-secondary: #2F3531;
   --soft-row: #F5F6F4;         /* rows inside a white block */
   --soft-row-group: #ECEEEA;   /* summary row of a country with several surveys */
   --soft-radius: 22px;         /* white blocks */
@@ -28,6 +30,7 @@ body { background: var(--soft-page); }
 .kpi[aria-pressed="true"] { background: var(--text); }
 .kpi[aria-pressed="true"] .kpi-value, .kpi[aria-pressed="true"] .kpi-sub { color: #FFFFFF; }
 .card { padding: 22px; }
+#list-card { padding: 22px 16px; }   /* a little more room for the eight columns */
 
 /* Status pills: tinted background, no border, no dot (the word carries the meaning) */
 .st-label {
@@ -47,9 +50,12 @@ body { background: var(--soft-page); }
 .chip { border: 0; border-radius: 999px; background: var(--soft-page); padding: 1px 3px 1px 10px; }
 .chip button:hover { background: #E2E5E0; }
 
-/* Export button: a green pill */
+/* Buttons: pills. Export CSV is a quiet grey pill (it was too prominent in green) */
 .btn { border: 0; border-radius: 999px; }
-.btn-primary { padding: 0 18px; }
+.btn-primary { height: 32px; padding: 0 14px; font-size: 13px; font-weight: 600; background: var(--soft-page); color: var(--text); }
+.btn-primary:hover { background: #E8EBE6; color: var(--text); }
+.btn-primary svg { width: 14px; height: 14px; }
+.btn-primary:disabled:hover { background: var(--soft-page); }
 
 /* Map: rounded, no border on the tooltip (a soft shadow instead) */
 .map-box { border-radius: var(--soft-radius-small); }
@@ -72,5 +78,13 @@ body { background: var(--soft-page); }
 
 /* The logo file has a white background: blend it into the grey page */
 .brand img { mix-blend-mode: multiply; }
-/* Pills stay on one line */
+/* Pills stay on one line; a long funding label may wrap (no sideways scrolling in the list) */
 .tbl .st-label { white-space: nowrap; }
+.tbl .fund { white-space: normal; border-radius: 10px; }
+.tbl td .sub { color: var(--text-muted); }
+.card-note, .kpi-sub, .map-disclaimer, .data-asof { color: var(--text-muted); }
+/* Narrower cell padding so the eight columns fit the half-width card from 1300 px */
+#list-card .tbl th button, #list-card .tbl th .th { padding: 7px 4px; }
+#list-card .tbl td { padding: 7px 4px; }
+#list-card .tbl td:first-child, #list-card .tbl th:first-child .th, #list-card .tbl th:first-child button { padding-left: 10px; }
+#list-card .st-label { padding: 1px 7px; }
