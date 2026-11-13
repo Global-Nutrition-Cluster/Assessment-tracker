@@ -48,7 +48,7 @@ export function createResultsKpis(root) {
         state.source === 'dhs' ? 'is-off' : ''),
       tile('DHS', 'DHS surveys', dhsSurveys.length, `Latest standard DHS, ${yearRange(dhsSurveys)}`,
         state.source === 'smart' ? 'is-off' : ''),
-      tile('MICS', 'MICS surveys', 'Soon', 'Third source, same structure', 'is-soon'),
+      tile('MICS', 'MICS surveys', '--', '', 'is-soon'),   // MICS results not available yet
     ].join('');
   };
 }

@@ -3,7 +3,7 @@
 //
 // Layout, from the Mali and Niger mockups in design/results/:
 //   1. title, Copy link, Close; a banner when the newest survey is older than 3 years (rule 11.3.5)
-//   2. survey cards: one per SMART survey (+ its Rapid SMART component), DHS (or "No recent survey"), MICS soon
+//   2. survey cards: one per SMART survey (+ its Rapid SMART component), DHS (or "No recent survey")
 //   3. indicator group tabs (Acute malnutrition, Mortality, Morbidity, Stunting, Underweight)
 //   4. per SMART survey: a dot plot of one indicator by area (national, admin 1 › admin 2, 95% CI),
 //      with a toggle between the indicators of the group, and every indicator of the group in a table
@@ -228,11 +228,6 @@ function surveyCards(countryName, surveys, values) {
         <p class="mute">No standard DHS published for ${esc(countryName)} from 2020 onwards.</p>
       </article>`);
   }
-  cards.push(`
-    <article class="pf-card pf-card-empty">
-      <div class="pf-card-top">${badge('MICS')}<strong>Coming soon</strong></div>
-      <p class="mute">MICS results will appear here as their own block, with their own definitions and levels.</p>
-    </article>`);
   return cards.join('');
 }
 

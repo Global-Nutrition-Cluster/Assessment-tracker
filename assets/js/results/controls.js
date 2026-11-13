@@ -22,15 +22,11 @@ function selectHtml(indicators) {
     </optgroup>`).join('');
 }
 
-/** "SMART: … DHS: …" for the sources shown, then how the colours work. */
+/** "SMART: … DHS: …" for the sources shown (definitions only; the phases are in the map legend). */
 export function definitionText(indicator, source) {
   const parts = Object.entries(indicator.definition || {})
     .filter(([src]) => source === 'all' || src === source.toUpperCase())
     .map(([src, text]) => `${src}: ${text}.`);
-  // Phases and their source come from the Dashboard indicators sheet (rule 11.3.7)
-  parts.push(indicator.phases
-    ? `Colours use ${indicator.phases.source} phases.`
-    : 'No phases for this indicator: colours follow a continuous scale.');
   return parts.join(' ');
 }
 
@@ -52,7 +48,7 @@ export function createControls(root, indicators, handlers) {
       <span class="field-label" id="source-label">Source</span>
       <div class="segmented" role="group" aria-labelledby="source-label">
         ${SOURCES.map((s) => `<button type="button" data-source="${s.value}" aria-pressed="false">${s.label}</button>`).join('')}
-        <button type="button" disabled title="MICS results are coming soon">MICS · soon</button>
+        <button type="button" disabled title="MICS results are not available yet">MICS</button>
       </div>
     </div>`;
 
