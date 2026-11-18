@@ -27,6 +27,7 @@ Warnings about the results (rows without a value, values outside their CI, Asses
   - `PLANNING_SETTINGS_CSV_URL` = the CSV link of the "Settings" tab of the tracker (two columns `Setting | Value`; the row `Data as of | yyyy-mm-dd` gives the date shown on the Planning view);
   - `SMART_RESULTS_CSV_URL` and `SMART_SURVEYS_CSV_URL` = the CSV links of the Consolidation and Surveys tabs of the SMART results workbook;
   - `RESULTS_INDICATORS_CSV_URL` = the CSV link of the "Dashboard indicators" tab (labels, definitions and phases of the indicators in the Results selector; `none` in Phase thresholds = no phases);
+  - `HNRP_COUNTRIES_CSV_URL` = the CSV link of the HNRP countries sheet (columns `Year | Country | ISO3`, one row per country and year; the Results page uses the rows of the current year for its "HNRP" switch);
   - `DHS_INDICATORS_CSV_URL` (optional) = the CSV link of the DHS indicator list.
 - **Settings → Actions → General → Workflow permissions:** select "Read and write permissions" so the workflow can commit the data.
 - **Settings → Pages:** deploy from the `main` branch, root folder.
@@ -46,7 +47,7 @@ Warnings about the results (rows without a value, values outside their CI, Asses
 - Preview the site locally: `python -m http.server 8000` in the repository folder, then open http://localhost:8000 (opening `index.html` directly does not work because the page loads JSON files).
 - Run the tests: `python -m unittest discover -s scripts/tests -v`, and the JavaScript checks: `python scripts/check_js.py` (needs Node.js). The **Tests** workflow runs both on every pull request.
 - Build the data from a local CSV: `python scripts/build_data.py --input my_export.csv`
-- Build the results from local CSVs: `python scripts/build_results.py --smart-results consolidation.csv --smart-surveys surveys.csv --indicators dashboard_indicators.csv`
+- Build the results from local CSVs: `python scripts/build_results.py --smart-results consolidation.csv --smart-surveys surveys.csv --indicators dashboard_indicators.csv --hnrp hnrp_countries.csv`
 
 ## Licence
 

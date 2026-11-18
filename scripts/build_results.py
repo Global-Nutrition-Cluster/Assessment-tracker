@@ -8,10 +8,14 @@ Sources (CLAUDE.md section 11.1):
                                           -> $RESULTS_INDICATORS_CSV_URL
   - DHS indicators and surveys            -> data/dhs/*.csv (written by the "Update DHS data" workflow)
   - Planning tracker, for the ID check    -> data/surveys.json (written by build_data.py)
+  - HNRP countries by year (Year | Country | ISO3), for the "HNRP" switch
+                                          -> $HNRP_COUNTRIES_CSV_URL (optional: if unreadable, a warning
+                                             and the previous list; it never fails the run)
 
 Usage:
     python scripts/build_results.py
-    python scripts/build_results.py --smart-results file.csv --smart-surveys file.csv --indicators file.csv
+    python scripts/build_results.py --smart-results file.csv --smart-surveys file.csv --indicators file.csv \
+        --hnrp hnrp.csv
 
 The business rules are numbered as in CLAUDE.md, section 11.3. Values are kept as published:
 nothing is recalculated. Only the Python standard library is used.
@@ -38,6 +42,7 @@ DATA_DIR = ROOT / "data"
 DHS_VALUES_FILE = DATA_DIR / "dhs" / "dhs_latest_indicators_national.csv"
 DHS_SURVEYS_FILE = DATA_DIR / "dhs" / "dhs_surveys.csv"
 PLANNING_FILE = DATA_DIR / "surveys.json"
+GEO_FILE = ROOT / "geo" / "countries.geojson"
 
 # Below these numbers we assume a source is broken (emptied by mistake, wrong tab...).
 MIN_SMART_VALUES = 100
@@ -510,8 +515,77 @@ def compact(record):
     return {k: v for k, v in record.items() if v is not None and v is not False}
 
 
-def build(smart_results_text, smart_surveys_text, dhs_values_text, dhs_surveys_text, planning, indicators_text):
-    warnings = []
+# ---------------------------------------------------------------------------
+# HNRP countries (the "HNRP" switch of the Results page, owner's decision, Nov 2026)
+# ---------------------------------------------------------------------------
+
+HNRP_COLUMNS = ["Year", "Country", "ISO3"]
+
+
+def load_hnrp(csv_text, warnings, known_iso3):
+    """HNRP countries by year from the HNRP sheet (columns Year | Country | ISO3, one row per country and year).
+    Returns {"2026": {"AFG": "Afghanistan", "MLI": "Mali", ...}, ...} (ISO3 -> name as in the sheet, so a
+    country with no survey yet still has its name in the list) with every year of the sheet: the page picks the current year
+    itself, so it switches to the new year on 1 January even before the next run.
+    A row with a bad year, a bad or unknown ISO3, or a duplicate is left out with a warning."""
+    rows = list(csv.reader(io.StringIO(csv_text)))
+    header_index = next((i for i, row in enumerate(rows)
+                         if [c.strip() for c in row[:3]] == HNRP_COLUMNS), None)
+    if header_index is None:
+        raise SourceError("HNRP sheet: header row 'Year, Country, ISO3' not found.")
+    by_year = {}
+    for line, row in enumerate(rows[header_index + 1:], start=header_index + 2):
+        year, country, iso3 = (row + ["", "", ""])[:3]
+        year, iso3 = year.strip(), iso3.strip().upper()
+        if not (year or country.strip() or iso3):
+            continue                                   # empty line
+        where = f"HNRP sheet, line {line} ({country.strip() or iso3 or '?'})"
+        if not re.fullmatch(r"20\d\d", year):
+            warnings.append(f"{where}: year '{year}' is not a year; left out.")
+        elif not re.fullmatch(r"[A-Z]{3}", iso3) or iso3 not in known_iso3:
+            warnings.append(f"{where}: '{iso3}' is not a known ISO3 code; left out.")
+        elif iso3 in by_year.get(year, {}):
+            warnings.append(f"{where}: {iso3} is listed twice for {year}; kept once.")
+        else:
+            by_year.setdefault(year, {})[iso3] = country.strip() or iso3
+    return {year: dict(sorted(codes.items())) for year, codes in sorted(by_year.items())}
+
+
+def known_countries():
+    """ISO3 codes of the map (geo/countries.geojson)."""
+    geo = json.loads(GEO_FILE.read_text(encoding="utf-8"))
+    return {f["properties"]["iso3"] for f in geo["features"]}
+
+
+def previous_hnrp(data_dir=DATA_DIR):
+    """The HNRP list of the last good run, used when the sheet cannot be read."""
+    path = data_dir / "results.json"
+    try:
+        return json.loads(path.read_text(encoding="utf-8")).get("hnrp", {})
+    except (OSError, ValueError):
+        return {}
+
+
+def read_hnrp(local_path, warnings, data_dir=DATA_DIR):
+    """Read and check the HNRP sheet. It never fails the run: on any problem, a warning and yesterday's list."""
+    try:
+        if local_path:
+            text = Path(local_path).read_text(encoding="utf-8-sig")
+        elif os.environ.get("HNRP_COUNTRIES_CSV_URL"):
+            text = fetch_csv(os.environ["HNRP_COUNTRIES_CSV_URL"])
+        else:
+            warnings.append("HNRP_COUNTRIES_CSV_URL is not set: the HNRP switch keeps the previous list.")
+            return previous_hnrp(data_dir)
+        return load_hnrp(text, warnings, known_countries())
+    except (OSError, SourceError) as exc:
+        warnings.append(f"HNRP sheet could not be read ({exc}): the previous list is kept.")
+        return previous_hnrp(data_dir)
+
+
+def build(smart_results_text, smart_surveys_text, dhs_values_text, dhs_surveys_text, planning, indicators_text,
+          hnrp=None, warnings=None):
+    """`hnrp` = {year: [ISO3...]} from read_hnrp(); `warnings` may already hold the HNRP warnings."""
+    warnings = [] if warnings is None else warnings
     indicators = load_indicators(indicators_text, warnings)
     smart_surveys, smart_values = build_smart(smart_results_text, smart_surveys_text, planning, indicators, warnings)
     dhs_surveys, dhs_values, dhs_extra = build_dhs(dhs_values_text, dhs_surveys_text, indicators, warnings)
@@ -526,6 +600,7 @@ def build(smart_results_text, smart_surveys_text, dhs_values_text, dhs_surveys_t
         "countries": dict(sorted(countries.items())),
         "surveys": [compact(s) for s in smart_surveys + dhs_surveys],
         "values": [compact(v) for v in smart_values + dhs_values],
+        "hnrp": hnrp or {},
     }
     counts = {
         "smart_surveys": len(smart_surveys),
@@ -545,7 +620,8 @@ def dump_results(results):
             f'"indicators": [\n{lines(results["indicators"])}\n],\n'
             f'"countries": {json.dumps(results["countries"], ensure_ascii=False)},\n'
             f'"surveys": [\n{lines(results["surveys"])}\n],\n'
-            f'"values": [\n{lines(results["values"])}\n]\n'
+            f'"values": [\n{lines(results["values"])}\n],\n'
+            f'"hnrp": {json.dumps(results.get("hnrp", {}), ensure_ascii=False)}\n'
             "}\n")
 
 
@@ -594,9 +670,12 @@ def main(argv=None):
     parser.add_argument("--smart-results", help="Local CSV of the Consolidation sheet instead of $SMART_RESULTS_CSV_URL")
     parser.add_argument("--smart-surveys", help="Local CSV of the Surveys sheet instead of $SMART_SURVEYS_CSV_URL")
     parser.add_argument("--indicators", help="Local CSV of the Dashboard indicators sheet instead of $RESULTS_INDICATORS_CSV_URL")
+    parser.add_argument("--hnrp", help="Local CSV of the HNRP countries sheet instead of $HNRP_COUNTRIES_CSV_URL")
     parser.add_argument("--out", default=str(DATA_DIR), help="Output folder (default: data/)")
     args = parser.parse_args(argv)
 
+    warnings = []
+    hnrp = read_hnrp(args.hnrp, warnings, Path(args.out))
     try:
         results, counts, warnings = build(
             read_source(args.smart_results, "SMART_RESULTS_CSV_URL"),
@@ -605,6 +684,7 @@ def main(argv=None):
             read_file(DHS_SURVEYS_FILE),
             load_planning(),
             read_source(args.indicators, "RESULTS_INDICATORS_CSV_URL"),
+            hnrp, warnings,
         )
     except SourceError as exc:
         print(f"ERROR: {exc}\nThe existing results files were left unchanged.", file=sys.stderr)

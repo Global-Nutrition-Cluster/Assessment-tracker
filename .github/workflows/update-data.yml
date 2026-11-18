@@ -40,6 +40,7 @@ jobs:
           SMART_RESULTS_CSV_URL: ${{ vars.SMART_RESULTS_CSV_URL }}
           SMART_SURVEYS_CSV_URL: ${{ vars.SMART_SURVEYS_CSV_URL }}
           RESULTS_INDICATORS_CSV_URL: ${{ vars.RESULTS_INDICATORS_CSV_URL }}
+          HNRP_COUNTRIES_CSV_URL: ${{ vars.HNRP_COUNTRIES_CSV_URL }}
         run: python scripts/build_results.py
 
       - name: Commit if the data changed

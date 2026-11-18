@@ -304,3 +304,37 @@ class Outputs(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class HnrpSheet(unittest.TestCase):
+    """HNRP countries by year, for the "HNRP" switch of the Results page (Nov 2026)."""
+
+    KNOWN = {"MLI", "NER", "SDN", "AFG"}
+
+    def test_all_years_kept_sorted(self):
+        warnings = []
+        text = "HNRP countries 2025-2026\n\nYear,Country,ISO3\n2026,Sudan,sdn\n2026,Mali,MLI\n2025,Niger,NER\n"
+        self.assertEqual(br.load_hnrp(text, warnings, self.KNOWN),
+                         {"2025": {"NER": "Niger"}, "2026": {"MLI": "Mali", "SDN": "Sudan"}})
+        self.assertEqual(warnings, [])
+
+    def test_bad_rows_left_out_with_a_warning(self):
+        warnings = []
+        text = "Year,Country,ISO3\n2026,Mali,MLI\n2026,Mali again,MLI\n26,Niger,NER\n2026,Somaliland,SOL\n,,\n"
+        self.assertEqual(br.load_hnrp(text, warnings, self.KNOWN), {"2026": {"MLI": "Mali"}})
+        self.assertEqual(len(warnings), 3)   # duplicate, bad year, unknown ISO3 (the empty line is ignored)
+
+    def test_missing_header_is_an_error(self):
+        with self.assertRaises(br.SourceError):
+            br.load_hnrp("Annee,Pays,Code\n2026,Mali,MLI\n", [], self.KNOWN)
+
+    def test_unreadable_sheet_keeps_the_previous_list(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp)
+            (out / "results.json").write_text('{"hnrp": {"2026": {"MLI": "Mali"}}}', encoding="utf-8")
+            warnings = []
+            self.assertEqual(br.read_hnrp(str(out / "missing.csv"), warnings, out), {"2026": {"MLI": "Mali"}})
+            self.assertEqual(len(warnings), 1)
+            (out / "bad.csv").write_text("no header here\n", encoding="utf-8")
+            self.assertEqual(br.read_hnrp(str(out / "bad.csv"), warnings, out), {"2026": {"MLI": "Mali"}})
+            self.assertEqual(len(warnings), 2)

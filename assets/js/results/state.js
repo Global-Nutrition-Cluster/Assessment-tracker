@@ -1,11 +1,12 @@
 // Results page state <-> URL, so a view can be shared by link (CLAUDE.md 11.4).
-// Example: results.html?indicator=STUNT&source=dhs#country=MLI
+// Example: results.html?indicator=STUNT&source=dhs&hnrp=1#country=MLI
 // Values equal to the defaults are left out of the URL to keep links short.
 
 export const DEFAULTS = Object.freeze({
   indicator: 'GAM_WHZ',   // an indicator key of data/results.json
   source: 'all',          // 'all' | 'smart' | 'dhs'
   country: null,          // ISO3 of the open country profile, or null
+  hnrp: false,            // HNRP switch: only the HNRP countries of the current year
 });
 
 const SOURCES = ['all', 'smart', 'dhs'];
@@ -23,6 +24,8 @@ export function readState(indicatorKeys, location = window.location) {
   const source = (params.get('source') || '').toLowerCase();
   if (SOURCES.includes(source)) state.source = source;
 
+  state.hnrp = params.get('hnrp') === '1';
+
   const country = new URLSearchParams(location.hash.slice(1)).get('country');
   if (country && /^[A-Za-z]{3}$/.test(country)) state.country = country.toUpperCase();
 
@@ -33,6 +36,7 @@ export function writeState(state) {
   const params = new URLSearchParams();
   if (state.indicator !== DEFAULTS.indicator) params.set('indicator', state.indicator);
   if (state.source !== DEFAULTS.source) params.set('source', state.source);
+  if (state.hnrp) params.set('hnrp', '1');
   const query = params.toString();
   const hash = state.country ? `#country=${state.country}` : '';
   window.history.replaceState(null, '', `${window.location.pathname}${query ? `?${query}` : ''}${hash}`);
