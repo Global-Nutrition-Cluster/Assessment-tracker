@@ -41,6 +41,7 @@ export async function createResultsMap(root, { onCountry }) {
   const COLORS = {
     noSurvey: '#E8EAE6', noData: '#C2C6C0', border: '#FFFFFF', hover: token('--text'),
     data: token('--gnc-green'),   // indicators without phases: one colour where there is a national figure
+    outside: '#F4F5F3',           // HNRP switch on: countries outside the HNRP list, almost white
   };
 
   const info = root.querySelector('.map-info');
@@ -59,7 +60,7 @@ export async function createResultsMap(root, { onCountry }) {
       const iso3 = feature.properties.iso3;
       layer.on('add', () => layer.getElement()?.setAttribute('data-iso3', iso3));   // handy for tests
       layer.on('mouseover', (event) => {
-        if (view?.figures.has(iso3)) layer.setStyle({ weight: 2, color: COLORS.hover });
+        if (clickable(iso3)) layer.setStyle({ weight: 2, color: COLORS.hover });
         showInfo(iso3, event.containerPoint);
       });
       layer.on('mousemove', (event) => placeInfo(event.containerPoint));
@@ -69,7 +70,7 @@ export async function createResultsMap(root, { onCountry }) {
       });
       layer.on('click', (event) => {
         L.DomEvent.stopPropagation(event);
-        if (view?.figures.has(iso3)) onCountry(iso3);
+        if (clickable(iso3)) onCountry(iso3);
         else showInfo(iso3, event.containerPoint);   // touch: show why nothing opens
       });
     },
@@ -104,6 +105,7 @@ export async function createResultsMap(root, { onCountry }) {
    * @param {object} v.indicator indicator of data/results.json
    * @param {string} v.source    'all' | 'smart' | 'dhs'
    * @param {object} v.countryNames iso3 -> name (data/results.json)
+   * @param {Set|null} v.hnrp    HNRP countries of the year when the HNRP switch is on, else null
    */
   return function update(v) {
     view = { ...v };
@@ -114,9 +116,15 @@ export async function createResultsMap(root, { onCountry }) {
     root.querySelector('.map-legend').innerHTML = legendHtml();
 
     countries.setStyle((feature) => ({
-      weight: 0.8, color: COLORS.border, fillOpacity: 1, fillColor: fill(view.figures.get(feature.properties.iso3)),
+      weight: 0.8, color: COLORS.border, fillOpacity: 1, fillColor: fill(view.figures.get(feature.properties.iso3), feature.properties.iso3),
     }));
   };
+
+  // A country opens its profile when it has at least one survey (and is in the HNRP list when the switch is on)
+  function clickable(iso3) {
+    const figure = view?.figures.get(iso3);
+    return Boolean(figure && !figure.noSurvey);
+  }
 
   function isIpc() {
     return view.indicator.phases?.palette === 'ipc';
@@ -143,8 +151,9 @@ export async function createResultsMap(root, { onCountry }) {
     return isIpc() ? '' : 'cont';
   }
 
-  function fill(figure) {
-    if (!figure) return COLORS.noSurvey;
+  function fill(figure, iso3) {
+    if (view.hnrp && !view.hnrp.has(iso3)) return COLORS.outside;   // HNRP switch on, not an HNRP country
+    if (!figure || figure.noSurvey) return COLORS.noSurvey;
     if (figure.main) {
       const colour = colourOf(figure.main);
       return isOlderThan3Years(figure.main.year) ? patterns.dotted(colour) : colour;
@@ -158,7 +167,8 @@ export async function createResultsMap(root, { onCountry }) {
   function tooltipHtml(iso3) {
     const figure = view?.figures.get(iso3);
     const name = escapeHtml(shortCountry(view?.countryNames[iso3] || geoName.get(iso3) || iso3));
-    if (!figure) return `<strong>${name}</strong><span class="tip-line mute">No survey in the tracker${view.source === 'all' ? '' : ` (${SOURCE_NAMES[view.source]})`}</span>`;
+    if (view?.hnrp && !view.hnrp.has(iso3)) return `<strong>${name}</strong><span class="tip-line mute">Not an HNRP country this year</span>`;
+    if (!figure || figure.noSurvey) return `<strong>${name}</strong><span class="tip-line mute">No survey in the tracker${view.source === 'all' ? '' : ` (${SOURCE_NAMES[view.source]})`}</span>`;
 
     const unit = view.indicator.unit;
     let body;
@@ -215,6 +225,7 @@ export async function createResultsMap(root, { onCountry }) {
         <li><span class="swatch" style="background:${COLORS.noData}"></span>No data for this indicator</li>
         <li><span class="swatch sw-dots ${kind ? `sw-dots-${kind}` : ''}"></span>Dotted: survey older than 3 years</li>
         <li><span class="swatch" style="background:${COLORS.noSurvey}"></span>No survey in the tracker</li>
+        ${view.hnrp ? `<li><span class="swatch swatch-outside" style="background:${COLORS.outside}"></span>Not an HNRP country</li>` : ''}
       </ul>`;
   }
 }

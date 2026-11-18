@@ -43,7 +43,11 @@
         <h1>Results</h1>
         <p>Latest nutrition survey results by country: acute malnutrition, mortality, morbidity and more.</p>
       </div>
-      <div class="data-asof">Data as of <strong id="data-date">…</strong></div>
+      <!-- HNRP switch (CLAUDE.md 11.4.2): only the HNRP countries of the current year, on the whole page -->
+      <button type="button" class="hnrp-switch" id="hnrp-switch" role="switch" aria-checked="false" disabled>
+        <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+        <span class="switch-label">HNRP</span>
+      </button>
     </div>
   </section>
 
