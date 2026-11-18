@@ -2522,5 +2522,6 @@
   {"survey":"ZM2024DHS","source":"DHS","type":"DHS","iso3":"ZMB","area":"Zambia","area_level":"National","population":"General population","indicator":"U5MR","value":42.0,"ci_lower":37.0,"ci_upper":47.0},
   {"survey":"ZM2024DHS","source":"DHS","type":"DHS","iso3":"ZMB","area":"Zambia","area_level":"National","population":"General population","indicator":"MM_AMRT_M_DTH","value":660.0},
   {"survey":"ZM2024DHS","source":"DHS","type":"DHS","iso3":"ZMB","area":"Zambia","area_level":"National","population":"General population","indicator":"MM_AMRT_W_DTH","value":408.0}
-]
+],
+"hnrp": {"2026": {"AFG": "Afghanistan", "BFA": "Burkina Faso", "CAF": "Central African Republic", "CMR": "Cameroon", "COD": "Democratic Republic of the Congo", "COL": "Colombia", "HTI": "Haiti", "MLI": "Mali", "MMR": "Myanmar", "MOZ": "Mozambique", "NER": "Niger", "NGA": "Nigeria", "SDN": "Sudan", "SOM": "Somalia", "SSD": "South Sudan", "SYR": "Syrian Arab Republic", "TCD": "Chad", "UKR": "Ukraine", "VEN": "Venezuela", "YEM": "Yemen"}}
 }
