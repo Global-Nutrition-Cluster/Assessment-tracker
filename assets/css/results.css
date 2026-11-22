@@ -120,7 +120,22 @@
 .pf-actions .btn { gap: 6px; }
 .pf-h { margin: 4px 0 0; font-size: 14px; font-weight: 700; }
 
-.pf-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr)); gap: 12px; }
+/* Survey list (22 Nov 2026): one row per survey, metadata on the left, report link and badge on the right */
+.pf-surveys { display: flex; flex-direction: column; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.pf-card.pf-srv { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 4px 16px; }
+.pf-srv-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pf-srv .pf-card-foot { flex-direction: column; align-items: flex-end; margin-top: 0; padding-top: 0; }
+.pf-srv.is-shown { box-shadow: inset 4px 0 0 var(--gnc-green); }
+.pf-srv-toggle { align-self: flex-start; }
+@media (max-width: 639px) {
+  .pf-card.pf-srv { grid-template-columns: 1fr; }
+  .pf-srv .pf-card-foot { flex-direction: row; justify-content: space-between; align-items: center; }
+}
+/* "SMART results from" (several SMART surveys) */
+.pf-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 14px; }
+.pf-pick label { font-weight: 700; }
+.pf-pick .sel { height: 36px; max-width: 100%; font-size: 14px; }
+.pf-block-survey { margin: -4px 0 0; font-size: 13px; color: var(--text-secondary); }
 .pf-card {
   display: flex; flex-direction: column; gap: 4px; padding: 12px 14px;
   border: 1px solid var(--border); border-radius: var(--radius-card); font-size: 13px;

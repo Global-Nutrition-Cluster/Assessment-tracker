@@ -131,6 +131,7 @@ body { background: var(--soft-page); }
 .res-profile { border-top: 0; }
 .pf-card, .pf-plot, .pf-tile, .pf-more-box { border: 0; border-radius: 16px; background: var(--soft-row); }
 .pf-card-empty { border: 0; background: var(--soft-row); }
+.pf-pick .sel { border: 0; border-radius: 999px; background-color: var(--soft-row); padding-left: 16px; }   /* "SMART results from" */
 .pf-tag { background: #FFFFFF; }
 .dp-row.is-national { background: #FFFFFF; border-radius: 8px; }
 .is-national .pf-level { background: var(--soft-row); }

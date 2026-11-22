@@ -113,7 +113,7 @@ function subnationalRow(row) {
   const s = row.figure.subnational;
   return `<tr>
     <td>${countryButton(row)}${sourceLine(s.source, s.year, 'Subnational only')}</td>
-    <td class="c-value"><span class="mute">${s.areas} area${s.areas === 1 ? '' : 's'}</span><span class="sub">See the country profile</span></td>
+    <td class="c-value"><span class="mute">${s.areas} area${s.areas === 1 ? '' : 's'}${s.surveyIds.length > 1 ? ` · ${s.surveyIds.length} surveys` : ''}</span><span class="sub">See the country profile</span></td>
     <td class="c-ci"></td>
     <td class="c-review"><span class="rev">As published</span></td>
   </tr>`;
@@ -154,7 +154,7 @@ function exportCsv(view) {
         'As published']);
     } else {
       const s = row.figure.subnational;
-      lines.push([row.name, row.iso3, ind.label, `Subnational only (${s.areas} areas)`, s.source, s.survey?.id, s.year,
+      lines.push([row.name, row.iso3, ind.label, `Subnational only (${s.areas} areas)`, s.source, s.surveyIds.join('; '), s.year,
         '', '', '', '', '', '', '', '', 'As published']);
     }
   });

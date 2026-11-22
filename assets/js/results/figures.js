@@ -3,8 +3,10 @@
 //   - national figure of the general population only (Rapid SMART IDP sites stay in the country profile);
 //   - the 6–59 months figure when 0–59 is also given (the others carry alt = true, rule 11.3.4);
 //   - per source, the most recent survey; with Source = All, the most recent of SMART and DHS,
-//     SMART first when both have the same survey year;
-//   - a country with only subnational values for the indicator is "subnational only".
+//     SMART first when both have the same survey year; between two surveys of the same source and year,
+//     the one whose data collection ended last (then the ID, so the choice never depends on the file order);
+//   - a country with only subnational values for the indicator is "subnational only": its areas are counted
+//     over every survey of the most recent year of that source (a country can have many district surveys a year).
 
 import { matchSource } from './data.js';
 import { escapeHtml } from '../format.js';
@@ -83,9 +85,21 @@ function surveyYear(value, surveysById) {
   return surveysById.get(value.survey)?.survey_year ?? null;
 }
 
-/** Most recent survey first; SMART before DHS for the same year. */
+/** Most recent survey first; SMART before DHS for the same year; then the latest end of data collection, then the ID. */
 function newestFirst(a, b) {
-  return (b.year ?? 0) - (a.year ?? 0) || (a.value.source === 'SMART' ? -1 : 1) - (b.value.source === 'SMART' ? -1 : 1);
+  return (b.year ?? 0) - (a.year ?? 0)
+    || (a.value.source === 'SMART' ? -1 : 1) - (b.value.source === 'SMART' ? -1 : 1)
+    || (b.survey?.end_date || '').localeCompare(a.survey?.end_date || '')
+    || (a.value.survey || '').localeCompare(b.value.survey || '');
+}
+
+/** Areas of the most recent year of one source, over all its surveys of that year (district surveys…). */
+function subnationalSummary(items) {
+  const [newest] = [...items].sort(newestFirst);
+  const same = items.filter((i) => i.value.source === newest.value.source && i.year === newest.year);
+  const areas = new Set(same.map((i) => `${i.value.area_level}|${i.value.parent_area || ''}|${i.value.area}`));
+  const surveys = [...new Set(same.map((i) => i.value.survey))];
+  return { source: newest.value.source, year: newest.year, survey: newest.survey, surveyIds: surveys, areas: areas.size };
 }
 
 /**
@@ -130,11 +144,8 @@ export function countryFigures(data, indicatorKey, source, surveysById) {
   }
 
   for (const [iso3, items] of subnational) {
-    items.sort(newestFirst);
-    const newest = items[0];
-    const areas = items.filter((i) => i.value.survey === newest.value.survey).length;
     const figure = get(iso3);
-    const sub = { source: newest.value.source, year: newest.year, survey: newest.survey, areas };
+    const sub = subnationalSummary(items);
     if (!figure.main) figure.subnational = sub;
     else if (!figure.others.some((o) => o.value.source === sub.source) && sub.source !== figure.main.value.source) {
       figure.others.push({ subnationalOnly: true, ...sub });
