@@ -121,20 +121,29 @@ export function createProfile(root, { onClose }) {
 
   /**
    * @param {string|null} iso3
-   * @param {object} data        data/results.json
+   * @param {object} data        overview.json, with `values` = every value of this country (its countries/<ISO3>.json)
    * @param {Map} indicators     key -> indicator
+   * @param {'loading'|'error'} [status]  while the country file loads, or when it could not be loaded
    */
-  return function update(iso3, data, indicators) {
+  return function update(iso3, data, indicators, status) {
     if (!iso3) { root.hidden = true; root.innerHTML = ''; current = null; return; }
     if (current?.iso3 !== iso3) { ui.tab = 'acute'; ui.survey = null; ui.allSurveys = false; plotChoice.clear(); }
-    current = { iso3, data, indicators };
+    current = { iso3, data, indicators, status };
     root.hidden = false;
     draw();
   };
 
   function draw() {
-    const { iso3, data, indicators } = current;
+    const { iso3, data, indicators, status } = current;
     const name = data.countries[iso3] || iso3;
+    if (status) {
+      root.setAttribute('aria-busy', String(status === 'loading'));
+      root.innerHTML = headerHtml(iso3, name, status === 'loading'
+        ? 'Loading the results of this country…'
+        : 'The results of this country could not be loaded. Please reload the page.');
+      return;
+    }
+    root.removeAttribute('aria-busy');
     const surveys = data.surveys.filter((s) => s.iso3 === iso3).sort(bySurveyDate);
     const values = data.values.filter((v) => v.iso3 === iso3);
 

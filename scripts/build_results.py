@@ -1,21 +1,30 @@
 #!/usr/bin/env python3
-"""Build data/results.json and data/results_meta.json for the Results page.
+"""Build the Results page files: data/results/overview.json, data/results/countries/<ISO3>.json
+and data/results/meta.json.
 
 Sources (CLAUDE.md section 11.1):
-  - SMART results, sheet "Consolidation"  -> $SMART_RESULTS_CSV_URL (Google Sheet published as CSV)
-  - SMART surveys, sheet "Surveys"        -> $SMART_SURVEYS_CSV_URL
+  - SMART results, one pair of CSV files per report in data/results/reports/ (owner's decision, 22 Nov 2026),
+    written by the extraction and pushed by the owner:
+      <Assessment ID>.csv         every result row of the report (columns of the extraction workbook)
+      <Assessment ID>.survey.csv  its row of the Surveys sheet + "Report link"
   - Indicators of the selector, sheet "Dashboard indicators" (labels, definitions, phases)
                                           -> $RESULTS_INDICATORS_CSV_URL
   - DHS indicators and surveys            -> data/dhs/*.csv (written by the "Update DHS data" workflow)
-  - Planning tracker, for the ID check    -> data/surveys.json (written by build_data.py)
+  - Planning tracker, for the ID check and as a fallback for a survey without .survey.csv (lead organization,
+    report link)                          -> data/surveys.json (written by build_data.py)
   - HNRP countries by year (Year | Country | ISO3), for the "HNRP" switch
                                           -> $HNRP_COUNTRIES_CSV_URL (optional: if unreadable, a warning
                                              and the previous list; it never fails the run)
 
+Outputs (the page loads the overview first, and a country file only when its profile opens):
+  - overview.json         indicators, countries, surveys (with their number of values), national values of the
+                          selector's indicators, and per survey x indicator the number of subnational areas
+  - countries/<ISO3>.json every value of one country (all surveys, areas, population groups, age groups)
+  - meta.json             last update time, counts, warnings
+
 Usage:
     python scripts/build_results.py
-    python scripts/build_results.py --smart-results file.csv --smart-surveys file.csv --indicators file.csv \
-        --hnrp hnrp.csv
+    python scripts/build_results.py --reports folder --indicators file.csv --hnrp hnrp.csv
 
 The business rules are numbered as in CLAUDE.md, section 11.3. Values are kept as published:
 nothing is recalculated. Only the Python standard library is used.
@@ -39,12 +48,15 @@ from build_data import SourceError, clean, fetch_csv, web_link  # noqa: E402  (s
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = ROOT / "data"
+RESULTS_DIR = DATA_DIR / "results"          # outputs, and the reports folder below
+REPORTS_DIR = RESULTS_DIR / "reports"       # inputs: one pair of CSV files per SMART report
+SURVEY_SUFFIX = ".survey.csv"
 DHS_VALUES_FILE = DATA_DIR / "dhs" / "dhs_latest_indicators_national.csv"
 DHS_SURVEYS_FILE = DATA_DIR / "dhs" / "dhs_surveys.csv"
 PLANNING_FILE = DATA_DIR / "surveys.json"
 GEO_FILE = ROOT / "geo" / "countries.geojson"
 
-# Below these numbers we assume a source is broken (emptied by mistake, wrong tab...).
+# Below these numbers we assume a source is broken (reports folder emptied by mistake, wrong file...).
 MIN_SMART_VALUES = 100
 MIN_DHS_VALUES = 100
 
@@ -58,7 +70,8 @@ SMART_SURVEY_COLUMNS = [
     "Assessment ID", "Country", "Country ISO3", "Assessment type", "Survey title", "Lead organization",
     "Data collection start", "Data collection end", "Geographic coverage", "Mortality recall period", "Notes",
 ]
-# Optional: filled by the owner, one URL per survey. Empty or absent -> no report link on the page.
+# Optional: one URL per survey (from the watch list at extraction, or edited by the owner). Empty or absent
+# -> the planning tracker's Report Link, else no report link on the page.
 SMART_REPORT_LINK_COLUMN = "Report link"
 
 # ---------------------------------------------------------------------------
@@ -279,7 +292,7 @@ def build_smart_surveys(rows, warnings):
         if not sid:
             continue
         if sid in surveys:
-            warnings.append(f"SMART Surveys sheet: {sid} appears twice; the first row is used.")
+            warnings.append(f"SMART surveys: {sid} appears twice; the first row is used.")
             continue
         start = parse_month_or_date(row["Data collection start"])
         end = parse_month_or_date(row["Data collection end"])
@@ -303,7 +316,7 @@ def build_smart_surveys(rows, warnings):
 
 
 def smart_value(row, codes, warnings):
-    """One Consolidation row -> one value, or None when the row has no usable value."""
+    """One result row of a report file -> one value, or None when the row has no usable value."""
     rid = row["Result ID"] or "(no Result ID)"
     try:
         value = parse_number(row["Value"])
@@ -370,34 +383,102 @@ def mark_alternative_ages(values):
                     v["alt"] = True
 
 
-def check_ids(values, smart_surveys, planning, warnings):
+def check_ids(values, planning, warnings):
     """Section 11.2: the planning tracker owns the Assessment IDs."""
+    if planning is None:
+        return
     seen = {}
     for v in values:
         seen.setdefault(v["survey"], v["iso3"])
     for sid, iso3 in sorted(seen.items()):
-        if sid not in smart_surveys:
-            warnings.append(f"{sid}: in the Consolidation sheet but not in the SMART Surveys sheet.")
-        if planning is None:
-            continue
-        if sid not in planning:
+        known = planning.get(sid)
+        if known is None:
             warnings.append(f"{sid}: Assessment ID not found in the planning tracker.")
-        elif planning[sid] and planning[sid] != iso3:
-            warnings.append(f"{sid}: country {iso3} in the results but {planning[sid]} in the planning tracker.")
+        elif known.get("iso3") and known["iso3"] != iso3:
+            warnings.append(f"{sid}: country {iso3} in the results but {known['iso3']} in the planning tracker.")
 
 
-def build_smart(results_text, surveys_text, planning, indicators, warnings):
-    result_rows = read_table(results_text, "Result ID", SMART_RESULT_COLUMNS, "SMART Consolidation sheet")
-    survey_rows = read_table(surveys_text, "Assessment ID", SMART_SURVEY_COLUMNS, "SMART Surveys sheet")
+def read_reports(folder):
+    """Rows of every report file in data/results/reports/: (result rows, survey rows).
+    <ID>.csv = results, <ID>.survey.csv = the survey's row. A file that cannot be read or lacks a
+    column stops the build (SourceError): the old outputs are kept."""
+    folder = Path(folder)
+    if not folder.is_dir():
+        raise SourceError(f"{folder} is missing.")
+    result_rows, survey_rows = [], []
+    for path in sorted(folder.glob("*.csv")):
+        text = path.read_text(encoding="utf-8-sig")
+        if path.name.endswith(SURVEY_SUFFIX):
+            survey_rows += read_table(text, "Assessment ID", SMART_SURVEY_COLUMNS, f"reports/{path.name}")
+        else:
+            rows = read_table(text, "Result ID", SMART_RESULT_COLUMNS, f"reports/{path.name}")
+            for row in rows:
+                row["_file"] = path.name
+            result_rows += rows
+    return result_rows, survey_rows
+
+
+def check_report_files(result_rows, warnings):
+    """One report per file, named after its Assessment ID; a Result ID only once."""
+    ids_by_file, seen = {}, {}
+    for row in result_rows:
+        name = row.get("_file", "")
+        if name:
+            ids_by_file.setdefault(name, set()).add(row["Assessment ID"])
+        rid = row["Result ID"]
+        if rid and rid in seen and seen[rid] != name:
+            warnings.append(f"{rid}: in reports/{seen[rid]} and reports/{name}.")
+        seen.setdefault(rid, name)
+    for name, ids in sorted(ids_by_file.items()):
+        expected = name[:-len(".csv")]
+        if ids != {expected}:
+            warnings.append(f"reports/{name}: holds {', '.join(sorted(ids))}; a results file should hold one "
+                            f"report, named after its Assessment ID ({expected}).")
+
+
+def fallback_survey(sid, rows, planning_record):
+    """A report pushed without its .survey.csv: the survey is built from its result rows and the planning
+    tracker, with a default title; a warning asks for the .survey.csv."""
+    first = rows[0]
+    record = planning_record or {}
+    return {
+        "Assessment ID": sid, "Country": first["Country"], "Country ISO3": first["Country ISO3"],
+        "Assessment type": first["Assessment type"],
+        "Survey title": f"{first['Assessment type'] or 'SMART'} survey, {first['Country']} {sid.split('-')[1] if '-' in sid else ''}".strip(),
+        "Lead organization": record.get("lead_org") or "",
+        "Data collection start": min((r["Data collection start"] for r in rows if r["Data collection start"]), default=""),
+        "Data collection end": max((r["Data collection end"] for r in rows if r["Data collection end"]), default=""),
+        "Geographic coverage": "", "Mortality recall period": "", "Notes": "",
+        SMART_REPORT_LINK_COLUMN: record.get("report_url") or "",
+    }
+
+
+def build_smart(result_rows, survey_rows, planning, indicators, warnings):
     if len(result_rows) < MIN_SMART_VALUES:
-        raise SourceError(f"SMART Consolidation sheet: only {len(result_rows)} rows (at least "
-                          f"{MIN_SMART_VALUES} expected). Wrong tab or emptied sheet?")
+        raise SourceError(f"SMART reports: only {len(result_rows)} result rows in data/results/reports/ (at least "
+                          f"{MIN_SMART_VALUES} expected). Folder emptied by mistake?")
+    check_report_files(result_rows, warnings)
+    by_survey = {}
+    for row in result_rows:
+        by_survey.setdefault(row["Assessment ID"], []).append(row)
+    listed = {r["Assessment ID"] for r in survey_rows}
+    for sid, rows in by_survey.items():
+        if sid and sid not in listed:
+            warnings.append(f"{sid}: no reports/{sid}{SURVEY_SUFFIX}; survey card built from its results and the "
+                            "planning tracker (default title, no coverage).")
+            survey_rows.append(fallback_survey(sid, rows, (planning or {}).get(sid)))
     surveys = build_smart_surveys(survey_rows, warnings)
+    # Report link: the survey file's, else the planning tracker's
+    for sid, survey in surveys.items():
+        if not survey["report_url"] and planning and planning.get(sid, {}).get("report_url"):
+            survey["report_url"] = planning[sid]["report_url"]
     codes = {i["smart_code"]: i["key"] for i in indicators if i["smart_code"]}
     values = [v for v in (smart_value(r, codes, warnings) for r in result_rows) if v]
     mark_alternative_ages(values)
-    check_ids(values, surveys, planning, warnings)
+    check_ids(values, planning, warnings)
     used = {v["survey"] for v in values}
+    for sid in sorted(set(surveys) - used):
+        warnings.append(f"reports/{sid}{SURVEY_SUFFIX}: no result rows for this survey; not shown.")
     return [s for sid, s in surveys.items() if sid in used], values
 
 
@@ -504,10 +585,11 @@ def build_dhs(values_text, surveys_text, indicators, warnings):
 
 
 def load_planning(path=PLANNING_FILE):
-    """Assessment ID -> ISO3 of the planning tracker, or None if the file is missing."""
+    """Assessment ID -> {iso3, lead_org, report_url} of the planning tracker, or None if the file is missing."""
     if not path.exists():
         return None
-    return {s["id"]: s.get("iso3") for s in json.loads(path.read_text(encoding="utf-8"))}
+    return {s["id"]: {"iso3": s.get("iso3"), "lead_org": s.get("lead_org"), "report_url": s.get("report_url")}
+            for s in json.loads(path.read_text(encoding="utf-8"))}
 
 
 def compact(record):
@@ -557,16 +639,16 @@ def known_countries():
     return {f["properties"]["iso3"] for f in geo["features"]}
 
 
-def previous_hnrp(data_dir=DATA_DIR):
+def previous_hnrp(out_dir=RESULTS_DIR):
     """The HNRP list of the last good run, used when the sheet cannot be read."""
-    path = data_dir / "results.json"
+    path = Path(out_dir) / "overview.json"
     try:
         return json.loads(path.read_text(encoding="utf-8")).get("hnrp", {})
     except (OSError, ValueError):
         return {}
 
 
-def read_hnrp(local_path, warnings, data_dir=DATA_DIR):
+def read_hnrp(local_path, warnings, out_dir=RESULTS_DIR):
     """Read and check the HNRP sheet. It never fails the run: on any problem, a warning and yesterday's list."""
     try:
         if local_path:
@@ -575,19 +657,21 @@ def read_hnrp(local_path, warnings, data_dir=DATA_DIR):
             text = fetch_csv(os.environ["HNRP_COUNTRIES_CSV_URL"])
         else:
             warnings.append("HNRP_COUNTRIES_CSV_URL is not set: the HNRP switch keeps the previous list.")
-            return previous_hnrp(data_dir)
+            return previous_hnrp(out_dir)
         return load_hnrp(text, warnings, known_countries())
     except (OSError, SourceError) as exc:
         warnings.append(f"HNRP sheet could not be read ({exc}): the previous list is kept.")
-        return previous_hnrp(data_dir)
+        return previous_hnrp(out_dir)
 
 
-def build(smart_results_text, smart_surveys_text, dhs_values_text, dhs_surveys_text, planning, indicators_text,
+def build(result_rows, survey_rows, dhs_values_text, dhs_surveys_text, planning, indicators_text,
           hnrp=None, warnings=None):
-    """`hnrp` = {year: [ISO3...]} from read_hnrp(); `warnings` may already hold the HNRP warnings."""
+    """All the Results data in one dict (indicators, countries, surveys, values, hnrp), before it is split
+    into the page's files by split_outputs(). `result_rows` / `survey_rows` come from read_reports();
+    `hnrp` = {year: {ISO3: name}} from read_hnrp(); `warnings` may already hold the HNRP warnings."""
     warnings = [] if warnings is None else warnings
     indicators = load_indicators(indicators_text, warnings)
-    smart_surveys, smart_values = build_smart(smart_results_text, smart_surveys_text, planning, indicators, warnings)
+    smart_surveys, smart_values = build_smart(result_rows, survey_rows, planning, indicators, warnings)
     dhs_surveys, dhs_values, dhs_extra = build_dhs(dhs_values_text, dhs_surveys_text, indicators, warnings)
 
     countries = {}
@@ -595,11 +679,18 @@ def build(smart_results_text, smart_surveys_text, dhs_values_text, dhs_surveys_t
         if s["iso3"]:
             countries.setdefault(s["iso3"], s["country"])
 
+    values = smart_values + dhs_values
+    count = {}
+    for v in values:
+        count[v["survey"]] = count.get(v["survey"], 0) + 1
+    for s in smart_surveys + dhs_surveys:
+        s["value_count"] = count.get(s["id"], 0)     # KPI tile "N values", without loading every value
+
     results = {
         "indicators": indicators + sorted(dhs_extra, key=lambda i: (i["group"], i["label"])),
         "countries": dict(sorted(countries.items())),
         "surveys": [compact(s) for s in smart_surveys + dhs_surveys],
-        "values": [compact(v) for v in smart_values + dhs_values],
+        "values": [compact(v) for v in values],
         "hnrp": hnrp or {},
     }
     counts = {
@@ -612,41 +703,98 @@ def build(smart_results_text, smart_surveys_text, dhs_values_text, dhs_surveys_t
     return results, counts, warnings
 
 
-def dump_results(results):
-    """One survey or value per line: small file, readable diffs in GitHub."""
-    def lines(items):
-        return ",\n".join("  " + json.dumps(item, ensure_ascii=False, separators=(",", ":")) for item in items)
+# ---------------------------------------------------------------------------
+# Splitting into the page's files (owner's decision, 22 Nov 2026): a small overview for the map, the list
+# and the KPI tiles, and one file per country for its profile, loaded only when the profile opens.
+# ---------------------------------------------------------------------------
+
+def is_main_general(v):
+    """Values the map and the list can use: general population, main age group (rule 11.3.4)."""
+    return (v.get("population") or "General population") == "General population" and not v.get("alt")
+
+
+def subnational_counts(values, selector):
+    """Per survey x indicator, the number of subnational areas (general population, main age group): enough for
+    "Subnational only · 12 areas · 3 surveys" without the values themselves."""
+    counts = {}
+    for v in values:
+        if v.get("area_level") == "National" or v["indicator"] not in selector or not is_main_general(v):
+            continue
+        key = (v["iso3"], v["source"], v["survey"], v["indicator"])
+        counts[key] = counts.get(key, 0) + 1
+    return [{"iso3": iso3, "source": source, "survey": survey, "indicator": indicator, "areas": n}
+            for (iso3, source, survey, indicator), n in sorted(counts.items())]
+
+
+def split_outputs(results):
+    """-> (overview, {ISO3: country file})."""
+    selector = {i["key"] for i in results["indicators"] if i.get("selector")}
+    national = [v for v in results["values"] if v.get("area_level") == "National" and v["indicator"] in selector]
+    overview = {
+        "indicators": results["indicators"],
+        "countries": results["countries"],
+        "surveys": results["surveys"],
+        "values": national,
+        "subnational": subnational_counts(results["values"], selector),
+        "hnrp": results.get("hnrp", {}),
+    }
+    by_country = {}
+    for v in results["values"]:
+        by_country.setdefault(v["iso3"], []).append(v)
+    return overview, {iso3: {"iso3": iso3, "values": values} for iso3, values in sorted(by_country.items())}
+
+
+def json_lines(items):
+    """One item per line: small files, readable diffs in GitHub."""
+    return ",\n".join("  " + json.dumps(item, ensure_ascii=False, separators=(",", ":")) for item in items)
+
+
+def dump_overview(overview):
     return ("{\n"
-            f'"indicators": [\n{lines(results["indicators"])}\n],\n'
-            f'"countries": {json.dumps(results["countries"], ensure_ascii=False)},\n'
-            f'"surveys": [\n{lines(results["surveys"])}\n],\n'
-            f'"values": [\n{lines(results["values"])}\n],\n'
-            f'"hnrp": {json.dumps(results.get("hnrp", {}), ensure_ascii=False)}\n'
+            f'"indicators": [\n{json_lines(overview["indicators"])}\n],\n'
+            f'"countries": {json.dumps(overview["countries"], ensure_ascii=False)},\n'
+            f'"surveys": [\n{json_lines(overview["surveys"])}\n],\n'
+            f'"values": [\n{json_lines(overview["values"])}\n],\n'
+            f'"subnational": [\n{json_lines(overview["subnational"])}\n],\n'
+            f'"hnrp": {json.dumps(overview.get("hnrp", {}), ensure_ascii=False)}\n'
             "}\n")
 
 
-def write_outputs(results, counts, warnings, data_dir=DATA_DIR):
-    """Write the JSON files only if the data changed. Returns True when files were written."""
-    data_dir.mkdir(parents=True, exist_ok=True)
-    results_path = data_dir / "results.json"
-    meta_path = data_dir / "results_meta.json"
+def dump_country(country):
+    return f'{{\n"iso3": "{country["iso3"]}",\n"values": [\n{json_lines(country["values"])}\n]\n}}\n'
 
-    new_results = dump_results(results)
-    old_results = results_path.read_text(encoding="utf-8") if results_path.exists() else None
+
+def write_outputs(results, counts, warnings, out_dir=RESULTS_DIR):
+    """Write the files that changed, remove the country files of countries no longer in the data.
+    Returns True when something was written."""
+    out_dir = Path(out_dir)
+    countries_dir = out_dir / "countries"
+    countries_dir.mkdir(parents=True, exist_ok=True)
+    overview, country_files = split_outputs(results)
+
+    wanted = {out_dir / "overview.json": dump_overview(overview)}
+    for iso3, country in country_files.items():
+        wanted[countries_dir / f"{iso3}.json"] = dump_country(country)
+    stale = [p for p in countries_dir.glob("*.json") if p not in wanted]
+
+    meta_path = out_dir / "meta.json"
     old_meta = json.loads(meta_path.read_text(encoding="utf-8")) if meta_path.exists() else {}
-    if new_results == old_results and old_meta.get("warnings") == warnings:
+    changed = [p for p, text in wanted.items() if not p.exists() or p.read_text(encoding="utf-8") != text]
+    if not changed and not stale and old_meta.get("warnings") == warnings:
         return False
 
+    for path in changed:
+        tmp = path.with_suffix(".tmp")
+        tmp.write_text(wanted[path], encoding="utf-8")
+        tmp.replace(path)
+    for path in stale:
+        path.unlink()
     meta = {
         "updated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
         "counts": counts,
         "warnings": warnings,
     }
-    for path, content in ((results_path, new_results),
-                          (meta_path, json.dumps(meta, ensure_ascii=False, indent=1) + "\n")):
-        tmp = path.with_suffix(".tmp")
-        tmp.write_text(content, encoding="utf-8")
-        tmp.replace(path)
+    meta_path.write_text(json.dumps(meta, ensure_ascii=False, indent=1) + "\n", encoding="utf-8")
     return True
 
 
@@ -667,19 +815,18 @@ def read_file(path):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--smart-results", help="Local CSV of the Consolidation sheet instead of $SMART_RESULTS_CSV_URL")
-    parser.add_argument("--smart-surveys", help="Local CSV of the Surveys sheet instead of $SMART_SURVEYS_CSV_URL")
+    parser.add_argument("--reports", default=str(REPORTS_DIR), help="Folder of the SMART report files (default: data/results/reports)")
     parser.add_argument("--indicators", help="Local CSV of the Dashboard indicators sheet instead of $RESULTS_INDICATORS_CSV_URL")
     parser.add_argument("--hnrp", help="Local CSV of the HNRP countries sheet instead of $HNRP_COUNTRIES_CSV_URL")
-    parser.add_argument("--out", default=str(DATA_DIR), help="Output folder (default: data/)")
+    parser.add_argument("--out", default=str(RESULTS_DIR), help="Output folder (default: data/results)")
     args = parser.parse_args(argv)
 
     warnings = []
     hnrp = read_hnrp(args.hnrp, warnings, Path(args.out))
     try:
+        result_rows, survey_rows = read_reports(args.reports)
         results, counts, warnings = build(
-            read_source(args.smart_results, "SMART_RESULTS_CSV_URL"),
-            read_source(args.smart_surveys, "SMART_SURVEYS_CSV_URL"),
+            result_rows, survey_rows,
             read_file(DHS_VALUES_FILE),
             read_file(DHS_SURVEYS_FILE),
             load_planning(),

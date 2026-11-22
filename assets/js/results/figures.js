@@ -93,13 +93,14 @@ function newestFirst(a, b) {
     || (a.value.survey || '').localeCompare(b.value.survey || '');
 }
 
-/** Areas of the most recent year of one source, over all its surveys of that year (district surveys…). */
+/** Areas of the most recent year of one source, added up over all its surveys of that year (district surveys…).
+ *  items: one per survey, with its number of areas (overview.json "subnational", built by build_results.py). */
 function subnationalSummary(items) {
   const [newest] = [...items].sort(newestFirst);
   const same = items.filter((i) => i.value.source === newest.value.source && i.year === newest.year);
-  const areas = new Set(same.map((i) => `${i.value.area_level}|${i.value.parent_area || ''}|${i.value.area}`));
+  const areas = same.reduce((total, i) => total + i.areas, 0);
   const surveys = [...new Set(same.map((i) => i.value.survey))];
-  return { source: newest.value.source, year: newest.year, survey: newest.survey, surveyIds: surveys, areas: areas.size };
+  return { source: newest.value.source, year: newest.year, survey: newest.survey, surveyIds: surveys, areas };
 }
 
 /**
@@ -121,15 +122,20 @@ export function countryFigures(data, indicatorKey, source, surveysById) {
   // Countries that have at least one survey for the chosen source ("no data for this indicator" vs "no survey")
   for (const s of data.surveys) if (matchSource(s, source) && s.iso3) get(s.iso3);
 
-  const national = new Map();     // iso3 -> candidates
-  const subnational = new Map();  // iso3 -> candidates
+  const national = new Map();     // iso3 -> candidates (overview.json "values": national values only)
+  const subnational = new Map();  // iso3 -> one item per survey with its number of areas (overview.json "subnational")
+  const add = (bucket, iso3, item) => {
+    if (!bucket.has(iso3)) bucket.set(iso3, []);
+    bucket.get(iso3).push(item);
+  };
   for (const v of data.values) {
-    if (v.indicator !== indicatorKey || !matchSource(v, source) || v.alt) continue;
+    if (v.indicator !== indicatorKey || !matchSource(v, source) || v.alt || v.area_level !== 'National') continue;
     if (v.population && v.population !== 'General population') continue;
-    const item = { value: v, year: surveyYear(v, surveysById), survey: surveysById.get(v.survey) };
-    const bucket = v.area_level === 'National' ? national : subnational;
-    if (!bucket.has(v.iso3)) bucket.set(v.iso3, []);
-    bucket.get(v.iso3).push(item);
+    add(national, v.iso3, { value: v, year: surveyYear(v, surveysById), survey: surveysById.get(v.survey) });
+  }
+  for (const c of data.subnational || []) {
+    if (c.indicator !== indicatorKey || !matchSource(c, source)) continue;
+    add(subnational, c.iso3, { value: c, year: surveyYear(c, surveysById), survey: surveysById.get(c.survey), areas: c.areas });
   }
 
   for (const [iso3, items] of national) {

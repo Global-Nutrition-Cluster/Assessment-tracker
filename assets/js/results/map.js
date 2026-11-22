@@ -102,9 +102,9 @@ export async function createResultsMap(root, { onCountry }) {
   /**
    * @param {object} v
    * @param {Map} v.figures      countryFigures() for the chosen indicator and source
-   * @param {object} v.indicator indicator of data/results.json
+   * @param {object} v.indicator indicator of data/results/overview.json
    * @param {string} v.source    'all' | 'smart' | 'dhs'
-   * @param {object} v.countryNames iso3 -> name (data/results.json)
+   * @param {object} v.countryNames iso3 -> name (data/results/overview.json)
    * @param {Set|null} v.hnrp    HNRP countries of the year when the HNRP switch is on, else null
    */
   return function update(v) {

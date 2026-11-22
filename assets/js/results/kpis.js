@@ -24,21 +24,23 @@ function tile(tag, label, value, sub, extraClass = '') {
 /** @param {HTMLElement} root */
 export function createResultsKpis(root) {
   return function update(data) {
-    const { surveys, values } = data;
+    // Counted from the surveys: each carries its number of values (value_count, build_results.py),
+    // so the tiles need no value file
+    const surveys = data.surveys.filter((s) => (s.value_count ?? 0) > 0);
     const smartSurveys = surveys.filter((s) => s.source === 'SMART');
     const dhsSurveys = surveys.filter((s) => s.source === 'DHS');
-    const smartValues = values.filter((v) => v.source === 'SMART');
+    const smartValues = smartSurveys.reduce((total, s) => total + s.value_count, 0);
 
-    const countriesOf = (list) => new Set(list.map((v) => v.iso3));
-    const all = countriesOf(values);
-    const smartCountries = countriesOf(smartValues);
-    const dhsCountries = countriesOf(values.filter((v) => v.source === 'DHS'));
+    const countriesOf = (list) => new Set(list.map((s) => s.iso3));
+    const all = countriesOf(surveys);
+    const smartCountries = countriesOf(smartSurveys);
+    const dhsCountries = countriesOf(dhsSurveys);
     const both = [...smartCountries].filter((c) => dhsCountries.has(c)).length;
 
     root.innerHTML = [
       tile('ALL', 'Countries with results', all.size, `${both} with both SMART and DHS`),
       tile('SMART', 'SMART surveys', smartSurveys.length,
-        `${smartCountries.size} countries · ${number(smartValues.length)} values · ${yearRange(smartSurveys)}`),
+        `${smartCountries.size} countries · ${number(smartValues)} values · ${yearRange(smartSurveys)}`),
       tile('DHS', 'DHS surveys', dhsSurveys.length, `Latest standard DHS, ${yearRange(dhsSurveys)}`),
       tile('MICS', 'MICS surveys', '--', '', 'is-soon'),   // MICS results not available yet
     ].join('');

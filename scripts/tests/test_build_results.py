@@ -46,6 +46,20 @@ def filler(n):
     return [result_row(f"F{i:03d}", code="STUNT", area=f"Region {i}", level="Admin 1") for i in range(n)]
 
 
+def result_rows(text):
+    return br.read_table(text, "Result ID", br.SMART_RESULT_COLUMNS, "test results")
+
+
+def survey_rows(text):
+    return br.read_table(text, "Assessment ID", br.SMART_SURVEY_COLUMNS, "test surveys")
+
+
+def build(rows, surveys=None, planning=None):
+    """br.build() on result rows (CSV lines) and a .survey.csv text."""
+    return br.build(result_rows(results_csv(rows)), survey_rows(surveys if surveys is not None else surveys_csv()),
+                    DHS_VALUES, DHS_SURVEYS, planning, INDICATORS_CSV)
+
+
 DHS_VALUES = (
     "country,iso3,indicator_id,indicator,topic,measurement_type,value,ci_lower,ci_upper,"
     "denominator_unweighted,survey_id,survey_year,release_date,retrieval_date\n"
@@ -191,7 +205,7 @@ class NumberAndTextRules(unittest.TestCase):
 
 class SmartRules(unittest.TestCase):
     def build(self, rows, planning=None, report=""):
-        return br.build(results_csv(rows), surveys_csv(report), DHS_VALUES, DHS_SURVEYS, planning, INDICATORS_CSV)
+        return build(rows, surveys_csv(report), planning)
 
     def test_header_detected_below_a_title_row(self):
         results, counts, _ = self.build(filler(br.MIN_SMART_VALUES))
@@ -203,8 +217,7 @@ class SmartRules(unittest.TestCase):
 
     def test_missing_column_fails(self):
         with self.assertRaises(br.SourceError):
-            br.build(results_csv(filler(200)).replace("Indicator code", "Code"), surveys_csv(),
-                     DHS_VALUES, DHS_SURVEYS, None, INDICATORS_CSV)
+            result_rows(results_csv(filler(200)).replace("Indicator code", "Code"))
 
     def test_6_59_months_is_the_main_figure(self):  # rule 11.3.4
         rows = filler(br.MIN_SMART_VALUES) + [result_row("A", age="6-59 months", value="10.8"),
@@ -249,9 +262,9 @@ class SmartRules(unittest.TestCase):
     def test_id_check_against_the_planning_tracker(self):  # section 11.2
         _, _, warnings = self.build(filler(br.MIN_SMART_VALUES), planning={})
         self.assertTrue(any("not found in the planning tracker" in w for w in warnings))
-        _, _, warnings = self.build(filler(br.MIN_SMART_VALUES), planning={"MLI-2022-SMART-01": "NER"})
+        _, _, warnings = self.build(filler(br.MIN_SMART_VALUES), planning={"MLI-2022-SMART-01": {"iso3": "NER"}})
         self.assertTrue(any("NER in the planning tracker" in w for w in warnings))
-        _, _, warnings = self.build(filler(br.MIN_SMART_VALUES), planning={"MLI-2022-SMART-01": "MLI"})
+        _, _, warnings = self.build(filler(br.MIN_SMART_VALUES), planning={"MLI-2022-SMART-01": {"iso3": "MLI"}})
         self.assertFalse(any("planning tracker" in w for w in warnings))
 
     def test_report_link_and_review_status(self):
@@ -261,11 +274,28 @@ class SmartRules(unittest.TestCase):
         self.assertEqual(survey["survey_year"], 2022)
         self.assertEqual(results["values"][0]["review_status"], "To review")  # kept, not shown
 
+    def test_report_link_falls_back_on_the_planning_tracker(self):
+        planning = {"MLI-2022-SMART-01": {"iso3": "MLI", "report_url": "https://tracker/r.pdf"}}
+        results, _, _ = self.build(filler(br.MIN_SMART_VALUES), planning=planning)
+        self.assertEqual(results["surveys"][0]["report_url"], "https://tracker/r.pdf")
+        results, _, _ = self.build(filler(br.MIN_SMART_VALUES), planning=planning, report="https://own/r.pdf")
+        self.assertEqual(results["surveys"][0]["report_url"], "https://own/r.pdf")   # the survey file wins
+
+    def test_report_without_survey_file_gets_a_default_card(self):
+        planning = {"MLI-2022-SMART-01": {"iso3": "MLI", "lead_org": "DGSHP"}}
+        results, _, warnings = build(filler(br.MIN_SMART_VALUES), SURVEY_HEADER + "\n", planning)
+        survey = results["surveys"][0]
+        self.assertEqual((survey["title"], survey["lead_org"], survey["end_date"]), ("SMART survey, Mali 2022", "DGSHP", "2022-07-12"))
+        self.assertTrue(any(".survey.csv" in w for w in warnings))
+
+    def test_value_count_per_survey(self):
+        results, _, _ = self.build(filler(br.MIN_SMART_VALUES))
+        self.assertEqual(results["surveys"][0]["value_count"], br.MIN_SMART_VALUES)
+
 
 class DhsRules(unittest.TestCase):
     def setUp(self):
-        self.results, self.counts, _ = br.build(results_csv(filler(br.MIN_SMART_VALUES)), surveys_csv(),
-                                                DHS_VALUES, DHS_SURVEYS, None, INDICATORS_CSV)
+        self.results, self.counts, _ = build(filler(br.MIN_SMART_VALUES))
         self.dhs = [v for v in self.results["values"] if v["source"] == "DHS"]
 
     def test_shared_key_for_wasting(self):  # rule 11.3.2
@@ -290,16 +320,67 @@ class DhsRules(unittest.TestCase):
         self.assertEqual(self.counts["countries"], 1)
 
 
+class ReportFiles(unittest.TestCase):
+    """data/results/reports/: one <ID>.csv and one <ID>.survey.csv per report (22 Nov 2026)."""
+
+    def write(self, folder, name, text):
+        (folder / name).write_text(text, encoding="utf-8")
+
+    def test_results_and_survey_files_are_read(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            self.write(folder, "MLI-2022-SMART-01.csv", results_csv(filler(5), title=False))
+            self.write(folder, "MLI-2022-SMART-01.survey.csv", surveys_csv("https://r"))
+            rows, surveys = br.read_reports(folder)
+            self.assertEqual((len(rows), len(surveys)), (5, 1))
+            self.assertEqual(rows[0]["_file"], "MLI-2022-SMART-01.csv")
+
+    def test_missing_folder_or_column_fails(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder = Path(tmp)
+            with self.assertRaises(br.SourceError):
+                br.read_reports(folder / "nope")
+            self.write(folder, "X.csv", results_csv(filler(2)).replace("Indicator code", "Code"))
+            with self.assertRaises(br.SourceError):
+                br.read_reports(folder)
+
+    def test_file_named_after_another_report_is_listed(self):
+        rows = result_rows(results_csv(filler(2)))
+        for row in rows:
+            row["_file"] = "NER-2025-SMART-01.csv"
+        warnings = []
+        br.check_report_files(rows, warnings)
+        self.assertTrue(any("named after its Assessment ID" in w for w in warnings))
+
+
 class Outputs(unittest.TestCase):
-    def test_written_only_when_changed(self):
-        results, counts, warnings = br.build(results_csv(filler(br.MIN_SMART_VALUES)), surveys_csv(),
-                                             DHS_VALUES, DHS_SURVEYS, None, INDICATORS_CSV)
+    def setUp(self):
+        rows = filler(br.MIN_SMART_VALUES) + [
+            result_row("N1", area="Mali", level="National"),
+            result_row("N2", age="0-59 months", level="National"),          # other age group: not in the overview
+            result_row("IDP", pop="IDPs in displacement sites", typ="Rapid SMART", level="National")]
+        self.results, self.counts, self.warnings = build(rows)
+
+    def test_overview_and_country_files(self):
+        overview, countries = br.split_outputs(self.results)
+        self.assertEqual(list(countries), ["MLI"])
+        self.assertEqual(len(countries["MLI"]["values"]), len(self.results["values"]))   # every value
+        smart_national = [v for v in overview["values"] if v["source"] == "SMART"]
+        self.assertEqual({v["result_id"] for v in smart_national}, {"N1", "N2", "IDP"})   # national rows only
+        stunting = [c for c in overview["subnational"] if c["indicator"] == "STUNT"][0]
+        self.assertEqual(stunting["areas"], br.MIN_SMART_VALUES)                         # areas counted, not listed
+
+    def test_written_only_when_changed_and_stale_country_removed(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
-            self.assertTrue(br.write_outputs(results, counts, warnings, out))
-            self.assertFalse(br.write_outputs(results, counts, warnings, out))
-            data = json.loads((out / "results.json").read_text(encoding="utf-8"))
-            self.assertEqual(len(data["values"]), counts["smart_values"] + counts["dhs_values"])
+            (out / "countries").mkdir()
+            (out / "countries" / "OLD.json").write_text("{}", encoding="utf-8")
+            self.assertTrue(br.write_outputs(self.results, self.counts, self.warnings, out))
+            self.assertFalse(br.write_outputs(self.results, self.counts, self.warnings, out))
+            self.assertFalse((out / "countries" / "OLD.json").exists())
+            overview = json.loads((out / "overview.json").read_text(encoding="utf-8"))
+            self.assertIn("subnational", overview)
+            self.assertTrue((out / "countries" / "MLI.json").exists())
 
 
 if __name__ == "__main__":
@@ -331,7 +412,7 @@ class HnrpSheet(unittest.TestCase):
     def test_unreadable_sheet_keeps_the_previous_list(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp)
-            (out / "results.json").write_text('{"hnrp": {"2026": {"MLI": "Mali"}}}', encoding="utf-8")
+            (out / "overview.json").write_text('{"hnrp": {"2026": {"MLI": "Mali"}}}', encoding="utf-8")
             warnings = []
             self.assertEqual(br.read_hnrp(str(out / "missing.csv"), warnings, out), {"2026": {"MLI": "Mali"}})
             self.assertEqual(len(warnings), 1)
