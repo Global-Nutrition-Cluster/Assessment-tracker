@@ -13,7 +13,7 @@ import { createControls } from './controls.js';
 import { createResultsKpis } from './kpis.js';
 import { escapeHtml } from '../format.js';
 
-const app = { data: null, state: null, surveysById: null, indicators: null, countries: new Map(),
+const app = { data: null, state: null, surveysById: null, indicators: null, countries: new Map(), scrollToProfile: false,
   updateControls: null, updateKpis: null, updateMap: null, updateRanked: null, updateProfile: null };
 
 async function start() {
@@ -69,8 +69,16 @@ function setState(next) {
   render();
 }
 
+// The page scrolls to the profile once it is drawn with its results, not while it is still loading: the short
+// "Loading…" profile would stop the scroll at the bottom of the page, showing only the country name.
 function openCountry(country) {
+  app.scrollToProfile = true;
   setState({ ...app.state, country });
+}
+
+function scrollToProfileOnce() {
+  if (!app.scrollToProfile) return;
+  app.scrollToProfile = false;
   document.getElementById('profile').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
@@ -103,14 +111,17 @@ function renderProfile() {
   const { data, indicators } = app;
   if (!iso3 || !data.surveys.some((s) => s.iso3 === iso3)) {
     app.updateProfile(iso3, { ...data, values: [] }, indicators);   // closed, or "No survey results" for this country
+    if (iso3) scrollToProfileOnce();
     return;
   }
   const entry = app.countries.get(iso3);
   if (entry?.values) {
     app.updateProfile(iso3, { ...data, values: entry.values }, indicators);
+    scrollToProfileOnce();
     return;
   }
   app.updateProfile(iso3, data, indicators, entry?.failed ? 'error' : 'loading');
+  if (entry?.failed) scrollToProfileOnce();   // show the message
   if (entry) return;   // already loading, or failed (the message asks to reload the page)
   const loading = {};
   app.countries.set(iso3, loading);
