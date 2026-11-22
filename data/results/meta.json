@@ -1,11 +1,11 @@
 {
- "updated_at": "2026-11-22T13:25:50+00:00",
+ "updated_at": "2026-11-22T14:29:25+00:00",
  "counts": {
-  "smart_surveys": 8,
-  "smart_values": 1816,
+  "smart_surveys": 11,
+  "smart_values": 2202,
   "dhs_surveys": 25,
   "dhs_values": 1258,
-  "countries": 30
+  "countries": 31
  },
  "warnings": [
   "AFG-2022-SMART-01-R051: no value; row left out.",
@@ -31,6 +31,9 @@
   "NER-2025-SMART-01-R654: automatic check 'Moderate + severe = 23.2, total = 22.0' (value kept).",
   "NER-2025-SMART-01-R655: automatic check 'Moderate + severe = 23.2, total = 22.0' (value kept).",
   "NER-2025-SMART-01-R656: automatic check 'Moderate + severe = 23.2, total = 22.0' (value kept).",
-  "NER-2025-SMART-01: Assessment ID not found in the planning tracker."
+  "MLI-2024-SMART-01: Assessment ID not found in the planning tracker.",
+  "NER-2025-SMART-01: Assessment ID not found in the planning tracker.",
+  "NGA-2025-SMART-01: Assessment ID not found in the planning tracker.",
+  "PSE-2026-SMART-01: Assessment ID not found in the planning tracker."
  ]
 }
