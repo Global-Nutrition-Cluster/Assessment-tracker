@@ -3,9 +3,9 @@
 //
 // Layout, from the first Mali and Niger mockups (CLAUDE.md 11.4.8):
 //   1. title, Copy link, Close (no "older than 3 years" banner since 13 Nov 2026: the age shows on the map legend only)
-//   2. survey cards side by side: SMART, then DHS or "No recent survey", with their metadata
+//   2. survey cards side by side: SMART, then the most recent DHS (and MICS later), with their metadata
 //      (title, lead, data collection period, coverage, other population groups, report link); one row of
-//      cards is shown (3 SMART + DHS), the others behind "Show all N surveys" (owner's decision, 22 Nov 2026)
+//      4 cards is shown (SMART fill the places DHS and MICS leave), the others behind "Show all N surveys" (22 Nov 2026)
 //   3. "SMART results from" selector when the country has several SMART surveys: one survey, all the surveys
 //      of the most recent year (default when there are several that year: district surveys are combined in one
 //      chart), or all SMART surveys (one block each); default otherwise: the most recent survey
@@ -30,7 +30,10 @@ const TABS = [
 ];
 const GENERAL = 'General population';
 const LEVEL_ORDER = { National: 0, 'Admin 1': 1, 'Admin 2': 2, Stratum: 2 };
-const SURVEYS_SHOWN = 3;   // SMART cards shown (with the DHS card: one row of four on a desktop) before "Show all N surveys"
+const ROW_CARDS = 4;       // survey cards in the folded row (one row on a desktop) before "Show all N surveys"
+// Sources other than SMART: one card each, the most recent survey only (DHS: owner's decision, 22 Nov 2026;
+// MICS: rule to confirm when MICS data exist; nothing is shown before that)
+const OTHER_SOURCES = ['DHS', 'MICS'];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // --- small formatting helpers ------------------------------------------------------------
@@ -165,7 +168,7 @@ export function createProfile(root, { onClose }) {
     root.innerHTML = `
       ${headerHtml(iso3, name, subtitle(surveys, values))}
       <h3 class="pf-h">Surveys</h3>
-      ${surveyList(name, surveys, values, shown, ui.allSurveys)}
+      ${surveyList(surveys, values, shown, ui.allSurveys)}
       ${surveyPicker(choices, ui.survey)}
       ${tabs.length ? `
         <div class="pf-tabs" role="tablist" aria-label="Indicator groups">
@@ -220,35 +223,36 @@ function reportLink(url, label = 'Report') {
 
 /**
  * Survey cards (owner's decision, 22 Nov 2026): cards side by side, as at first, so they take little height; each card
- * keeps all the survey's metadata. Folded, one row of cards is shown: the SURVEYS_SHOWN most recent SMART surveys
- * and the DHS card (or "No recent survey"), so a DHS is always visible; the other SMART surveys come with
- * "Show all N surveys". The cards of the SMART surveys whose results are shown below carry "Shown below".
+ * keeps all the survey's metadata. Folded, one row of ROW_CARDS cards is shown: one card per other source with
+ * data (most recent DHS, MICS later), always visible, and the most recent SMART surveys in the places left
+ * (4 SMART when the country has no DHS and no MICS); the other SMART surveys come with "Show all N surveys".
+ * The cards of the SMART surveys whose results are shown below carry "Shown below".
  */
-function surveyList(countryName, surveys, values, shown, unfolded) {
+function surveyList(surveys, values, shown, unfolded) {
   const shownIds = new Set(shown.map((s) => s.id));
-  const smart = surveys.filter((s) => s.source === 'SMART').map((s) => smartRow(s, values, shownIds.has(s.id)));
-  const dhs = surveys.filter((s) => s.source === 'DHS').map(dhsRow);
-  if (!dhs.length) {
-    dhs.push(`
-      <li class="pf-card pf-srv pf-card-empty">
-        <div class="pf-srv-main">
-          <div class="pf-card-top">${badge('DHS')}<strong>No recent survey</strong></div>
-          <p class="mute">No standard DHS published for ${esc(countryName)} from 2020 onwards.</p>
-        </div>
-      </li>`);
-  }
-  const total = smart.length + dhs.length;
-  const folded = smart.length > SURVEYS_SHOWN;
-  const visible = folded && !unfolded ? [...smart.slice(0, SURVEYS_SHOWN), ...dhs] : [...smart, ...dhs];
+  const others = latestOthers(surveys).map(otherRow);
+  const smartSlots = ROW_CARDS - others.length;
+  // small screens, folded: two cards, the other sources keeping their place, but always the most recent SMART
+  const narrowSlots = Math.max(2 - others.length, 1);
+  const smart = surveys.filter((s) => s.source === 'SMART')
+    .map((s, i) => smartRow(s, values, shownIds.has(s.id), i >= narrowSlots));
+  const total = smart.length + others.length;
+  const folded = smart.length > smartSlots;
+  const visible = folded && !unfolded ? [...smart.slice(0, smartSlots), ...others] : [...smart, ...others];
   const toggle = folded ? `
     <button type="button" class="btn btn-small pf-srv-toggle" id="pf-surveys-toggle" aria-expanded="${unfolded}" aria-controls="pf-surveys">
       ${unfolded ? 'Show fewer surveys' : `Show all ${total} surveys`}
     </button>` : '';
-  // small screens: the folded list shows its first two cards only (CSS .is-folded)
+  // small screens: the folded list hides the SMART cards marked pf-srv-wide (CSS .is-folded)
   return `<ul class="pf-surveys${folded && !unfolded ? ' is-folded' : ''}" id="pf-surveys">${visible.join('')}</ul>${toggle}`;
 }
 
-function smartRow(s, values, isShown) {
+/** The most recent survey of each source other than SMART (surveys are sorted most recent first). */
+function latestOthers(surveys) {
+  return OTHER_SOURCES.map((src) => surveys.find((s) => s.source === src)).filter(Boolean);
+}
+
+function smartRow(s, values, isShown, wideOnly) {
   const period = formatPeriod(s.start_date, s.end_date);
   const own = values.filter((v) => v.survey === s.id);
   const others = populations(own).filter((p) => p !== GENERAL).map((p) => {
@@ -258,7 +262,7 @@ function smartRow(s, values, isShown) {
     return `${esc(p)}${isRapid(group) ? ' (Rapid SMART component)' : ''}${where ? `: ${esc(where)}` : ''}`;
   });
   return `
-    <li class="pf-card pf-srv${isShown ? ' is-shown' : ''}">
+    <li class="pf-card pf-srv${isShown ? ' is-shown' : ''}${wideOnly ? ' pf-srv-wide' : ''}">
       <div class="pf-srv-main">
         <div class="pf-card-top">${badge('SMART')}<strong>${s.survey_year ?? ''}</strong>${isShown ? '<span class="pf-tag pf-shown">Shown below</span>' : ''}</div>
         <h4>${esc(s.title || s.id)}</h4>
@@ -270,18 +274,26 @@ function smartRow(s, values, isShown) {
     </li>`;
 }
 
-function dhsRow(s) {
+// Text of the cards of the other sources (MICS to complete when MICS data exist)
+const OTHER_CARD = {
+  DHS: { coverage: 'National only · 0–59 months for child indicators', link: 'DHS Program survey page' },
+  MICS: { coverage: '', link: 'MICS survey page' },
+};
+
+/** Card of a DHS (later MICS) survey. */
+function otherRow(s) {
+  const card = OTHER_CARD[s.source] ?? { coverage: '', link: 'Survey page' };
   const released = s.release_date ? `Released ${formatDay(s.release_date)}` : '';
   const retrieved = s.retrieval_date ? `retrieved ${formatDay(s.retrieval_date)}` : '';
   return `
     <li class="pf-card pf-srv">
       <div class="pf-srv-main">
-        <div class="pf-card-top">${badge('DHS')}<strong>${s.survey_year ?? ''}</strong><span class="pf-tag">${esc(s.id)}</span></div>
+        <div class="pf-card-top">${badge(s.source)}<strong>${s.survey_year ?? ''}</strong><span class="pf-tag">${esc(s.id)}</span></div>
         <h4>${esc(s.title || s.id)}</h4>
         ${s.lead_org ? `<p>${esc(s.lead_org)}</p>` : ''}
-        <p class="mute">${[released, retrieved, 'National only · 0–59 months for child indicators'].filter(Boolean).join(' · ')}</p>
+        <p class="mute">${[released, retrieved, card.coverage].filter(Boolean).join(' · ')}</p>
       </div>
-      <div class="pf-card-foot">${reportLink(s.report_url, 'DHS Program survey page')}<span class="rev">As published</span></div>
+      <div class="pf-card-foot">${reportLink(s.report_url, card.link)}<span class="rev">As published</span></div>
     </li>`;
 }
 
@@ -363,7 +375,7 @@ function tabPanel(tab, shown, combine, surveys, values, indicators) {
     }
   }
 
-  for (const s of surveys.filter((x) => x.source === 'DHS')) {
+  for (const s of latestOthers(surveys).filter((x) => x.source === 'DHS')) {   // most recent DHS only
     const dhs = values.filter((v) => v.survey === s.id && inTab(v) && indicators.get(v.indicator)?.selector);
     if (dhs.length) blocks.push(dhsBlock(s, dhs, indicators, surveys));
   }
