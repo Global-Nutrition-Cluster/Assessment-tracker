@@ -210,4 +210,4 @@ body { background: var(--soft-page); }
 }
 .hnrp-switch[aria-checked="true"] .switch-track { background: #4E8A2A; }
 .hnrp-switch[aria-checked="true"] .switch-thumb { transform: translateX(16px); }
-.legend .swatch-outside { box-shadow: inset 0 0 0 1px #DADDD8; }
+.legend .swatch-outside { box-shadow: inset 0 0 0 1px #C9CEC6; }   /* same grey border as on the map */

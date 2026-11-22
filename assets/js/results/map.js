@@ -41,8 +41,12 @@ export async function createResultsMap(root, { onCountry }) {
   const COLORS = {
     noSurvey: '#E8EAE6', noData: '#C2C6C0', border: '#FFFFFF', hover: token('--text'),
     data: token('--gnc-green'),   // indicators without phases: one colour where there is a national figure
-    outside: '#F4F5F3',           // HNRP switch on: countries outside the HNRP list, almost white
+    // HNRP switch on: countries outside the HNRP list in white with a grey border, so they stay visible as land
+    // (a near-white fill with white borders melted into the sea, #F4F8FA)
+    outside: '#FFFFFF', outsideBorder: '#C9CEC6',
   };
+  const isOutside = (iso3) => Boolean(view?.hnrp && !view.hnrp.has(iso3));
+  const borderOf = (iso3) => (isOutside(iso3) ? COLORS.outsideBorder : COLORS.border);
 
   const info = root.querySelector('.map-info');
   const geo = await fetch('geo/countries.geojson', { cache: 'force-cache' }).then((r) => r.json());
@@ -65,7 +69,7 @@ export async function createResultsMap(root, { onCountry }) {
       });
       layer.on('mousemove', (event) => placeInfo(event.containerPoint));
       layer.on('mouseout', () => {
-        layer.setStyle({ weight: 0.8, color: COLORS.border });
+        layer.setStyle({ weight: 0.8, color: borderOf(feature.properties.iso3) });
         info.hidden = true;
       });
       layer.on('click', (event) => {
@@ -116,7 +120,7 @@ export async function createResultsMap(root, { onCountry }) {
     root.querySelector('.map-legend').innerHTML = legendHtml();
 
     countries.setStyle((feature) => ({
-      weight: 0.8, color: COLORS.border, fillOpacity: 1, fillColor: fill(view.figures.get(feature.properties.iso3), feature.properties.iso3),
+      weight: 0.8, color: borderOf(feature.properties.iso3), fillOpacity: 1, fillColor: fill(view.figures.get(feature.properties.iso3), feature.properties.iso3),
     }));
   };
 
@@ -152,7 +156,7 @@ export async function createResultsMap(root, { onCountry }) {
   }
 
   function fill(figure, iso3) {
-    if (view.hnrp && !view.hnrp.has(iso3)) return COLORS.outside;   // HNRP switch on, not an HNRP country
+    if (isOutside(iso3)) return COLORS.outside;   // HNRP switch on, not an HNRP country
     if (!figure || figure.noSurvey) return COLORS.noSurvey;
     if (figure.main) {
       const colour = colourOf(figure.main);
