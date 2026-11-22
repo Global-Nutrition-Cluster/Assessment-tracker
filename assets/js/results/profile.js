@@ -3,9 +3,9 @@
 //
 // Layout, from the first Mali and Niger mockups (CLAUDE.md 11.4.8):
 //   1. title, Copy link, Close (no "older than 3 years" banner since 13 Nov 2026: the age shows on the map legend only)
-//   2. survey list: one row per survey (SMART, then DHS or "No recent survey") with its metadata
-//      (title, lead, data collection period, coverage, other population groups, report link);
-//      the first 3 rows are shown, the others behind "Show all N surveys" (owner's decision, 22 Nov 2026)
+//   2. survey cards side by side: SMART, then DHS or "No recent survey", with their metadata
+//      (title, lead, data collection period, coverage, other population groups, report link); one row of
+//      cards is shown (3 SMART + DHS), the others behind "Show all N surveys" (owner's decision, 22 Nov 2026)
 //   3. "SMART results from" selector when the country has several SMART surveys: one survey, all the surveys
 //      of the most recent year (default when there are several that year: district surveys are combined in one
 //      chart), or all SMART surveys (one block each); default otherwise: the most recent survey
@@ -30,7 +30,7 @@ const TABS = [
 ];
 const GENERAL = 'General population';
 const LEVEL_ORDER = { National: 0, 'Admin 1': 1, 'Admin 2': 2, Stratum: 2 };
-const SURVEYS_SHOWN = 3;   // survey rows shown before "Show all N surveys"
+const SURVEYS_SHOWN = 3;   // SMART cards shown (with the DHS card: one row of four on a desktop) before "Show all N surveys"
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // --- small formatting helpers ------------------------------------------------------------
@@ -219,19 +219,17 @@ function reportLink(url, label = 'Report') {
 }
 
 /**
- * Survey list (owner's decision, 22 Nov 2026): one row per survey with all its metadata, instead of a grid of
- * cards, so that a country with many surveys stays readable. The first SURVEYS_SHOWN rows are shown; the others
- * come with "Show all N surveys". The rows of the SMART surveys whose results are shown below carry "Shown below".
+ * Survey cards (owner's decision, 22 Nov 2026): cards side by side, as at first, so they take little height; each card
+ * keeps all the survey's metadata. Folded, one row of cards is shown: the SURVEYS_SHOWN most recent SMART surveys
+ * and the DHS card (or "No recent survey"), so a DHS is always visible; the other SMART surveys come with
+ * "Show all N surveys". The cards of the SMART surveys whose results are shown below carry "Shown below".
  */
 function surveyList(countryName, surveys, values, shown, unfolded) {
   const shownIds = new Set(shown.map((s) => s.id));
-  // SMART first, then DHS (as the cards before), each most recent first
-  const rows = [
-    ...surveys.filter((s) => s.source === 'SMART').map((s) => smartRow(s, values, shownIds.has(s.id))),
-    ...surveys.filter((s) => s.source === 'DHS').map(dhsRow),
-  ];
-  if (!surveys.some((s) => s.source === 'DHS')) {
-    rows.push(`
+  const smart = surveys.filter((s) => s.source === 'SMART').map((s) => smartRow(s, values, shownIds.has(s.id)));
+  const dhs = surveys.filter((s) => s.source === 'DHS').map(dhsRow);
+  if (!dhs.length) {
+    dhs.push(`
       <li class="pf-card pf-srv pf-card-empty">
         <div class="pf-srv-main">
           <div class="pf-card-top">${badge('DHS')}<strong>No recent survey</strong></div>
@@ -239,13 +237,15 @@ function surveyList(countryName, surveys, values, shown, unfolded) {
         </div>
       </li>`);
   }
-  const folded = rows.length > SURVEYS_SHOWN + 1;   // never fold a single row away
-  const visible = folded && !unfolded ? rows.slice(0, SURVEYS_SHOWN) : rows;
+  const total = smart.length + dhs.length;
+  const folded = smart.length > SURVEYS_SHOWN;
+  const visible = folded && !unfolded ? [...smart.slice(0, SURVEYS_SHOWN), ...dhs] : [...smart, ...dhs];
   const toggle = folded ? `
     <button type="button" class="btn btn-small pf-srv-toggle" id="pf-surveys-toggle" aria-expanded="${unfolded}" aria-controls="pf-surveys">
-      ${unfolded ? 'Show fewer surveys' : `Show all ${rows.length} surveys`}
+      ${unfolded ? 'Show fewer surveys' : `Show all ${total} surveys`}
     </button>` : '';
-  return `<ul class="pf-surveys" id="pf-surveys">${visible.join('')}</ul>${toggle}`;
+  // small screens: the folded list shows its first two cards only (CSS .is-folded)
+  return `<ul class="pf-surveys${folded && !unfolded ? ' is-folded' : ''}" id="pf-surveys">${visible.join('')}</ul>${toggle}`;
 }
 
 function smartRow(s, values, isShown) {
