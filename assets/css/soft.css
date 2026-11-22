@@ -11,16 +11,20 @@
   --soft-row-group: #ECEEEA;   /* summary row of a country with several surveys */
   --soft-radius: 22px;         /* white blocks */
   --soft-radius-small: 12px;   /* rows, map, tooltip */
+  /* Selected tab or toggle option (owner's choice, 18 Nov 2026): GNC green with dark text, not bold.
+     White text on this green would fail WCAG AA (1.9:1); dark text gives about 10:1. */
+  --selected-bg: var(--gnc-green);
+  --selected-text: #1F2421;
 }
 
 body { background: var(--soft-page); }
 
-/* Header on the page background; tabs as a white pill with the active tab in black */
+/* Header on the page background; tabs as a white pill with the active tab in GNC green */
 .site-header { border-bottom: 0; }
 .brand-divider { background: #D3D7D1; }
 .site-nav { background: #FFFFFF; border-radius: 999px; padding: 5px; gap: 2px; }
 .site-nav a { padding: 7px 18px; border-radius: 999px; font-size: 15px; }
-.site-nav a[aria-current="page"] { border-bottom: 0; background: var(--text); color: #FFFFFF; font-weight: 600; }
+.site-nav a[aria-current="page"] { border-bottom: 0; background: var(--selected-bg); color: var(--selected-text); font-weight: 400; }
 .site-nav a:not([aria-current]):hover { background: var(--soft-page); }
 
 /* KPI tiles and cards: white, rounded, no border */
@@ -91,7 +95,7 @@ body { background: var(--soft-page); }
 
 /* ======================= Results page (results.html loads this file after results.css) ======================= */
 
-/* Indicator selector: a white rounded field, no border; Source toggle: a white pill, active option black */
+/* Indicator selector: a white rounded field, no border; Source toggle: a white pill, active option GNC green */
 .res-controls .sel { border: 0; border-radius: 999px; background-color: #FFFFFF; padding-left: 16px; height: 38px; }
 /* The indicator selector stands out (owner's choice, 13 Nov 2026): light GNC green with a GNC green outline
    (the one outline of the soft look); the definitions beside it in smaller italics */
@@ -101,7 +105,7 @@ body { background: var(--soft-page); }
 .segmented { border: 0; border-radius: 999px; background: #FFFFFF; padding: 4px; gap: 2px; overflow: visible; }
 .segmented button { border-radius: 999px; background: none; height: 30px; padding: 0 14px; }
 .segmented button + button { border-left: 0; }
-.segmented button[aria-pressed="true"] { background: var(--text); color: #FFFFFF; }
+.segmented button[aria-pressed="true"] { background: var(--selected-bg); color: var(--selected-text); }
 .res-controls .segmented button:disabled { background: none; color: var(--text-faint); }
 
 /* KPI tiles (read-only here); the tile of the source not shown is greyed, no dashed border */
@@ -109,7 +113,7 @@ body { background: var(--soft-page); }
 
 /* Badges: borderless pills. One colour per source (owner's choice, 13 Nov 2026), away from the status,
    IPC and blue phase colours: SMART violet, DHS raspberry (MICS later); "ALL" stays grey.
-   Not used on the Source toggle, which keeps black and white. */
+   Not used on the Source toggle (white pill, selected option GNC green). */
 .src { border: 0; border-radius: 999px; padding: 0 7px; background: #E9ECE7; color: #2F3531; }
 .src-smart, .src-rapid { background: #E9E2F6; color: #47307D; }   /* Rapid SMART: same family as SMART */
 .src-dhs { background: #F7E0EC; color: #7A1F55; }
@@ -136,10 +140,10 @@ body { background: var(--soft-page); }
 .is-national .pf-level { background: var(--soft-row); }
 .dp-dot.dp-neutral { background: var(--gnc-green); }   /* indicators without phases: same green as the map */
 
-/* Tabs of the indicator groups: pills, active one black */
+/* Tabs of the indicator groups: pills, active one GNC green */
 .pf-tabs { border-bottom: 0; gap: 6px; }
 .pf-tabs button { border: 0; border-radius: 999px; padding: 6px 14px; background: var(--soft-row); }
-.pf-tabs button[aria-selected="true"] { background: var(--text); color: #FFFFFF; font-weight: 600; }
+.pf-tabs button[aria-selected="true"] { background: var(--selected-bg); color: var(--selected-text); font-weight: 400; }
 @media (max-width: 899px) {
   .pf-plot-toggle button { border-bottom: 0; margin-bottom: 0; }
 }
