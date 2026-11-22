@@ -4,6 +4,10 @@ on:
   schedule:
     - cron: "17 2 * * *"   # every night at 02:17 UTC
   workflow_dispatch:        # "Run workflow" button in the Actions tab
+  push:                     # a SMART report pushed or replaced in data/results/reports/ (CLAUDE.md 11.1):
+    branches: [main]        # the Results files are rebuilt at once, without waiting for the night
+    paths:
+      - "data/results/reports/**"
 
 permissions:
   contents: write
@@ -31,27 +35,30 @@ jobs:
           PLANNING_SETTINGS_CSV_URL: ${{ vars.PLANNING_SETTINGS_CSV_URL }}
         run: python scripts/build_data.py
 
-      # Results page (CLAUDE.md 11.1). If the SMART results sheets cannot be read, the planning
-      # data above is still committed, the old results files are kept, and the run is marked failed.
-      - name: Build results (SMART sheets + data/dhs)
+      # Results page (CLAUDE.md 11.1): SMART report files of data/results/reports + data/dhs + indicator sheet.
+      # If a source cannot be read, the planning data above is still committed, the old results files
+      # are kept, and the run is marked failed.
+      - name: Build results (data/results/reports + data/dhs)
         id: results
         continue-on-error: true
         env:
-          SMART_RESULTS_CSV_URL: ${{ vars.SMART_RESULTS_CSV_URL }}
-          SMART_SURVEYS_CSV_URL: ${{ vars.SMART_SURVEYS_CSV_URL }}
           RESULTS_INDICATORS_CSV_URL: ${{ vars.RESULTS_INDICATORS_CSV_URL }}
           HNRP_COUNTRIES_CSV_URL: ${{ vars.HNRP_COUNTRIES_CSV_URL }}
         run: python scripts/build_results.py
 
       - name: Commit if the data changed
         run: |
-          git add data/*.json
+          git add data/*.json data/results/overview.json data/results/meta.json data/results/countries
           if git diff --cached --quiet; then
             echo "No change in the data."
           else
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git commit -m "data: refresh from Google Sheet"
+            if [ "${{ github.event_name }}" = "push" ]; then
+              git commit -m "data: rebuild results from data/results/reports"
+            else
+              git commit -m "data: refresh from Google Sheet"
+            fi
             git pull --rebase
             git push
           fi

@@ -3,7 +3,7 @@
 // Values equal to the defaults are left out of the URL to keep links short.
 
 export const DEFAULTS = Object.freeze({
-  indicator: 'GAM_WHZ',   // an indicator key of data/results.json
+  indicator: 'GAM_WHZ',   // an indicator key of data/results/overview.json
   source: 'all',          // 'all' | 'smart' | 'dhs'
   country: null,          // ISO3 of the open country profile, or null
   hnrp: false,            // HNRP switch: only the HNRP countries of the current year

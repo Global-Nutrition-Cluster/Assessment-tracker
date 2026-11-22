@@ -1,4 +1,6 @@
-// Results page: loading data/results.json and small helpers shared by the blocks.
+// Results page: loading the data files and small helpers shared by the blocks.
+// data/results/overview.json is loaded with the page (map, list, KPI tiles); data/results/countries/<ISO3>.json
+// only when a country profile opens (owner's decision, 22 Nov 2026: the page stays light as reports pile up).
 // The data rules are in CLAUDE.md section 11.3 and scripts/build_results.py.
 
 export const SOURCES = [
@@ -9,10 +11,15 @@ export const SOURCES = [
 
 export async function loadResults() {
   const [results, meta] = await Promise.all([
-    fetchJson('data/results.json'),
-    fetchJson('data/results_meta.json').catch(() => ({})), // the page still works without meta
+    fetchJson('data/results/overview.json'),
+    fetchJson('data/results/meta.json').catch(() => ({})), // the page still works without meta
   ]);
   return { ...results, meta };
+}
+
+/** Every value of one country (all surveys, areas, population and age groups), for its profile. */
+export function loadCountry(iso3) {
+  return fetchJson(`data/results/countries/${encodeURIComponent(iso3)}.json`);
 }
 
 async function fetchJson(path) {

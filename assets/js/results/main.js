@@ -1,8 +1,9 @@
-// Results page entry point: loads data/results.json and draws the blocks (CLAUDE.md section 11).
+// Results page entry point: loads data/results/overview.json and draws the blocks (CLAUDE.md section 11);
+// a country's own file (data/results/countries/<ISO3>.json) is loaded when its profile opens.
 // Blocks: HNRP switch, KPI tiles, indicator selector + Source toggle, map and "Latest results by country"
 // (same figures, figures.js). The country profile opens under them (profile.js).
 
-import { loadResults, selectorIndicators, indexSurveys } from './data.js';
+import { loadResults, loadCountry, selectorIndicators, indexSurveys } from './data.js';
 import { countryFigures } from './figures.js';
 import { createResultsMap } from './map.js';
 import { createRankedList } from './ranked.js';
@@ -12,7 +13,7 @@ import { createControls } from './controls.js';
 import { createResultsKpis } from './kpis.js';
 import { escapeHtml } from '../format.js';
 
-const app = { data: null, state: null, surveysById: null, indicators: null,
+const app = { data: null, state: null, surveysById: null, indicators: null, countries: new Map(),
   updateControls: null, updateKpis: null, updateMap: null, updateRanked: null, updateProfile: null };
 
 async function start() {
@@ -92,11 +93,35 @@ function render() {
   app.updateKpis(shown);   // totals of the countries shown: all, or the HNRP countries; not the indicator or the source
   app.updateMap?.({ figures, indicator, source: state.source, countryNames, hnrp: hnrp && new Set(hnrp.keys()) });
   app.updateRanked({ figures, indicator, countryNames });
-  app.updateProfile(state.country, data, app.indicators);
+  renderProfile();
+}
+
+// --- country profile: its values come from data/results/countries/<ISO3>.json, loaded once per visit ---------
+
+function renderProfile() {
+  const iso3 = app.state.country;
+  const { data, indicators } = app;
+  if (!iso3 || !data.surveys.some((s) => s.iso3 === iso3)) {
+    app.updateProfile(iso3, { ...data, values: [] }, indicators);   // closed, or "No survey results" for this country
+    return;
+  }
+  const entry = app.countries.get(iso3);
+  if (entry?.values) {
+    app.updateProfile(iso3, { ...data, values: entry.values }, indicators);
+    return;
+  }
+  app.updateProfile(iso3, data, indicators, entry?.failed ? 'error' : 'loading');
+  if (entry) return;   // already loading, or failed (the message asks to reload the page)
+  const loading = {};
+  app.countries.set(iso3, loading);
+  loadCountry(iso3)
+    .then((file) => { loading.values = file.values; })
+    .catch((error) => { console.error(error); loading.failed = true; })
+    .finally(() => { if (app.state.country === iso3) renderProfile(); });
 }
 
 // --- HNRP switch -------------------------------------------------------------------------------
-// The list comes from the HNRP sheet (results.json "hnrp": { year: { ISO3: name } }). The page picks the
+// The list comes from the HNRP sheet (overview.json "hnrp": { year: { ISO3: name } }). The page picks the
 // current calendar year itself, so it switches to the new year on 1 January (owner's decision, Nov 2026).
 
 const CURRENT_YEAR = String(new Date().getFullYear());
@@ -110,6 +135,7 @@ function onlyCountries(data, countries) {
     ...data,
     surveys: data.surveys.filter((s) => countries.has(s.iso3)),
     values: data.values.filter((v) => countries.has(v.iso3)),
+    subnational: data.subnational.filter((c) => countries.has(c.iso3)),
   };
 }
 

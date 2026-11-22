@@ -1,0 +1,29 @@
+{
+"iso3": "PHL",
+"values": [
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CMR","value":5.0,"ci_lower":3.0,"ci_upper":6.0},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"IMR","value":22.0,"ci_lower":17.0,"ci_upper":26.0},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CM_ECMT_C_U5M","value":26.0,"ci_lower":21.0,"ci_upper":31.0},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"DHS_ARI","value":0.6,"sample":8296},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"DHS_DIAR","value":5.9,"sample":8296},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"DHS_FEVER","value":11.2,"sample":8296},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_3PA","value":37.3,"sample":2228},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_3PN","value":38.0,"sample":786},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"MDD","value":47.2,"sample":2228},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_4FB","value":50.2,"sample":1442},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_4FN","value":42.1,"sample":786},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_BTB","value":36.9,"sample":1442},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_MKA","value":96.1,"sample":2228},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_MKN","value":89.3,"sample":786},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"MMF","value":73.7,"sample":2228},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_MNB","value":67.0,"sample":1442},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_MNN","value":85.2,"sample":786},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_NMA","value":2061.0,"sample":2228},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_NMB","value":1299.0,"sample":1442},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_NMN","value":762.0,"sample":786},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_UNA","value":2228.0},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_UNB","value":1442.0},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"CN_IYCF_C_UNN","value":786.0},
+  {"survey":"PH2022DHS","source":"DHS","type":"DHS","iso3":"PHL","area":"Philippines","area_level":"National","population":"General population","indicator":"U5MR","value":26.0,"ci_lower":21.0,"ci_upper":31.0}
+]
+}

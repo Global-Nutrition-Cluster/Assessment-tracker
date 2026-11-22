@@ -1,0 +1,36 @@
+{
+ "updated_at": "2026-11-22T13:25:50+00:00",
+ "counts": {
+  "smart_surveys": 8,
+  "smart_values": 1816,
+  "dhs_surveys": 25,
+  "dhs_values": 1258,
+  "countries": 30
+ },
+ "warnings": [
+  "AFG-2022-SMART-01-R051: no value; row left out.",
+  "AFG-2022-SMART-01-R052: no value; row left out.",
+  "AFG-2022-SMART-01-R087: automatic check 'Value outside its CI' (value kept).",
+  "AFG-2022-SMART-01-R121: no value; row left out.",
+  "AFG-2022-SMART-01-R122: no value; row left out.",
+  "AFG-2022-SMART-01-R203: automatic check 'Value outside its CI' (value kept).",
+  "AFG-2022-SMART-01-R361: automatic check 'Value outside its CI' (value kept).",
+  "AFG-2022-SMART-01-R362: automatic check 'Value outside its CI' (value kept).",
+  "AFG-2022-SMART-01-R363: no value; row left out.",
+  "AFG-2022-SMART-01-R364: no value; row left out.",
+  "NER-2021-SMART-01-R249: no value; row left out.",
+  "NER-2021-SMART-01-R357: no value; row left out.",
+  "NER-2025-SMART-01-R291: automatic check 'Combined morbidity below FEVER (79.6)' (value kept).",
+  "NER-2025-SMART-01-R312: automatic check 'Combined morbidity below FEVER (58.5)' (value kept).",
+  "NER-2025-SMART-01-R354: automatic check 'Combined morbidity below ARI (60.6)' (value kept).",
+  "NER-2025-SMART-01-R375: automatic check 'Combined morbidity below FEVER (48.5)' (value kept).",
+  "NER-2025-SMART-01-R436: automatic check 'Combined morbidity below ARI (49.0)' (value kept).",
+  "NER-2025-SMART-01-R457: automatic check 'Combined morbidity below ARI (27.5)' (value kept).",
+  "NER-2025-SMART-01-R539: automatic check 'Combined morbidity below ARI (66.6)' (value kept).",
+  "NER-2025-SMART-01-R581: automatic check 'Combined morbidity below ARI (64.1)' (value kept).",
+  "NER-2025-SMART-01-R654: automatic check 'Moderate + severe = 23.2, total = 22.0' (value kept).",
+  "NER-2025-SMART-01-R655: automatic check 'Moderate + severe = 23.2, total = 22.0' (value kept).",
+  "NER-2025-SMART-01-R656: automatic check 'Moderate + severe = 23.2, total = 22.0' (value kept).",
+  "NER-2025-SMART-01: Assessment ID not found in the planning tracker."
+ ]
+}
