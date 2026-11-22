@@ -193,10 +193,13 @@ function headerHtml(iso3, name, sub) {
         <p class="pf-sub">${esc(sub)}</p>
       </div>
       <div class="pf-actions">
-        <button type="button" class="btn btn-small" id="profile-copy">Copy link</button>
+        <button type="button" class="btn btn-small" id="profile-copy" aria-label="Copy link">
+          <svg width="14" height="14" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><path d="M6.5 9.5l3-3"></path><path d="M7 4.5l1.3-1.3a2.8 2.8 0 0 1 4 4L11 8.5"></path><path d="M9 11.5l-1.3 1.3a2.8 2.8 0 0 1-4-4L5 7.5"></path></svg>
+          <span class="btn-text">Copy link</span>
+        </button>
         <button type="button" class="btn btn-small" id="profile-close" aria-label="Close the ${esc(name)} profile">
           <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M1 1l10 10M11 1 1 11" stroke="currentColor" stroke-width="1.6"></path></svg>
-          Close
+          <span class="btn-text">Close</span>
         </button>
       </div>
     </div>`;
@@ -227,6 +230,8 @@ function reportLink(url, label = 'Report') {
  * data (most recent DHS, MICS later), always visible, and the most recent SMART surveys in the places left
  * (4 SMART when the country has no DHS and no MICS); the other SMART surveys come with "Show all N surveys".
  * The cards of the SMART surveys whose results are shown below carry "Shown below".
+ * Every card is always in the page; the folding is done in CSS (.is-folded), so that phones (< 640 px) show all
+ * the cards in one row swiped sideways, with no "Show all" button (owner's decision, 22 Nov 2026).
  */
 function surveyList(surveys, values, shown, unfolded) {
   const shownIds = new Set(shown.map((s) => s.id));
@@ -234,17 +239,17 @@ function surveyList(surveys, values, shown, unfolded) {
   const smartSlots = ROW_CARDS - others.length;
   // small screens, folded: two cards, the other sources keeping their place, but always the most recent SMART
   const narrowSlots = Math.max(2 - others.length, 1);
-  const smart = surveys.filter((s) => s.source === 'SMART')
-    .map((s, i) => smartRow(s, values, shownIds.has(s.id), i >= narrowSlots));
+  const smart = surveys.filter((s) => s.source === 'SMART').map((s, i) => smartRow(s, values, shownIds.has(s.id),
+    // folded: pf-srv-more = hidden on wide screens, pf-srv-wide = hidden from 640 to 899 px too
+    [i >= smartSlots ? 'pf-srv-more' : '', i >= narrowSlots ? 'pf-srv-wide' : ''].filter(Boolean).join(' ')));
   const total = smart.length + others.length;
   const folded = smart.length > smartSlots;
-  const visible = folded && !unfolded ? [...smart.slice(0, smartSlots), ...others] : [...smart, ...others];
   const toggle = folded ? `
     <button type="button" class="btn btn-small pf-srv-toggle" id="pf-surveys-toggle" aria-expanded="${unfolded}" aria-controls="pf-surveys">
       ${unfolded ? 'Show fewer surveys' : `Show all ${total} surveys`}
     </button>` : '';
-  // small screens: the folded list hides the SMART cards marked pf-srv-wide (CSS .is-folded)
-  return `<ul class="pf-surveys${folded && !unfolded ? ' is-folded' : ''}" id="pf-surveys">${visible.join('')}</ul>${toggle}`;
+  // tabindex: the list scrolls sideways on phones, so it must be reachable with the keyboard
+  return `<ul class="pf-surveys${folded && !unfolded ? ' is-folded' : ''}" id="pf-surveys" tabindex="0" aria-label="Surveys">${[...smart, ...others].join('')}</ul>${toggle}`;
 }
 
 /** The most recent survey of each source other than SMART (surveys are sorted most recent first). */
@@ -252,7 +257,7 @@ function latestOthers(surveys) {
   return OTHER_SOURCES.map((src) => surveys.find((s) => s.source === src)).filter(Boolean);
 }
 
-function smartRow(s, values, isShown, wideOnly) {
+function smartRow(s, values, isShown, foldClass) {
   const period = formatPeriod(s.start_date, s.end_date);
   const own = values.filter((v) => v.survey === s.id);
   const others = populations(own).filter((p) => p !== GENERAL).map((p) => {
@@ -262,7 +267,7 @@ function smartRow(s, values, isShown, wideOnly) {
     return `${esc(p)}${isRapid(group) ? ' (Rapid SMART component)' : ''}${where ? `: ${esc(where)}` : ''}`;
   });
   return `
-    <li class="pf-card pf-srv${isShown ? ' is-shown' : ''}${wideOnly ? ' pf-srv-wide' : ''}">
+    <li class="pf-card pf-srv${isShown ? ' is-shown' : ''}${foldClass ? ` ${foldClass}` : ''}">
       <div class="pf-srv-main">
         <div class="pf-card-top">${badge('SMART')}<strong>${s.survey_year ?? ''}</strong>${isShown ? '<span class="pf-tag pf-shown">Shown below</span>' : ''}</div>
         <h4>${esc(s.title || s.id)}</h4>
@@ -641,9 +646,15 @@ async function copyLink(button) {
   const url = window.location.href;
   try {
     await navigator.clipboard.writeText(url);
-    button.textContent = 'Link copied';
+    setButtonText(button, 'Link copied');
   } catch {
     window.prompt('Copy this link:', url);   // older browsers / no clipboard permission
   }
-  setTimeout(() => { button.textContent = 'Copy link'; }, 2000);
+  setTimeout(() => setButtonText(button, 'Copy link'), 2000);
+}
+
+/** Copy link: the visible text (hidden on phones, where only the icon shows) and the accessible name. */
+function setButtonText(button, text) {
+  button.querySelector('.btn-text').textContent = text;
+  button.setAttribute('aria-label', text);
 }

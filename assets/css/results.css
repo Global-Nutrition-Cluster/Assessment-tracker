@@ -125,8 +125,26 @@
 .pf-srv-main { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 .pf-srv.is-shown { box-shadow: inset 4px 0 0 var(--gnc-green); }
 .pf-srv-toggle { align-self: flex-start; }
+.pf-surveys.is-folded > .pf-srv-more { display: none; }   /* folded: one row of 4 cards (profile.js surveyList) */
+
+/* Phones (< 640 px, owner's decision, 22 Nov 2026): every card in one row swiped sideways, no "Show all";
+   Copy link and Close as round icon buttons on the line of the flag and the name */
+@media (max-width: 639px) {
+  .pf-surveys { position: relative; display: flex; overflow-x: auto;   /* relative: keeps the hidden link texts inside */
+    scroll-snap-type: x mandatory; overscroll-behavior-x: contain;
+    margin: 0 -22px; padding: 2px 22px 8px; scroll-padding: 0 22px; }   /* to the edges of the profile card (22 px padding) */
+  .pf-surveys > li.pf-srv, .pf-surveys.is-folded > li.pf-srv { display: flex; flex: 0 0 82%; scroll-snap-align: start; }
+  .pf-srv-toggle { display: none; }
+  .pf-head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; column-gap: 12px; }
+  .pf-head > div:first-child { display: contents; }
+  .pf-head .lbl, .pf-head .pf-sub { grid-column: 1 / -1; }
+  .pf-head h2 { grid-column: 1; grid-row: 2; }
+  .pf-actions { grid-column: 2; grid-row: 2; }
+  .pf-actions .btn { width: 36px; height: 36px; padding: 0; justify-content: center; border-radius: 50%; }
+  .pf-actions .btn-text { display: none; }
+}
 @media (max-width: 899px) {
-  .pf-surveys.is-folded > .pf-srv-wide { display: none; }   /* folded: two cards on small screens, DHS kept */
+  .pf-surveys.is-folded > .pf-srv-wide { display: none; }   /* folded: two cards on tablets, DHS kept */
 }
 /* "SMART results from" (several SMART surveys) */
 .pf-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 14px; }
@@ -247,3 +265,11 @@
 /* KPI tiles: one row of four from 900 px, 2 × 2 below (the auto-fit grid of the Planning view gives 3 + 1 on tablets) */
 @media (min-width: 900px) { .res-kpis { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
 @media (max-width: 899px) { .res-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Phones: smaller block titles; the chart's indicator toggle wraps on several lines, so a rounded box, not a pill
+   (owner's request, 22 Nov 2026). After the rules above, which it overrides */
+@media (max-width: 639px) {
+  .pf-block-head h3 { font-size: 15px; }
+  .pf-plot-toggle.segmented { width: 100%; border-radius: 16px; }
+  .pf-plot-toggle button { flex: 0 1 auto; padding: 0 10px; }
+}
