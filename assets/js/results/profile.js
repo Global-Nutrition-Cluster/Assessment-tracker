@@ -3,12 +3,18 @@
 //
 // Layout, from the first Mali and Niger mockups (CLAUDE.md 11.4.8):
 //   1. title, Copy link, Close (no "older than 3 years" banner since 13 Nov 2026: the age shows on the map legend only)
-//   2. survey cards: one per SMART survey (+ its Rapid SMART component), DHS (or "No recent survey")
-//   3. indicator group tabs (Acute malnutrition, Mortality, Morbidity, Stunting, Underweight)
-//   4. per SMART survey: a dot plot of one indicator by area (national, admin 1 › admin 2, 95% CI),
-//      with a toggle between the indicators of the group, and every indicator of the group in a table
-//   5. Rapid SMART IDP sites in their own block; DHS national figures as tiles
-//   6. DHS "More indicators" (folded). No "Notes from the data" and no "Not directly comparable" note (removed, 13 Nov 2026)
+//   2. survey list: one row per survey (SMART, then DHS or "No recent survey") with its metadata
+//      (title, lead, data collection period, coverage, other population groups, report link);
+//      the first 3 rows are shown, the others behind "Show all N surveys" (owner's decision, 22 Nov 2026)
+//   3. "SMART results from" selector when the country has several SMART surveys: one survey, all the surveys
+//      of the most recent year (default when there are several that year: district surveys are combined in one
+//      chart), or all SMART surveys (one block each); default otherwise: the most recent survey
+//   4. indicator group tabs (Acute malnutrition, Mortality, Morbidity, Stunting, Underweight)
+//   5. per SMART survey and population group: a dot plot of one indicator by area (national, admin 1 › admin 2,
+//      95% CI), with a toggle between the indicators of the group, and every indicator of the group in a table
+//   6. every population group other than the general population (IDPs, refugees…) in its own block,
+//      titled with its own name; DHS national figures as tiles
+//   7. DHS "More indicators" (folded). No "Notes from the data" and no "Not directly comparable" note (removed, 13 Nov 2026)
 // Values are shown as published; every value carries the "As published" badge (rule 11.3.6).
 
 import { escapeHtml } from '../format.js';
@@ -24,6 +30,7 @@ const TABS = [
 ];
 const GENERAL = 'General population';
 const LEVEL_ORDER = { National: 0, 'Admin 1': 1, 'Admin 2': 2, Stratum: 2 };
+const SURVEYS_SHOWN = 3;   // survey rows shown before "Show all N surveys"
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 // --- small formatting helpers ------------------------------------------------------------
@@ -49,6 +56,24 @@ const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 const pill = phasePill;   // phase name, coloured like the map (rule 11.3.7)
 
+/** Most recent first: survey year, then end of data collection, then ID (stable order for surveys of the same year). */
+function bySurveyDate(a, b) {
+  return (b.survey_year ?? 0) - (a.survey_year ?? 0)
+    || (b.end_date || '').localeCompare(a.end_date || '')
+    || (a.id || '').localeCompare(b.id || '');
+}
+
+/** Population groups of some values, general population first, the others in order of appearance. */
+function populations(values) {
+  const list = [...new Set(values.map((v) => v.population || GENERAL))];
+  return [GENERAL, ...list.filter((p) => p !== GENERAL)].filter((p) => list.includes(p));
+}
+
+/** A population group surveyed by a Rapid SMART component of the survey (e.g. Mali 2022 IDP sites). */
+function isRapid(values) {
+  return values.length > 0 && values.every((v) => v.type === 'Rapid SMART');
+}
+
 // --- the profile ----------------------------------------------------------------------------
 
 /**
@@ -56,7 +81,9 @@ const pill = phasePill;   // phase name, coloured like the map (rule 11.3.7)
  * @param {{onClose: () => void}} handlers
  */
 export function createProfile(root, { onClose }) {
-  const ui = { tab: 'acute' };
+  // tab = indicator group; survey = SMART results shown: an ID, 'year:2025' or 'all' (null = the default, see shownSurveys);
+  // allSurveys = the survey list unfolded
+  const ui = { tab: 'acute', survey: null, allSurveys: false };
   let current = null; // { iso3, data, indicators }
 
   root.addEventListener('click', (event) => {
@@ -66,6 +93,17 @@ export function createProfile(root, { onClose }) {
     else if (target.id === 'profile-copy') copyLink(target);
     else if (target.dataset.tab) { ui.tab = target.dataset.tab; draw(); focusTab(); }
     else if (target.dataset.plot) { plotChoice.set(target.dataset.block, target.dataset.plot); draw(); }
+    else if (target.id === 'pf-surveys-toggle') {
+      ui.allSurveys = !ui.allSurveys;
+      draw();
+      root.querySelector('#pf-surveys-toggle')?.focus();
+    }
+  });
+  root.addEventListener('change', (event) => {
+    if (event.target.id !== 'pf-survey') return;
+    ui.survey = event.target.value;
+    draw();
+    root.querySelector('#pf-survey')?.focus();
   });
   // Arrow keys move between tabs (WAI-ARIA tabs pattern)
   root.addEventListener('keydown', (event) => {
@@ -88,7 +126,7 @@ export function createProfile(root, { onClose }) {
    */
   return function update(iso3, data, indicators) {
     if (!iso3) { root.hidden = true; root.innerHTML = ''; current = null; return; }
-    if (current?.iso3 !== iso3) { ui.tab = 'acute'; plotChoice.clear(); }
+    if (current?.iso3 !== iso3) { ui.tab = 'acute'; ui.survey = null; ui.allSurveys = false; plotChoice.clear(); }
     current = { iso3, data, indicators };
     root.hidden = false;
     draw();
@@ -97,8 +135,7 @@ export function createProfile(root, { onClose }) {
   function draw() {
     const { iso3, data, indicators } = current;
     const name = data.countries[iso3] || iso3;
-    const surveys = data.surveys.filter((s) => s.iso3 === iso3)
-      .sort((a, b) => (b.survey_year ?? 0) - (a.survey_year ?? 0));
+    const surveys = data.surveys.filter((s) => s.iso3 === iso3).sort(bySurveyDate);
     const values = data.values.filter((v) => v.iso3 === iso3);
 
     if (!surveys.length) {
@@ -110,17 +147,24 @@ export function createProfile(root, { onClose }) {
     if (!tabs.some((t) => t.key === ui.tab)) ui.tab = tabs[0]?.key;
     const tab = tabs.find((t) => t.key === ui.tab);
 
+    const smart = surveys.filter((s) => s.source === 'SMART');
+    const choices = surveyChoices(smart);
+    if (!choices.some((c) => c.value === ui.survey)) ui.survey = choices[0]?.value ?? null;
+    const shown = choices.find((c) => c.value === ui.survey)?.surveys ?? [];
+    const combine = ui.survey?.startsWith('year:') ?? false;
+
     root.innerHTML = `
       ${headerHtml(iso3, name, subtitle(surveys, values))}
       <h3 class="pf-h">Surveys</h3>
-      <div class="pf-cards">${surveyCards(name, surveys, values)}</div>
+      ${surveyList(name, surveys, values, shown, ui.allSurveys)}
+      ${surveyPicker(choices, ui.survey)}
       ${tabs.length ? `
         <div class="pf-tabs" role="tablist" aria-label="Indicator groups">
           ${tabs.map((t) => `<button type="button" role="tab" id="tab-${t.key}" data-tab="${t.key}" aria-controls="pf-panel"
             aria-selected="${t.key === ui.tab}" tabindex="${t.key === ui.tab ? 0 : -1}">${t.label}</button>`).join('')}
         </div>
         <div class="pf-panel" id="pf-panel" role="tabpanel" aria-labelledby="tab-${ui.tab}">
-          ${tabPanel(tab, surveys, values, indicators)}
+          ${tabPanel(tab, shown, combine, surveys, values, indicators)}
         </div>` : ''}
       ${moreIndicators(surveys, values, indicators)}`;
   }
@@ -153,7 +197,7 @@ function subtitle(surveys, values) {
   for (const [level, label] of [['Admin 1', 'admin 1'], ['Admin 2', 'admin 2'], ['Stratum', 'strata']]) {
     if (values.some((v) => v.area_level === level && v.population === GENERAL)) levels.push(label);
   }
-  if (values.some((v) => v.population && v.population !== GENERAL)) levels.push('IDP sites');
+  levels.push(...populations(values).filter((p) => p !== GENERAL));   // IDPs in displacement sites, refugees…
   return `${plural(surveys.length, 'survey')} from ${plural(sources.size, 'source')} · ${levels.join(', ') || 'no area'}`;
 }
 
@@ -165,78 +209,147 @@ function reportLink(url, label = 'Report') {
   return url ? `<a href="${esc(url)}" target="_blank" rel="noopener">${label}<span class="visually-hidden"> (opens in a new tab)</span></a>` : '';
 }
 
-function surveyCards(countryName, surveys, values) {
-  const cards = [];
-  for (const s of surveys.filter((x) => x.source === 'SMART')) {
-    const period = formatPeriod(s.start_date, s.end_date);
-    cards.push(`
-      <article class="pf-card">
-        <div class="pf-card-top">${badge('SMART')}<strong>${s.survey_year ?? ''}</strong></div>
+/**
+ * Survey list (owner's decision, 22 Nov 2026): one row per survey with all its metadata, instead of a grid of
+ * cards, so that a country with many surveys stays readable. The first SURVEYS_SHOWN rows are shown; the others
+ * come with "Show all N surveys". The rows of the SMART surveys whose results are shown below carry "Shown below".
+ */
+function surveyList(countryName, surveys, values, shown, unfolded) {
+  const shownIds = new Set(shown.map((s) => s.id));
+  // SMART first, then DHS (as the cards before), each most recent first
+  const rows = [
+    ...surveys.filter((s) => s.source === 'SMART').map((s) => smartRow(s, values, shownIds.has(s.id))),
+    ...surveys.filter((s) => s.source === 'DHS').map(dhsRow),
+  ];
+  if (!surveys.some((s) => s.source === 'DHS')) {
+    rows.push(`
+      <li class="pf-card pf-srv pf-card-empty">
+        <div class="pf-srv-main">
+          <div class="pf-card-top">${badge('DHS')}<strong>No recent survey</strong></div>
+          <p class="mute">No standard DHS published for ${esc(countryName)} from 2020 onwards.</p>
+        </div>
+      </li>`);
+  }
+  const folded = rows.length > SURVEYS_SHOWN + 1;   // never fold a single row away
+  const visible = folded && !unfolded ? rows.slice(0, SURVEYS_SHOWN) : rows;
+  const toggle = folded ? `
+    <button type="button" class="btn btn-small pf-srv-toggle" id="pf-surveys-toggle" aria-expanded="${unfolded}" aria-controls="pf-surveys">
+      ${unfolded ? 'Show fewer surveys' : `Show all ${rows.length} surveys`}
+    </button>` : '';
+  return `<ul class="pf-surveys" id="pf-surveys">${visible.join('')}</ul>${toggle}`;
+}
+
+function smartRow(s, values, isShown) {
+  const period = formatPeriod(s.start_date, s.end_date);
+  const own = values.filter((v) => v.survey === s.id);
+  const others = populations(own).filter((p) => p !== GENERAL).map((p) => {
+    const group = own.filter((v) => (v.population || GENERAL) === p);
+    const places = [...new Set(group.filter((v) => v.area_level !== 'National').map((v) => v.area))];
+    const where = places.length > 5 ? plural(places.length, 'area') : places.join(', ');
+    return `${esc(p)}${isRapid(group) ? ' (Rapid SMART component)' : ''}${where ? `: ${esc(where)}` : ''}`;
+  });
+  return `
+    <li class="pf-card pf-srv${isShown ? ' is-shown' : ''}">
+      <div class="pf-srv-main">
+        <div class="pf-card-top">${badge('SMART')}<strong>${s.survey_year ?? ''}</strong>${isShown ? '<span class="pf-tag pf-shown">Shown below</span>' : ''}</div>
         <h4>${esc(s.title || s.id)}</h4>
         ${s.lead_org ? `<p>${esc(s.lead_org)}</p>` : ''}
         <p class="mute">${[period && `Data collection ${esc(period)}`, s.coverage && esc(s.coverage)].filter(Boolean).join(' · ')}</p>
-        <div class="pf-card-foot">${reportLink(s.report_url)}<span class="rev">As published</span></div>
-      </article>`);
+        ${others.length ? `<p class="mute">Also: ${others.join(' · ')}</p>` : ''}
+      </div>
+      <div class="pf-card-foot">${reportLink(s.report_url)}<span class="rev">As published</span></div>
+    </li>`;
+}
 
-    // Rapid SMART component (IDP sites) of the same survey, as in the Mali mockup
-    const rapid = values.filter((v) => v.survey === s.id && v.type === 'Rapid SMART');
-    if (rapid.length) {
-      const places = [...new Set(rapid.filter((v) => v.area_level !== 'National').map((v) => v.area))];
-      cards.push(`
-        <article class="pf-card">
-          <div class="pf-card-top">${badge('RAPID SMART')}<strong>${s.survey_year ?? ''}</strong><span class="pf-tag">IDPs in sites</span></div>
-          <h4>Rapid SMART component in IDP displacement sites</h4>
-          <p>Same survey and lead as the SMART ${s.survey_year ?? ''}</p>
-          <p class="mute">${[period && `Data collection ${esc(period)}`, places.length && `IDP sites: ${esc(places.join(', '))}`].filter(Boolean).join(' · ')}</p>
-          <div class="pf-card-foot">${reportLink(s.report_url, 'Report (same document)')}<span class="rev">As published</span></div>
-        </article>`);
-    }
-  }
-
-  const dhs = surveys.filter((x) => x.source === 'DHS');
-  for (const s of dhs) {
-    const released = s.release_date ? `Released ${formatDay(s.release_date)}` : '';
-    const retrieved = s.retrieval_date ? `retrieved ${formatDay(s.retrieval_date)}` : '';
-    cards.push(`
-      <article class="pf-card">
+function dhsRow(s) {
+  const released = s.release_date ? `Released ${formatDay(s.release_date)}` : '';
+  const retrieved = s.retrieval_date ? `retrieved ${formatDay(s.retrieval_date)}` : '';
+  return `
+    <li class="pf-card pf-srv">
+      <div class="pf-srv-main">
         <div class="pf-card-top">${badge('DHS')}<strong>${s.survey_year ?? ''}</strong><span class="pf-tag">${esc(s.id)}</span></div>
         <h4>${esc(s.title || s.id)}</h4>
         ${s.lead_org ? `<p>${esc(s.lead_org)}</p>` : ''}
-        <p class="mute">${[released, retrieved].filter(Boolean).join(' · ')}</p>
-        <p class="mute">National only · 0–59 months for child indicators</p>
-        <div class="pf-card-foot">${reportLink(s.report_url, 'DHS Program survey page')}<span class="rev">As published</span></div>
-      </article>`);
+        <p class="mute">${[released, retrieved, 'National only · 0–59 months for child indicators'].filter(Boolean).join(' · ')}</p>
+      </div>
+      <div class="pf-card-foot">${reportLink(s.report_url, 'DHS Program survey page')}<span class="rev">As published</span></div>
+    </li>`;
+}
+
+/**
+ * Choices of "SMART results from", default first (owner's decision, 22 Nov 2026):
+ *   - "All N surveys from <year>": when several SMART surveys share the most recent year (district surveys);
+ *     their areas are combined in one chart per population group;
+ *   - each survey, most recent first (the most recent is the default when it is alone in its year);
+ *   - "All N SMART surveys": every survey, one block each (several years).
+ */
+function surveyChoices(smart) {
+  if (!smart.length) return [];
+  const year = smart[0].survey_year;
+  const sameYear = smart.filter((s) => s.survey_year === year);
+  const choices = smart.map((s) => ({ value: s.id, label: `${s.survey_year ?? ''} · ${s.title || s.id}`, surveys: [s] }));
+  if (sameYear.length > 1) {
+    choices.unshift({ value: `year:${year}`, label: `All ${sameYear.length} surveys from ${year}`, surveys: sameYear });
   }
-  if (!dhs.length) {
-    cards.push(`
-      <article class="pf-card pf-card-empty">
-        <div class="pf-card-top">${badge('DHS')}<strong>No recent survey</strong></div>
-        <p class="mute">No standard DHS published for ${esc(countryName)} from 2020 onwards.</p>
-      </article>`);
+  if (smart.length > sameYear.length) {
+    choices.push({ value: 'all', label: `All ${smart.length} SMART surveys (one block each)`, surveys: smart });
   }
-  return cards.join('');
+  return choices;
+}
+
+/** "SMART results from": shown only when the country has several SMART surveys. */
+function surveyPicker(choices, chosen) {
+  if (choices.filter((c) => c.surveys.length === 1).length < 2) return '';
+  return `
+    <div class="pf-pick">
+      <label for="pf-survey">SMART results from</label>
+      <select id="pf-survey" class="sel">
+        ${choices.map((c) => `<option value="${esc(c.value)}"${c.value === chosen ? ' selected' : ''}>${esc(c.label)}</option>`).join('')}
+      </select>
+    </div>`;
 }
 
 // --- one tab ----------------------------------------------------------------------------
 
-function tabPanel(tab, surveys, values, indicators) {
+/**
+ * One block per shown SMART survey and population group, then the DHS block.
+ * A population group other than the general population gets its own block titled with its own name
+ * (IDPs in displacement sites, refugees and asylum seekers…); "Rapid SMART" and the small-sample note
+ * only when its values come from a Rapid SMART component.
+ */
+function tabPanel(tab, shown, combine, surveys, values, indicators) {
   const inTab = (v) => tab.groups.includes(indicators.get(v.indicator)?.group);
   const blocks = [];
 
-  for (const s of surveys.filter((x) => x.source === 'SMART')) {
-    const general = values.filter((v) => v.survey === s.id && inTab(v) && (v.population || GENERAL) === GENERAL);
-    if (general.length) {
+  // Surveys of one year combined in one block per population group, unless two of them cover the same area
+  const ids = new Set(shown.map((s) => s.id));
+  const pooled = values.filter((v) => ids.has(v.survey) && inTab(v));
+  if (combine && shown.length > 1 && !sharesAnArea(pooled)) {
+    const year = shown[0].survey_year ?? '';
+    const together = { id: `${shown.length} SMART surveys ${year}`, title: `${shown.length} SMART surveys, ${year}` };
+    for (const population of populations(pooled)) {
+      const group = pooled.filter((v) => (v.population || GENERAL) === population);
+      const rapid = isRapid(group);
       blocks.push(smartBlock({
-        key: s.id, survey: s, values: general, indicators, source: 'SMART',
-        title: `SMART ${s.survey_year ?? ''} · General population`,
+        key: `year:${year}|${population}`, survey: together, values: group, indicators, source: rapid ? 'RAPID SMART' : 'SMART',
+        title: `${rapid ? 'Rapid SMART' : 'SMART'} ${year} · ${population}`,
+        context: `${plural(new Set(group.map((v) => v.survey)).size, 'survey')} combined (listed above): one row per area`,
+        note: rapid ? 'Shown apart from the general population: small samples, very wide confidence intervals. Interpret with caution.' : '',
       }));
     }
-    const idp = values.filter((v) => v.survey === s.id && inTab(v) && v.population && v.population !== GENERAL);
-    if (idp.length) {
+    shown = [];
+  }
+
+  for (const s of shown) {
+    const own = values.filter((v) => v.survey === s.id && inTab(v));
+    for (const population of populations(own)) {
+      const group = own.filter((v) => (v.population || GENERAL) === population);
+      const rapid = isRapid(group);
       blocks.push(smartBlock({
-        key: `${s.id}-idp`, survey: s, values: idp, indicators, source: 'RAPID SMART',
-        title: `Rapid SMART ${s.survey_year ?? ''} · IDPs in displacement sites`,
-        note: 'Shown apart from the general population: small samples, very wide confidence intervals. Interpret with caution.',
+        key: `${s.id}|${population}`, survey: s, values: group, indicators, source: rapid ? 'RAPID SMART' : 'SMART',
+        title: `${rapid ? 'Rapid SMART' : 'SMART'} ${s.survey_year ?? ''} · ${population}`,
+        context: shown.length > 1 ? s.title || s.id : '',
+        note: rapid ? 'Shown apart from the general population: small samples, very wide confidence intervals. Interpret with caution.' : '',
       }));
     }
   }
@@ -247,6 +360,17 @@ function tabPanel(tab, surveys, values, indicators) {
   }
 
   return blocks.join('') || '<p class="mute">No results for this group of indicators.</p>';
+}
+
+/** True when two surveys give the same indicator for the same area (they cannot share one chart). */
+function sharesAnArea(values) {
+  const seen = new Map();
+  for (const v of values) {
+    const key = `${v.population}|${v.area_level}|${v.parent_area || ''}|${v.area}|${v.indicator}|${v.age_group}`;
+    if (seen.has(key) && seen.get(key) !== v.survey) return true;
+    seen.set(key, v.survey);
+  }
+  return false;
 }
 
 /** Indicators of a block, in the order of the indicator list, with the number of areas for each. */
@@ -282,7 +406,7 @@ function orderAreas(rows, valueOf) {
   return [...ordered, ...orphans];
 }
 
-function smartBlock({ key, survey, values, indicators, source, title, note }) {
+function smartBlock({ key, survey, values, indicators, source, title, context, note }) {
   const main = values.filter((v) => !v.alt);
   const alt = values.filter((v) => v.alt);
   const inds = blockIndicators(main, indicators);
@@ -305,6 +429,7 @@ function smartBlock({ key, survey, values, indicators, source, title, note }) {
         ${ages.length ? `<span class="mute pf-ages">${esc(ages.join(', '))}</span>` : ''}
         ${toggle}
       </div>
+      ${context ? `<p class="pf-block-survey">${esc(context)}</p>` : ''}
       ${note ? `<p class="pf-note">${esc(note)}</p>` : ''}
       ${dotPlot(main.filter((v) => v.indicator === chosen.key), chosen)}
       ${blockTable(main, inds, survey)}

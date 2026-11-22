@@ -177,7 +177,7 @@ export async function createResultsMap(root, { onCountry }) {
     } else if (figure.subnational) {
       const s = figure.subnational;
       body = `<span class="tip-line"><span class="src src-${s.source.toLowerCase()}">${s.source}</span> ${s.year ?? ''} · Subnational data only</span>
-        <span class="tip-line mute">${s.areas} area${s.areas === 1 ? '' : 's'}, not on the national scale</span>`;
+        <span class="tip-line mute">${s.areas} area${s.areas === 1 ? '' : 's'}${s.surveyIds.length > 1 ? ` from ${s.surveyIds.length} surveys` : ''}, not on the national scale</span>`;
     } else {
       body = '<span class="tip-line mute">No data for this indicator</span>';
     }
